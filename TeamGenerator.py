@@ -111,6 +111,15 @@ class Team:
         print("### FAME ###", self.fame_average)
         print("Fielding Average", self.fielding_average)
 
+    def printTeamPlayerData(self):
+        print(self.name)
+        print("============================")
+        print("Player Count: ", self.number_of_players)
+        print("Batsmen Count: ", self.number_of_batsmen - self.number_of_allrounders)
+        print("Bowler Count: ", self.number_of_bowlers - self.number_of_allrounders)
+        print("Wicketkeeper Count: ", self.number_of_wicketkeepers)
+        print("Allrounder Count: ", self.number_of_allrounders)
+
     def findMostPopular(self):
         fame = -1
         famous_player = 0
@@ -150,6 +159,7 @@ for i in range(23):
     # x = input()
     # if x == " ":
 
+# Team1.printTeamPlayerData()
 Team1.printTeamData()
 
 print("")
