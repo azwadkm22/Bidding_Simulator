@@ -151,37 +151,37 @@ class Team:
 
 
 
-Team1 = Team("Dhaka Gladiators")
+# Team1 = Team("Dhaka Gladiators")
 
-for i in range(23):
-    a = Player()
-    Team1.addPlayer(a)
-    # x = input()
-    # if x == " ":
+# for i in range(23):
+#     a = Player()
+#     Team1.addPlayer(a)
+#     # x = input()
+#     # if x == " ":
 
-# Team1.printTeamPlayerData()
-Team1.printTeamData()
+# # Team1.printTeamPlayerData()
+# Team1.printTeamData()
 
-print("")
-print("")
-
-
-print("MOST FAMOUS")
-
-print("")
-famP = Team1.findMostPopular()
-famP.printDetails()
+# print("")
+# print("")
 
 
-print("BEST BATTING")
+# print("MOST FAMOUS")
 
-print("")
-famP = Team1.findBestBowler()
-famP.printDetails()
+# print("")
+# famP = Team1.findMostPopular()
+# famP.printDetails()
 
 
-print("BEST BOWLING")
+# print("BEST BATTING")
 
-print("")
-famP = Team1.findBestBatsman()
-famP.printDetails()
+# print("")
+# famP = Team1.findBestBowler()
+# famP.printDetails()
+
+
+# print("BEST BOWLING")
+
+# print("")
+# famP = Team1.findBestBatsman()
+# famP.printDetails()
