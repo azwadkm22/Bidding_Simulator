@@ -1,6 +1,6 @@
 from PlayerGenerator import Player
 from TeamGenerator import Team
-from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder
+from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder, PriorityBidder
 
 def GenerateNPlayerList(n):
     ListOfPlayers = []
@@ -32,7 +32,7 @@ def FindTopNPlayerInCategory(playerList, n, category):
         TopNPlayers = playerList[:n]
         return TopNPlayers
 
-ListOfPlayers = GenerateNPlayerList(20)
+ListOfPlayers = GenerateNPlayerList(200)
 
 TopTenBatsmen = FindTopNPlayerInCategory(ListOfPlayers, 10, "Batting")
 TopTenBowler = FindTopNPlayerInCategory(ListOfPlayers, 10, "Bowling")
@@ -46,6 +46,8 @@ def PrintTitleBoard(Title):
     print(Title)
     print("")
     print("########")
+
+
 
 # PrintTitleBoard("Best Batsmen")
 # for pl in TopTenBatsmen:
@@ -114,14 +116,26 @@ def ShowcasePlayer(player):
 
 
 BidderList = []
-BidderList.append(SafeBidder("Rajshahi", 100))
-BidderList.append(RiskyBidder("Dhaka", 100))
-BidderList.append(SafeBidder("Sylhet", 100))
-BidderList.append(RandomBidder("Khulna", 100))
-BidderList.append(SafeBidder("Barishal", 100))
-BidderList.append(SafeBidder("Noakhali", 100))
-BidderList.append(SafeBidder("Chittagong", 100))
-BidderList.append(SafeBidder("Rangpur", 100))
+TeamList = []
+
+Rajshahi = Team("Rajshahi")
+Dhaka = Team("Dhaka")
+Sylhet = Team("Sylhet")
+Khulna = Team("Khulna")
+Barishal = Team("Barishal")
+Noakhali = Team("Noakhali")
+Chittagong = Team("Chittagong")
+Rangpur = Team("Rangpur")
+
+
+BidderList.append(PriorityBidder("Rajshahi", 5000, Rajshahi))
+BidderList.append(PriorityBidder("Dhaka", 5000, Dhaka))
+BidderList.append(PriorityBidder("Sylhet", 5000, Sylhet))
+BidderList.append(PriorityBidder("Khulna", 5000, Khulna))
+BidderList.append(PriorityBidder("Barishal", 5000, Barishal))
+BidderList.append(PriorityBidder("Noakhali", 5000, Noakhali))
+BidderList.append(PriorityBidder("Chittagong", 5000, Chittagong))
+BidderList.append(PriorityBidder("Rangpur", 5000, Rangpur))
 
 
 for p in ListOfPlayers:
@@ -147,6 +161,7 @@ for p in ListOfPlayers:
             print(p.name, "sold to", currentBidder.name, "for", running_price)
             currentBidder.subtractPrice(running_price)
             not_sold = False
+            currentBidder.addPlayerToTeam(p)
         if(run > 2):
             print(p.name, "remains unsold.")
             not_sold = False
@@ -155,7 +170,7 @@ for p in ListOfPlayers:
         placed_bid_this_round = False
         for bidder in BidderList:
             if bidder != currentBidder:
-                if bidder.placeBid(p, running_price) == 1:
+                if bidder.placeBid(p, running_price+5) == 1:
                     if bidCounter == 0:
                         print("We get a bid from", bidder.name)
                     if bidCounter == 1:
@@ -166,11 +181,22 @@ for p in ListOfPlayers:
                     running_price = running_price + 5
                     bidCounter = 1
                     currentBidder = bidder
-                    break
+                    
         if(placed_bid_this_round == False and bidCounter != 0):
             bidCounter =  bidCounter +1
         
             
         
         
-        
+for bd in BidderList:
+    PrintTitleBoard(bd.name)
+    print("Remaining Budget: ", bd.budget)
+    bd.team.printTeamData()
+    
+
+# Rangpur.printAllPlayerData()
+
+# Rangpur.findBestBatsman().printDetails()
+# Rangpur.findBestBowler().printDetails()
+# Rangpur.findMostPopular().printDetails()
+

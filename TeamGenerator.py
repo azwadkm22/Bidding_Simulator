@@ -79,7 +79,7 @@ class Team:
                     self.pace_bowling_average = ( (self.pace_bowling_average * (self.number_of_pacers-1)) + player.bowling) / self.number_of_pacers
                 else:
                     self.number_of_spinners = self.number_of_spinners +1
-                    self.spin_bowling_average = ( (self.spin_bowling_average * (self.spin_bowling_average-1)) + player.bowling) / self.number_of_spinners
+                    self.spin_bowling_average = ( (self.spin_bowling_average * (self.number_of_spinners-1)) + player.bowling) / self.number_of_spinners
 
             if(player.position == "Wicketkeeper"):
                 self.number_of_wicketkeepers = self.number_of_wicketkeepers + 1
@@ -119,6 +119,70 @@ class Team:
         print("Bowler Count: ", self.number_of_bowlers - self.number_of_allrounders)
         print("Wicketkeeper Count: ", self.number_of_wicketkeepers)
         print("Allrounder Count: ", self.number_of_allrounders)
+
+    def findNewPlayerPriority(self, player):
+        priority = 0
+        if player.position == "Bowler" or (player.position == "Allrounder" and player.bowling > 60):
+            if player.bowling_type == "Spinner":
+                if self.number_of_spinners < 3:
+                    priority = priority + 1
+                if self.spin_bowling_average < player.bowling:
+                    priority = priority + 1
+            if player.bowling_type == "Pacer":
+                if self.number_of_pacers < 3:
+                    priority = priority + 1
+                if self.pace_bowling_average < player.bowling:
+                    priority = priority + 1
+            if player.bowling > 70 and self.number_of_bowlers < 4:
+                priority = priority + 1
+            if player.bowling > self.bowling_average:
+                priority = priority + 1
+
+            if player.bowling < 50:
+                priority = 1    
+            
+
+        if player.position == "Batsmen" or (player.position == "Allrounder" and player.batting > 60) or player.position == "Wicketkeeper":
+            if player.batting_hand == "Right":
+                if self.number_of_right_handed_batsmen < 3:
+                    priority = priority + 1
+            
+            if player.batting_hand == "left":
+                if self.number_of_left_handed_batsmen < 3:
+                    priority = priority + 1
+                
+            if player.batting > 70 and self.number_of_batsmen < 6:
+                priority = priority + 1
+            
+            if self.batting_average < player.batting:
+                priority = priority + 1
+
+            if player.batting_order == "Opener" and self.number_of_openers == 0:
+                priority = priority + 3
+            if player.batting_order == "Opener" and self.number_of_openers < 3:
+                priority = priority + 1
+            if player.batting_order == "Middle Order" and self.mid_order_batsmen < 3:
+                priority = priority + 1
+            if player.batting_order == "Top Order" and self.mid_order_batsmen < 2:
+                priority = priority + 1
+            if player.batting_order == "Low Order" and self.low_order_batsmen < 1:
+                priority = priority + 1
+            if player.position == "Wicketkeeper" and self.number_of_wicketkeepers < 1:
+                priority = priority + 5
+            if player.position == "Wicketkeeper" and self.number_of_wicketkeepers < 2:
+                priority = priority + 1
+
+            if player.batting < 50:
+                priority = 1
+        return priority
+    
+    def printAllPlayerData(self):
+        for p in self.playerList:
+            p.printDetails()
+            print()
+        
+
+
 
     def findMostPopular(self):
         fame = -1
