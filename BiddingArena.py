@@ -1,6 +1,6 @@
 from PlayerGenerator import Player
 from TeamGenerator import Team
-from Bidders import RandomBidder, AlwaysBidder, NeverBidder
+from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder
 
 def GenerateNPlayerList(n):
     ListOfPlayers = []
@@ -114,14 +114,14 @@ def ShowcasePlayer(player):
 
 
 BidderList = []
-BidderList.append(RandomBidder("Rajshahi"))
-BidderList.append(RandomBidder("Dhaka"))
-BidderList.append(RandomBidder("Sylhet"))
-BidderList.append(RandomBidder("Khulnda"))
-BidderList.append(RandomBidder("Barishal"))
-BidderList.append(RandomBidder("Noakhali"))
-BidderList.append(RandomBidder("Chittagong"))
-BidderList.append(RandomBidder("Rangpur"))
+BidderList.append(SafeBidder("Rajshahi"))
+BidderList.append(RiskyBidder("Dhaka"))
+BidderList.append(SafeBidder("Sylhet"))
+BidderList.append(RandomBidder("Khulna"))
+BidderList.append(SafeBidder("Barishal"))
+BidderList.append(SafeBidder("Noakhali"))
+BidderList.append(SafeBidder("Chittagong"))
+BidderList.append(SafeBidder("Rangpur"))
 
 
 for p in ListOfPlayers:
@@ -148,7 +148,7 @@ for p in ListOfPlayers:
         placed_bid_this_round = False
         for bidder in BidderList:
             if bidder != currentBidder:
-                if bidder.placeBid() == 1:
+                if bidder.placeBid(p, running_price) == 1:
                     if bidCounter == 0:
                         print("We get a bid from", bidder.name)
                     if bidCounter == 1:
