@@ -32,7 +32,7 @@ def FindTopNPlayerInCategory(playerList, n, category):
         TopNPlayers = playerList[:n]
         return TopNPlayers
 
-ListOfPlayers = GenerateNPlayerList(10)
+ListOfPlayers = GenerateNPlayerList(20)
 
 TopTenBatsmen = FindTopNPlayerInCategory(ListOfPlayers, 10, "Batting")
 TopTenBowler = FindTopNPlayerInCategory(ListOfPlayers, 10, "Bowling")
@@ -114,14 +114,14 @@ def ShowcasePlayer(player):
 
 
 BidderList = []
-BidderList.append(SafeBidder("Rajshahi"))
-BidderList.append(RiskyBidder("Dhaka"))
-BidderList.append(SafeBidder("Sylhet"))
-BidderList.append(RandomBidder("Khulna"))
-BidderList.append(SafeBidder("Barishal"))
-BidderList.append(SafeBidder("Noakhali"))
-BidderList.append(SafeBidder("Chittagong"))
-BidderList.append(SafeBidder("Rangpur"))
+BidderList.append(SafeBidder("Rajshahi", 100))
+BidderList.append(RiskyBidder("Dhaka", 100))
+BidderList.append(SafeBidder("Sylhet", 100))
+BidderList.append(RandomBidder("Khulna", 100))
+BidderList.append(SafeBidder("Barishal", 100))
+BidderList.append(SafeBidder("Noakhali", 100))
+BidderList.append(SafeBidder("Chittagong", 100))
+BidderList.append(SafeBidder("Rangpur", 100))
 
 
 for p in ListOfPlayers:
@@ -131,19 +131,26 @@ for p in ListOfPlayers:
     print("The player is now going up for bidding.")
     currentBidder = 0
     bidCounter = 0
-    running_price = 10
+    running_price = 10  
+    run = 0
     while(not_sold):
         print("Reminder to everyone", p.name, "'s current price is", running_price)
         if(bidCounter == 0):
             print("Do I get a bid from anyone?")
+            run = run + 1
         if(bidCounter == 1):
             print("Going once.")
         if(bidCounter == 2):
-            print("Going Twice.")
+            print("Going Twice..")
         if(bidCounter == 3):
-            print("Going Thrice.")
+            print("Going Thrice...")
             print(p.name, "sold to", currentBidder.name, "for", running_price)
+            currentBidder.subtractPrice(running_price)
             not_sold = False
+        if(run > 2):
+            print(p.name, "remains unsold.")
+            not_sold = False
+
         
         placed_bid_this_round = False
         for bidder in BidderList:
