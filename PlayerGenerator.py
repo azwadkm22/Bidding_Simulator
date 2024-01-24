@@ -116,7 +116,7 @@ def getEstimatedPrice(batting, bowling, fielding, fame, position):
         fieldingWeight = 0.3
     
         
-    price = int((batting*battingWeight + bowling*bowlingWeight + fielding*fieldingWeight + fame*0.5) * 40)
+    price = int((batting*battingWeight + bowling*bowlingWeight + fielding*fieldingWeight + fame*0.5) * 40) * 2
 
     return price
 

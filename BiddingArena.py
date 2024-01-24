@@ -1,6 +1,7 @@
+import time
 from PlayerGenerator import Player
 from TeamGenerator import Team
-from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder, PriorityBidder
+from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder, PriorityBidder, SpecializedBidder, SpecialBidder
 
 def GenerateNPlayerList(n):
     ListOfPlayers = []
@@ -128,20 +129,31 @@ Chittagong = Team("Chittagong")
 Rangpur = Team("Rangpur")
 
 
-BidderList.append(PriorityBidder("Rajshahi", 5000, Rajshahi))
-BidderList.append(PriorityBidder("Dhaka", 5000, Dhaka))
-BidderList.append(PriorityBidder("Sylhet", 5000, Sylhet))
-BidderList.append(PriorityBidder("Khulna", 5000, Khulna))
-BidderList.append(PriorityBidder("Barishal", 5000, Barishal))
-BidderList.append(PriorityBidder("Noakhali", 5000, Noakhali))
-BidderList.append(PriorityBidder("Chittagong", 5000, Chittagong))
-BidderList.append(PriorityBidder("Rangpur", 5000, Rangpur))
+# BidderList.append(SpecializedBidder("Rajshahi", 5000, Rajshahi, "Batting"))
+# BidderList.append(PriorityBidder("Dhaka", 5000, Dhaka))
+# BidderList.append(PriorityBidder("Sylhet", 5000, Sylhet))
+# BidderList.append(PriorityBidder("Khulna", 5000, Khulna))
+# BidderList.append(PriorityBidder("Barishal", 5000, Barishal))
+# BidderList.append(PriorityBidder("Noakhali", 5000, Noakhali))
+# BidderList.append(PriorityBidder("Chittagong", 5000, Chittagong))
+# # BidderList.append(PriorityBidder("Rangpur", 5000, Rangpur))
 
+# BidderList.append(SpecializedBidder("Rangpur", 5000, Rangpur, "Batting"))
+
+BidderList.append(SpecialBidder("RAJ", 5000, Rajshahi, ""))
+BidderList.append(SpecialBidder("RAN", 5000, Rangpur, []))
+BidderList.append(SpecialBidder("DHK", 5000, Dhaka, []))
+BidderList.append(SpecialBidder("SYL", 5000, Sylhet, []))
+BidderList.append(SpecialBidder("BAR", 5000, Barishal, []))
+BidderList.append(SpecialBidder("KHU", 5000, Khulna, []))
+BidderList.append(SpecialBidder("CTG", 5000, Chittagong, []))
+BidderList.append(SpecialBidder("NKH", 5000, Noakhali, []))
 
 for p in ListOfPlayers:
     ShowcasePlayer(p)
     not_sold = True
     placed_bid_this_round = False
+    time.sleep(2)
     print("The player is now going up for bidding.")
     currentBidder = 0
     bidCounter = 0
@@ -151,13 +163,17 @@ for p in ListOfPlayers:
         print("Reminder to everyone", p.name, "'s current price is", running_price)
         if(bidCounter == 0):
             print("Do I get a bid from anyone?")
+            time.sleep(1)
             run = run + 1
         if(bidCounter == 1):
             print("Going once.")
+            time.sleep(1)
         if(bidCounter == 2):
             print("Going Twice..")
+            time.sleep(1)
         if(bidCounter == 3):
             print("Going Thrice...")
+            time.sleep(1)
             print(p.name, "sold to", currentBidder.name, "for", running_price)
             currentBidder.subtractPrice(running_price)
             not_sold = False
