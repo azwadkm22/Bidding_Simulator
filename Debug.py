@@ -1,7 +1,11 @@
 from PlayerGenerator import Player
 from TeamGenerator import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
+from StartingEleven import StartingEleven
 
-players = [None for _ in range(40)]
+
+
+
+players = [None for _ in range(43)]
 players[0] = Player("Top Priority Player", 98, 30, 75, "Batsmen", 75, "Right", None, None, "Middle Order")
 
 players[1] = Player("Good Opening Batter", 85, 30, 75, "Batsmen", 75, "Left", None, None, "Opener")
@@ -57,9 +61,15 @@ players[35] = Player("Mid Top Order Batter 2", 75, 30, 75, "Batsmen", 75, "Right
 players[36] = Player("Bad Top Order Batter 2", 55, 30, 75, "Batsmen", 75, "Left", None, None, "Top Order")
 
 
-players[37] = Player("Good Mid Order Batter", 85, 30, 75, "Batsmen", 75, "Left", None, None, "Middle Order")
-players[38] = Player("Mid Mid Order Batter", 75, 30, 75, "Batsmen", 75, "Right", None, None, "Middle Order")
-players[39] = Player("Bad Mid Order Batter", 55, 30, 75, "Batsmen", 75, "Left", None, None, "Middle Order")
+players[37] = Player("Good Mid Order Batter 2", 85, 30, 75, "Batsmen", 75, "Left", None, None, "Middle Order")
+players[38] = Player("Mid Mid Order Batter 2", 75, 30, 75, "Batsmen", 75, "Right", None, None, "Middle Order")
+players[39] = Player("Bad Mid Order Batter 2", 55, 30, 75, "Batsmen", 75, "Left", None, None, "Middle Order")
+
+
+players[40] = Player("Good Opening Batter 2", 85, 30, 75, "Batsmen", 75, "Left", None, None, "Opener")
+players[41] = Player("Mid Opening Batter 2", 75, 30, 75, "Batsmen", 75, "Right", None, None, "Opener")
+players[42] = Player("Bad Opening Batter 2", 55, 30, 75, "Batsmen", 75, "Left", None, None, "Opener")
+
 
 debugTeam = Team("Debug Team")
 
@@ -67,3 +77,9 @@ for player in players:
     debugTeam.addPlayer(player)
 
 debugTeam.printTeamData()
+
+printTeamPositionAndOrderSummary(debugTeam)
+
+startingDebug = StartingEleven()
+
+startingDebug.createStartingEleven(debugTeam)

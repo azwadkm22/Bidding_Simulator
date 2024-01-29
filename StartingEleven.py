@@ -164,7 +164,7 @@ class StartingEleven:
         print("Spinner: ", self.spinnerCount)
         print("Players Picked: ", len(self.starting))
         for x in self.starting:
-            x.printSummary()
+            x.printName()
 
         self.createLineup()
         self.printLineup()  
@@ -220,28 +220,31 @@ class StartingEleven:
     def createLineup(self):
         eleven = list(self.starting)
         print(len(eleven))
+        openers = []
+        top_ord = []
+        mid_ord = []
+        low_ord = []
 
         for x in eleven:
             if(x.batting_order == "Opener"):
-                x.printSummary( )
-                self.lineup.append(x)
-                eleven.remove(x)
+                openers.append(x)
+            
+            elif(x.batting_order == "Top Order"):
+                top_ord.append(x)
+
+            elif(x.batting_order == "Middle Order"):
+                mid_ord.append(x)
         
-        # for x in eleven:
-        #     if(x.batting_order == "Top Order"):
-        #         self.lineup.append(x)
-        #         eleven.remove(x)
-        
-        # for x in eleven:
-        #     if(x.batting_order == "Middle Order"):
-        #         self.lineup.append(x)
-        #         eleven.remove(x)
-        
-        # for x in eleven:
-        #     if(x.batting_order == "Low Order"):
-        #         self.lineup.append(x)
-        #         eleven.remove(x)
-        
+            elif(x.batting_order == "Low Order"):
+                low_ord.append(x)
+        for x in openers:
+            self.lineup.append(x)
+        for x in top_ord:
+            self.lineup.append(x)
+        for x in mid_ord:
+            self.lineup.append(x)
+        for x in low_ord:
+            self.lineup.append(x)
     def printLineup(self):
         for i in range(0, len(self.lineup)):
             print(f'{i+1}. {self.lineup[i].name}')
