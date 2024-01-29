@@ -1,7 +1,8 @@
 import time
 from PlayerGenerator import Player
-from TeamGenerator import Team
+from TeamGenerator import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
 from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder, PriorityBidder, SpecializedBidder, SpecialBidder
+from StartingEleven import StartingEleven
 
 def GenerateNPlayerList(n):
     ListOfPlayers = []
@@ -140,20 +141,20 @@ Rangpur = Team("Rangpur")
 
 # BidderList.append(SpecializedBidder("Rangpur", 5000, Rangpur, "Batting"))
 
-BidderList.append(SpecialBidder("RAJ", 5000, Rajshahi, ""))
-BidderList.append(SpecialBidder("RAN", 5000, Rangpur, []))
-BidderList.append(SpecialBidder("DHK", 5000, Dhaka, []))
-BidderList.append(SpecialBidder("SYL", 5000, Sylhet, []))
-BidderList.append(SpecialBidder("BAR", 5000, Barishal, []))
-BidderList.append(SpecialBidder("KHU", 5000, Khulna, []))
-BidderList.append(SpecialBidder("CTG", 5000, Chittagong, []))
-BidderList.append(SpecialBidder("NKH", 5000, Noakhali, []))
+# BidderList.append(SpecialBidder("RAJ", 5000, Rajshahi, ""))
+# BidderList.append(SpecialBidder("RAN", 5000, Rangpur, []))
+BidderList.append(SpecialBidder("DHK", 10000, Dhaka, []))
+# BidderList.append(SpecialBidder("SYL", 5000, Sylhet, []))
+# BidderList.append(SpecialBidder("BAR", 5000, Barishal, []))
+# BidderList.append(SpecialBidder("KHU", 5000, Khulna, []))
+# BidderList.append(SpecialBidder("CTG", 5000, Chittagong, []))
+# BidderList.append(SpecialBidder("NKH", 5000, Noakhali, []))
 
 for p in ListOfPlayers:
     ShowcasePlayer(p)
     not_sold = True
     placed_bid_this_round = False
-    time.sleep(2)
+    # time.sleep(2)
     print("The player is now going up for bidding.")
     currentBidder = 0
     bidCounter = 0
@@ -163,20 +164,21 @@ for p in ListOfPlayers:
         print("Reminder to everyone", p.name, "'s current price is", running_price)
         if(bidCounter == 0):
             print("Do I get a bid from anyone?")
-            time.sleep(1)
+            # time.sleep(1)
             run = run + 1
         if(bidCounter == 1):
             print("Going once.")
-            time.sleep(1)
+            # time.sleep(1)
         if(bidCounter == 2):
             print("Going Twice..")
-            time.sleep(1)
+            # time.sleep(1)
         if(bidCounter == 3):
             print("Going Thrice...")
-            time.sleep(1)
+            # time.sleep(1)
             print(p.name, "sold to", currentBidder.name, "for", running_price)
             currentBidder.subtractPrice(running_price)
             not_sold = False
+            p.setSellingPrice(running_price)
             currentBidder.addPlayerToTeam(p)
         if(run > 2):
             print(p.name, "remains unsold.")
@@ -203,12 +205,14 @@ for p in ListOfPlayers:
         
             
         
-        
 for bd in BidderList:
     PrintTitleBoard(bd.name)
     print("Remaining Budget: ", bd.budget)
     bd.team.printTeamData()
+    # printTeamPositionAndOrderSummary(bd.team)
     
+DhakaStart = StartingEleven()
+DhakaStart.createStartingEleven(Dhaka)
 
 # Rangpur.printAllPlayerData()
 
