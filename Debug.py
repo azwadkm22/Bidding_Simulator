@@ -1,8 +1,7 @@
 from PlayerGenerator import Player
 from TeamGenerator import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
 
-players = []
-
+players = [None for _ in range(40)]
 players[0] = Player("Top Priority Player", 98, 30, 75, "Batsmen", 75, "Right", None, None, "Middle Order")
 
 players[1] = Player("Good Opening Batter", 85, 30, 75, "Batsmen", 75, "Left", None, None, "Opener")
@@ -62,4 +61,9 @@ players[37] = Player("Good Mid Order Batter", 85, 30, 75, "Batsmen", 75, "Left",
 players[38] = Player("Mid Mid Order Batter", 75, 30, 75, "Batsmen", 75, "Right", None, None, "Middle Order")
 players[39] = Player("Bad Mid Order Batter", 55, 30, 75, "Batsmen", 75, "Left", None, None, "Middle Order")
 
+debugTeam = Team("Debug Team")
 
+for player in players:
+    debugTeam.addPlayer(player)
+
+debugTeam.printTeamData()

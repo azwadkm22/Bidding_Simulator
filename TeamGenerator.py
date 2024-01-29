@@ -189,7 +189,7 @@ class Team:
                 self.pace_bowling_average = ( (self.pace_bowling_average * (self.number_of_pacers-1)) + player.bowling) / self.number_of_pacers
             else:
                 self.number_of_spinners = self.number_of_spinners +1
-                self.spin_bowling_average = ( (self.spin_bowling_average * (self.spin_bowling_average-1)) + player.bowling) / self.number_of_spinners
+                self.spin_bowling_average = ( (self.spin_bowling_average * (self.number_of_spinners-1)) + player.bowling) / self.number_of_spinners
         
         else: # IF NOT BOWLER THEN MUST BE BATSMEN
             self.number_of_batsmen = self.number_of_batsmen +1
