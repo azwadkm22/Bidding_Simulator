@@ -10,6 +10,11 @@ class StartingEleven:
     def __init__(self):
         self.starting = set()
         self.lineup = []
+        self.batting_average = 0
+        self.bowling_average = 0
+        self.fielding_average = 0
+        self.spin_average = 0
+        self.pace_average = 0
     def createStartingEleven(self, team):
 
         self.teamOpeners = team.getTeamOpeners()
@@ -53,8 +58,10 @@ class StartingEleven:
             # create team start
             newPick = None
             if(self.wickerKeeperCount == 0):
+                print("Picking WK")
                 newPick = self.teamWicketkeepers[0]
             elif(self.openerCount + self.topOrderCount + self.midOrderCount < 3):
+                print("Picking Top Three Batsmen")
                 if(len(self.teamOpeners) > 0 and len(self.teamTopOrders) > 0 and len(self.teamMidOrders) > 0):
                     if (self.teamOpeners[0].batting > self.teamTopOrders[0].batting-10 and self.teamOpeners[0].batting > self.teamMidOrders[0].batting-20):
                         newPick = self.teamOpeners[0]
@@ -96,25 +103,27 @@ class StartingEleven:
                     # newPick = self.teamTopOrders[0]
             
             elif(self.bowlerCount + self.allRounderCount < 5 and len(self.teamAllRounders) + len(self.teamPacers) + len(self.teamSpinners) != 0):
+                print("Picking Bowlers")
                 pacePick = None
                 spinPick = None
                 rounderPick = None
+                all_rounder_BWL = sorted(self.teamAllRounders, key=lambda x: x.bowling, reverse=True)
                 if(len(self.teamPacers) > 0):
                     pacePick = self.teamPacers[0]
                 if(len(self.teamSpinners) > 0):
                     spinPick = self.teamSpinners[0]
                 if(len(self.teamAllRounders) > 0):
-                    rounderPick = self.teamAllRounders[0]
+                    rounderPick = all_rounder_BWL[0]
                 if(pacePick != None and spinPick != None and rounderPick != None):
-                    if(pacePick.bowling > spinPick.bowling and pacePick.bowling > rounderPick.bowling):
+                    if((pacePick.bowling - self.pacerCount*5) > (spinPick.bowling - self.spinnerCount*5) and (pacePick.bowling - self.pacerCount*5) > (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5)):
                         newPick = self.teamPacers[0]
 
-                    elif(spinPick.bowling > pacePick.bowling and spinPick.bowling > rounderPick.bowling):
+                    elif((spinPick.bowling - self.spinnerCount*5) > (pacePick.bowling - self.pacerCount*5) and (spinPick.bowling - self.spinnerCount*5) > (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5)):
                         newPick = self.teamSpinners[0]
-               
-                    elif(rounderPick.bowling >= pacePick.bowling and rounderPick.bowling >= spinPick.bowling):
-                        newPick = self.teamAllRounders[0]
-                    elif(spinPick.bowling == pacePick.bowling):
+                
+                    elif((rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5) >= (pacePick.bowling - self.pacerCount*5) and (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5) >= (spinPick.bowling - self.spinnerCount*5)):
+                        newPick = all_rounder_BWL[0]
+                    elif((spinPick.bowling - self.spinnerCount*5) == (pacePick.bowling - self.pacerCount*5)):
                         newPick = random.choice([spinPick, pacePick])
                 elif(pacePick == None and spinPick == None and rounderPick == None):
                     print("No Bowlers Available")
@@ -122,31 +131,31 @@ class StartingEleven:
                 else:
                     if(pacePick == None):
                         if(spinPick == None):
-                            newPick = self.teamAllRounders[0]
+                            newPick = all_rounder_BWL[0]
                         elif(rounderPick == None):
                             newPick = self.teamSpinners[0]
                         else:
-                            if(spinPick.bowling > rounderPick.bowling):
+                            if((spinPick.bowling - self.spinnerCount*5) > (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5)):
                                 newPick = self.teamSpinners[0]
                             else:
-                                newPick = self.teamAllRounders[0]
+                                newPick = all_rounder_BWL[0]
                     elif(spinPick == None):
                         if(pacePick == None):
-                            newPick = self.teamAllRounders[0]
+                            newPick = all_rounder_BWL[0]
                         elif(rounderPick == None):
                             newPick = self.teamPacers[0]
                         else:
-                            if(pacePick.bowling > rounderPick.bowling):
+                            if((pacePick.bowling - self.pacerCount*5) > (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5)):
                                 newPick = self.teamPacers[0]
                             else:
-                                newPick = self.teamAllRounders[0]
+                                newPick = all_rounder_BWL[0]
                     elif(rounderPick == None):
                         if(pacePick == None):
                             newPick = self.teamSpinners[0]
                         elif(spinPick == None):
                             newPick = self.teamPacers[0]
                         else:
-                            if(pacePick.bowling >= spinPick.bowling):
+                            if((spinPick.bowling - self.spinnerCount*5) >= (spinPick.bowling - self.spinnerCount*5)):
                                 newPick = self.teamPacers[0]
                             else:
                                 newPick = self.teamSpinners[0]
@@ -156,23 +165,48 @@ class StartingEleven:
                     # break
 
             elif(self.batsmenCount + self.allRounderCount < 5 and len(self.teamBatsmen) + len(self.teamAllRounders) > 0 ):
+                print("Picking Batsmen Again")
                 batPick = None
                 allRounderPick = None
+                all_rounder_BAT = sorted(self.teamAllRounders, key=lambda x: x.batting, reverse=True)
                 if(len(self.teamBatsmen) != 0 and len(self.teamAllRounders) != 0):
                     batPick = self.teamBatsmen[0]
-                    allRounderPick = self.teamAllRounders[0]
+                    allRounderPick = all_rounder_BAT[0]
                     if batPick.batting > allRounderPick.batting:
                         newPick = self.teamBatsmen[0]
                     else:
-                        newPick = self.teamAllRounders[0]
+                        newPick = all_rounder_BAT[0]
                 elif(len(self.teamBatsmen) == 0):
-                    newPick = self.teamAllRounders[0]
+                    newPick = all_rounder_BAT[0]
                 else:
                     newPick = self.teamBatsmen[0]
             
             else:
+                print("Picking Top Players")
                 print(f'Players Left: {11 - len(self.starting)}')
+                mergedBat = self.teamBatsmen + self.teamAllRounders
+                mergedBowl = self.teamPacers + self.teamSpinners + self.teamAllRounders
 
+                mergedBat = sorted(mergedBat, key=lambda x: x.batting, reverse=True)
+                mergedBowl = sorted(mergedBowl, key=lambda x: x.bowling, reverse=True)
+
+                if(len(mergedBat) != 0 and len(mergedBowl) != 0):
+                    if self.batting_average > self.bowling_average:
+                        newPick = mergedBowl[0]
+                    else:
+                        newPick = mergedBat[0]
+                elif(len(mergedBat) != 0):
+                    newPick = mergedBat[0]
+                elif(len(mergedBowl) != 0):
+                    newPick = mergedBowl[0]
+                else:
+                    print("No players left man.")
+                # if len(self.batsmenCount) != 0 and len(self.allRounderCount) != 0:
+                #     pass
+
+
+
+                
                 # pass
                 # break
             if(newPick == None):
@@ -181,6 +215,7 @@ class StartingEleven:
 
             self.starting.add(newPick)
             self.updateCounts(newPick)
+            self.updateAverage(newPick)
             # Delete from all lists
             if newPick in self.teamOpeners:
                 self.teamOpeners.remove(newPick)
@@ -200,8 +235,12 @@ class StartingEleven:
                 self.teamAllRounders.remove(newPick)
             if newPick in self.teamBatsmen:
                 self.teamBatsmen.remove(newPick)
+
+            # Update Team Average Scores
+            
+                
             print(f'{len(self.starting)}. {newPick.name} BAT: {newPick.batting}, BWL: {newPick.bowling}')
-            self.evaluateTeam()
+            # self.evaluateTeam()
         
         print("Players Picked: ", len(self.starting))
         print("Openers: ", self.openerCount)
@@ -221,7 +260,7 @@ class StartingEleven:
         self.createLineup()
         self.printLineup()  
         
-        # self.batting_overall = 0
+        # self.batting_average = 0
         # 2 Openers
         # 2 Top or Mid order Batsman
         # 2 Pacers
@@ -308,8 +347,13 @@ class StartingEleven:
     
     def printLineup(self):
         for i in range(0, len(self.lineup)):
-            print(f'{i+1}. {self.lineup[i].name}: {self.lineup[i].batting}')
-
+            print(f'{i+1}. {self.lineup[i].name}: BAT({self.lineup[i].batting}) BWL({self.lineup[i].bowling})')
+    def printTeamScore(self):
+        print(f'Batting Score: {self.batting_average}')
+        print(f'Bowling Score: {self.bowling_average}')
+        print(f'Spin Score: {self.spin_average}')
+        print(f'Pace Score: {self.pace_average}')
+        print(f'Fielding Score: {self.fielding_average}')
     def updateCounts(self, player):
         if(player.position == "Wicketkeeper"):
             self.wickerKeeperCount = self.wickerKeeperCount + 1
@@ -343,7 +387,29 @@ class StartingEleven:
         else:
             self.lowOrderCount = self.lowOrderCount + 1
 
+    def updateAverage(self, player):
+            
+            self.fielding_average = ( (self.fielding_average * (len(self.starting) -1)) + player.fielding) / (len(self.starting))
 
+            if player.position == "Batsmen" or player.position == "Wicketkeeper":
+                self.batting_average = ( (self.batting_average * (self.batsmenCount + self.allRounderCount-1)) + player.batting) / (self.batsmenCount + self.allRounderCount)
+
+            elif player.position == "Bowler":
+                self.bowling_average = ( (self.bowling_average * (self.bowlerCount + self.allRounderCount-1)) + player.bowling) / (self.bowlerCount + self.allRounderCount)
+                if player.bowling_type == "Pacer":    
+                    self.pace_average = ( (self.pace_average * (self.pacerCount-1)) + player.bowling) / self.pacerCount
+                else:
+                    self.spin_average = ( (self.spin_average * (self.spinnerCount-1)) + player.bowling) / self.spinnerCount
+                pass
+            else:
+                self.batting_average = ( (self.batting_average * (self.batsmenCount + self.allRounderCount-1)) + player.batting) / (self.batsmenCount + self.allRounderCount)
+                #UPDATE BOWLING AVERAGE
+                self.bowling_average = ( (self.bowling_average * (self.bowlerCount + self.allRounderCount-1)) + player.bowling) / (self.bowlerCount + self.allRounderCount)
+                if player.bowling_type == "Pacer":    
+                    self.pace_average = ( (self.pace_average * (self.pacerCount-1)) + player.bowling) / self.pacerCount
+                else:
+                    self.spin_average = ( (self.spin_average * (self.spinnerCount-1)) + player.bowling) / self.spinnerCount
+                pass
     def evaluateBatting(self):
         
         pass
@@ -357,9 +423,9 @@ class StartingEleven:
     def evaluateTeam(self):
 
     
-        # batting_overall
-        # bowling_overall
-        # fielding_overall
+        # batting_average
+        # bowling_average
+        # fielding_average
 
         # opening_rating
         # top_order_rating
