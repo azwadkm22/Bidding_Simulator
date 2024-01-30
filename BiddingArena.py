@@ -213,7 +213,7 @@ for bd in BidderList:
     
 DhakaStart = StartingEleven()
 DhakaStart.createStartingEleven(Dhaka)
-
+DhakaStart.printBenchedPlayers()
 # Rangpur.printAllPlayerData()
 
 # Rangpur.findBestBatsman().printDetails()

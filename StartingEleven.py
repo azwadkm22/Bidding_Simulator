@@ -58,10 +58,8 @@ class StartingEleven:
             # create team start
             newPick = None
             if(self.wickerKeeperCount == 0):
-                print("Picking WK")
                 newPick = self.teamWicketkeepers[0]
             elif(self.openerCount + self.topOrderCount + self.midOrderCount < 3):
-                print("Picking Top Three Batsmen")
                 if(len(self.teamOpeners) > 0 and len(self.teamTopOrders) > 0 and len(self.teamMidOrders) > 0):
                     if (self.teamOpeners[0].batting > self.teamTopOrders[0].batting-10 and self.teamOpeners[0].batting > self.teamMidOrders[0].batting-20):
                         newPick = self.teamOpeners[0]
@@ -103,7 +101,6 @@ class StartingEleven:
                     # newPick = self.teamTopOrders[0]
             
             elif(self.bowlerCount + self.allRounderCount < 5 and len(self.teamAllRounders) + len(self.teamPacers) + len(self.teamSpinners) != 0):
-                print("Picking Bowlers")
                 pacePick = None
                 spinPick = None
                 rounderPick = None
@@ -165,7 +162,6 @@ class StartingEleven:
                     # break
 
             elif(self.batsmenCount + self.allRounderCount < 5 and len(self.teamBatsmen) + len(self.teamAllRounders) > 0 ):
-                print("Picking Batsmen Again")
                 batPick = None
                 allRounderPick = None
                 all_rounder_BAT = sorted(self.teamAllRounders, key=lambda x: x.batting, reverse=True)
@@ -182,7 +178,6 @@ class StartingEleven:
                     newPick = self.teamBatsmen[0]
             
             else:
-                print("Picking Top Players")
                 print(f'Players Left: {11 - len(self.starting)}')
                 mergedBat = self.teamBatsmen + self.teamAllRounders
                 mergedBowl = self.teamPacers + self.teamSpinners + self.teamAllRounders
@@ -238,8 +233,8 @@ class StartingEleven:
 
             # Update Team Average Scores
             
-                
-            print(f'{len(self.starting)}. {newPick.name} BAT: {newPick.batting}, BWL: {newPick.bowling}')
+            print(f'Picking a {(newPick.batting_order + " ") if newPick.position != "Bowler" else ""}{newPick.position if newPick.position != "Bowler" else newPick.bowling_type}')    
+            print(f'{len(self.starting)}. {newPick.name} : BAT({newPick.batting}) BWL({newPick.bowling})')
             # self.evaluateTeam()
         
         print("Players Picked: ", len(self.starting))
@@ -276,9 +271,6 @@ class StartingEleven:
         print("Openers")
         for x in self.teamOpeners:
             x.printSummary()
-        print("Wicketkeepers")
-        for x in self.teamWicketkeepers:
-            x.printSummary()
         
         print("#################")
         print("Top-Order")
@@ -293,6 +285,11 @@ class StartingEleven:
         print("#################")
         print("Low-Order")
         for x in self.teamLowOrders:
+            x.printSummary()
+
+        print("#################")
+        print("Wicketkeepers")
+        for x in self.teamWicketkeepers:
             x.printSummary()
 
         print("#################")
