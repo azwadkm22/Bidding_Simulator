@@ -44,5 +44,5 @@ last = ['Chowdhury', 'Ahmed', 'Khan', 'Hossain',
 def getPlayerName():
       return random.choice(first) + " " + random.choice(last)
 
-for i in range(1000):
-   print(getPlayerName())
+# for i in range(1000):
+#    print(getPlayerName())
