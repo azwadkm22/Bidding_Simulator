@@ -24,17 +24,25 @@ first = ['Asif', 'Sakib', 'Fahim', 'Sajib',
      "Naeem", "Naim", "Shubho", "Taaz", "Nabil", "Tahrim",
      "Takrim", "Zarzis", "Shahid", "Imtiaz", "Shourobh", "Abul", "Abu",
      "Nazim", "Nazmul", "Naz", "Taaz", "Fatik", "Farhad", "Bappa", "Bappi", 
-     "Nasir", "Yasir", "Araf", "Anas", "Areful", "Miraz", "Pritom", "Mahfuz",
+     "Nasir", "Yasir", "Araf", "Anas", "Ariful", "Miraz", "Pritom", "Mahfuz",
      "Topu", "Rimon", "Shumon", "Jayed", "Kabbo", "Toimur", "Fardin", 
-     "Jamal", "Tushar"]
+     "Jamal", "Tushar", "Fazle", "Tonmoy", "Haidar", "Moinul", "Shadab",
+     "Irtiza", "Shoummo", "Nibir", "Shafin", "Safin", "Ninad", "Raiyan",
+     "Alvi", "Himel", "Shahriar", "Ramim", "Sadman", "Mahee", "Mugdho",
+     "Omio", "Tawsif", "Sadik", "Jahirul", "Tasnim", "Ashraf", "Saif",
+     "Radi", "Sadi", "Ataur", "Atik", "Apurbo", "Arnab"]
 
 last = ['Chowdhury', 'Ahmed', 'Khan', 'Hossain',
  'Uddin', 'Hasan', 'Haque', "Haq", "Hoq", 'Mahmud', 'Islam', "Mohammad", "Mohammed", 
   'Ali', 'Alam', 'Rahman', 'Ahmad', 'Khondokar'
   , 'Ahsan', 'Zaman', 'Sarker', 'Habib', 'Majumder', 
-  "Sen", "Datta", "Sarkar", "Biswas", "Ghosh", "Roy",
-  "Mia", "Siddique", "Karim", "Malik", "Iqbal", "Barman"
+  "Sen", "Datta", "Sarkar", "Biswas", "Ghosh", "Roy", "Pal",
+  "Mia", "Siddique", "Karim", "Malik", "Iqbal", "Barman", "Karmakar", "Abdullah"
   ]
 
+
 def getPlayerName():
-    return random.choice(first) + " " + random.choice(last)
+      return random.choice(first) + " " + random.choice(last)
+
+for i in range(1000):
+   print(getPlayerName())
