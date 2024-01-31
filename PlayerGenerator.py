@@ -76,10 +76,10 @@ def pickBattingOrder(position, batting):
     
 def getPosition(batting, bowling, fielding):
     
-    if(abs(batting - bowling) < 10 or (batting > 70 and bowling > 70)):
+    if(abs(batting - bowling) < 15 or (batting > 75 and bowling > 70)):
         return "Allrounder"
     elif(batting > bowling):
-        if(bowling < 40 and fielding > 60):
+        if(bowling < 50 and fielding > 70):
             return "Wicketkeeper"
         else:
             return "Batsmen"
@@ -130,7 +130,7 @@ class Player():
         # else:
         #     bowlingLowbound = 10
         self.bowling = get_random_number(10, 96)
-        self.fielding = get_random_number(10, 96)
+        self.fielding = get_random_number(40, 96)
         # self.position = getPosition(self.batting, self.bowling)
         self.position = getPosition(self.batting, self.bowling, self.fielding)
         fameLowbound = max(self.batting-10, self.bowling-10, self.fielding-30, 10)
@@ -187,6 +187,7 @@ class Player():
         print("Batting Order: ", self.batting_order)
         print("Bowling Type: ", self.bowling_type)
         print("Bowling Style: ", self.bowling_style)
+        print("")
 
     def setSellingPrice(self, price):
         self.selling_price = price
@@ -201,9 +202,10 @@ class Player():
         else:
             print("Batting Skill: ", self.batting)
             print("Bowling Skill: ", self.bowling)
-            print("Bowling Type: ", self.bowling_type)
-        
+            print("Bowling Type: ", self.bowling_type)        
         print("Batting Order: ", self.batting_order)
+        print("")
+
     def printPosition(self):
         print(self.name)
         print("Position: ", self.position)

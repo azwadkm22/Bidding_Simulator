@@ -28,6 +28,12 @@ def getPlayerSubset(playerList, role):
                 subList.append(player)
         return subList
     
+    elif role == "Allrounder":
+        for player in playerList:
+            if player.position == "Allrounder":
+                subList.append(player)
+        return subList
+    
     elif role == "Spinner":
         for player in playerList:
             if (player.position == "Bowler" or player.position == "Allrounder") and player.bowling_type == "Spinner":
@@ -38,7 +44,8 @@ def getPlayerSubset(playerList, role):
         for player in playerList:
             if (player.position == "Bowler" or player.position == "Allrounder") and player.bowling_type == "Pacer":
                 subList.append(player)
-        return subList;
+        return subList
+    return subList
         
 
 def FindTopNPlayerInCategory(playerList, n, category):
@@ -64,27 +71,33 @@ def FindTopNPlayerInCategory(playerList, n, category):
         return TopNPlayers
     
     elif(category == "Pacer"):
-        subList =  getPlayerSubset(playerList, "Pacer")
+        subList = getPlayerSubset(playerList, "Pacer")
         subList = sorted(subList, key=lambda Player: Player.bowling, reverse=True)
-        TopNPlayers = playerList[:n]
+        TopNPlayers = subList[:n]
         return TopNPlayers
     
     elif(category == "Spinner"):
-        subList =  getPlayerSubset(playerList, "Spinner")
+        subList = getPlayerSubset(playerList, "Spinner")
         subList = sorted(subList, key=lambda Player: Player.bowling, reverse=True)
-        TopNPlayers = playerList[:n]
+        TopNPlayers = subList[:n]
         return TopNPlayers
     
     elif(category == "Wicketkeeper"):
         subList =  getPlayerSubset(playerList, "Wicketkeeper")
         subList = sorted(subList, key=lambda Player: Player.batting, reverse=True)
-        TopNPlayers = playerList[:n]
+        TopNPlayers = subList[:n]
+        return TopNPlayers
+
+    elif(category == "Allrounder"):
+        subList =  getPlayerSubset(playerList, "Allrounder")
+        subList = sorted(subList, key=lambda Player: (Player.batting + Player.bowling )/2, reverse=True)
+        TopNPlayers = subList[:n]
         return TopNPlayers
     
     elif(category == "Opener"):
         subList =  getPlayerSubset(playerList, "Opener")
         subList = sorted(subList, key=lambda Player: Player.batting, reverse=True)
-        TopNPlayers = playerList[:n]
+        TopNPlayers = subList[:n]
         return TopNPlayers
 
 def FindPlayersWithStatsAbove(playerList, stat, value):
@@ -115,14 +128,16 @@ def FindPlayersWithStatsAbove(playerList, stat, value):
 ListOfPlayers = GenerateNPlayerList(200)
 
 TopTenBatsmen = FindTopNPlayerInCategory(ListOfPlayers, 10, "Batting")
-TopTenBowler = FindTopNPlayerInCategory(ListOfPlayers, 10, "Bowling")
-TopTenSpinner = FindTopNPlayerInCategory(ListOfPlayers, 10, "Spinner")
-TopTenPacer = FindTopNPlayerInCategory(ListOfPlayers, 10, "Pacer")
-TopEightWicketkeeper = FindTopNPlayerInCategory(ListOfPlayers, 5, "Wicketkeeper")
-TopTenOpener = FindTopNPlayerInCategory(ListOfPlayers, 10, "Opener")
-TopTenAllrounder = FindTopNPlayerInCategory(ListOfPlayers, 10, "Allrounder")
+TopTenBowlers = FindTopNPlayerInCategory(ListOfPlayers, 10, "Bowling")
+TopTenSpinners = FindTopNPlayerInCategory(ListOfPlayers, 10, "Spinner")
+TopTenPacers = FindTopNPlayerInCategory(ListOfPlayers, 10, "Pacer")
+TopEightWicketkeepers = FindTopNPlayerInCategory(ListOfPlayers, 8, "Wicketkeeper")
+TopTenOpeners = FindTopNPlayerInCategory(ListOfPlayers, 10, "Opener")
+TopTenAllrounders = FindTopNPlayerInCategory(ListOfPlayers, 10, "Allrounder")
 TopTenFamous = FindTopNPlayerInCategory(ListOfPlayers, 10, "Fame")
 TopTenMostExpensive = FindTopNPlayerInCategory(ListOfPlayers, 10, "Price")
+
+
 
 
 PlayersAbove80Batting = FindPlayersWithStatsAbove(ListOfPlayers, "Batting", 80)
@@ -139,33 +154,63 @@ def PrintTitleBoard(Title):
     print("########")
 
 
+def printSummaryOfGeneration():
+    PrintTitleBoard("Best Batsmen")
+    for pl in TopTenBatsmen:
+        pl.printSummary()
+    PrintTitleBoard("Best Bowlers")
+    for pl in TopTenBowlers:
+        pl.printSummary()
+    PrintTitleBoard("Best Allrounders")
+    for pl in TopTenAllrounders:
+        pl.printSummary()
+    PrintTitleBoard("Best Wicketkeepers")
+    for pl in TopEightWicketkeepers:
+        pl.printSummary()
+    PrintTitleBoard("Best Openers")
+    for pl in TopTenOpeners:
+        pl.printSummary()
+    PrintTitleBoard("Best Spinners")
+    for pl in TopTenSpinners:
+        pl.printSummary()
+    PrintTitleBoard("Best Pacers")
+    for pl in TopTenPacers:
+        pl.printSummary()
+    PrintTitleBoard("Most Famous")
+    for pl in TopTenFamous:
+        pl.printSummary()
+    PrintTitleBoard("Most Expensive")
+    for pl in TopTenMostExpensive:
+        pl.printSummary()
 
-# PrintTitleBoard("Best Batsmen")
-# for pl in TopTenBatsmen:
-#     pl.printDetails()
-# PrintTitleBoard("Best Bowlers")
-# for pl in TopTenBowler:
-#     pl.printDetails()
-# PrintTitleBoard("Most Famous")
-# for pl in TopTenFamous:
-#     pl.printDetails()
-# PrintTitleBoard("Most Expensive")
-# for pl in TopTenMostExpensive:
-#     pl.printDetails()
+    PrintTitleBoard("Now all the best players with score above 80")
 
+    listToPrint = [PlayersAbove80Batting, PlayersAbove80Bowling, PlayersAbove80Allrounder, PlayersAbove80Spin, PlayersAbove80Pace]
+    for lst in listToPrint:
+        for player in lst:
+            player.printSummary()
 
 def ShowcasePlayer(player):
     PrintTitleBoard("Next Player: " + player.name)
-    if(player in TopTenBatsmen and player in TopTenBowler):
+    if(player in TopTenAllrounders):
         print("He is one of the top contenders of this years best all rounder award.")
 
     elif(player in TopTenBatsmen):
         print("He is one of the top contenders of this years best batsmen award.")
-    
 
-    elif(player in TopTenBowler and player in TopTenBowler):
+    elif(player in TopTenBowlers):
         print("He is one of the top contenders of this years best bowler award.")
 
+    if(player in TopEightWicketkeepers):
+        print("He should be a regular in one of the teams for sure.")
+    
+    if(player in TopTenPacers):
+        print("Very few pacers out there with skills like his.")
+    elif (player in TopTenSpinners):
+        print("Just give him the ball and watch it spin all the way.")
+
+    if (player in TopTenOpeners):
+        print("Which team will he open for this year.")
     if(player in TopTenFamous):
         print("He's got a lot of fans around the world.")
 
@@ -210,7 +255,7 @@ def ShowcasePlayer(player):
         print("What do you think, will he be bought this time?")
         print("If I had to say a price, I wouldn't suggest anything more than", (int(player.estimated_price/10)+1)*10, "Million")
 
-
+printSummaryOfGeneration()
 
 BidderList = []
 TeamList = []
@@ -223,7 +268,9 @@ Barishal = Team("Barishal")
 Noakhali = Team("Noakhali")
 Chittagong = Team("Chittagong")
 Rangpur = Team("Rangpur")
+Cumilla = Team("Cumilla")
 
+# Dhaka, Rajshahi, Rangpur, Barishal, Chittagong, Cumilla, Sylhet, Khulna
 
 # BidderList.append(SpecializedBidder("Rajshahi", 5000, Rajshahi, "Batting"))
 # BidderList.append(PriorityBidder("Dhaka", 5000, Dhaka))
@@ -243,68 +290,69 @@ BidderList.append(SpecialBidder("SYL", 5000, Sylhet, []))
 BidderList.append(SpecialBidder("BAR", 5000, Barishal, []))
 BidderList.append(SpecialBidder("KHU", 5000, Khulna, []))
 BidderList.append(SpecialBidder("CTG", 5000, Chittagong, []))
+BidderList.append(SpecialBidder("COM", 5000, Cumilla, []))
 BidderList.append(SpecialBidder("NKH", 5000, Noakhali, []))
 
-for p in ListOfPlayers:
-    ShowcasePlayer(p)
-    not_sold = True
-    placed_bid_this_round = False
-    print("The player is now going up for bidding.")
-    # time.sleep(2)
-    currentBidder = 0
-    bidCounter = 0
-    running_price = 10  
-    run = 0
-    while(not_sold):
-        print("Reminder to everyone", p.name, "'s current price is", running_price)
-        if(bidCounter == 0):
-            print("Do I get a bid from anyone?")
-            # time.sleep(1)
-            run = run + 1
-        if(bidCounter == 1):
-            print("Going once.")
-            # time.sleep(1)
-        if(bidCounter == 2):
-            print("Going Twice..")
-            # time.sleep(1)
-        if(bidCounter == 3):
-            print("Going Thrice...")
-            # time.sleep(1)
-            print(p.name, "sold to", currentBidder.name, "for", running_price)
-            currentBidder.subtractPrice(running_price)
-            not_sold = False
-            p.setSellingPrice(running_price)
-            currentBidder.addPlayerToTeam(p)
-        if(run > 2):
-            print(p.name, "remains unsold.")
-            not_sold = False
-            continue
+# for p in ListOfPlayers:
+#     ShowcasePlayer(p)
+#     not_sold = True
+#     placed_bid_this_round = False
+#     print("The player is now going up for bidding.")
+#     # time.sleep(2)
+#     currentBidder = 0
+#     bidCounter = 0
+#     running_price = 10  
+#     run = 0
+#     while(not_sold):
+#         print("Reminder to everyone", p.name, "'s current price is", running_price)
+#         if(bidCounter == 0):
+#             print("Do I get a bid from anyone?")
+#             # time.sleep(1)
+#             run = run + 1
+#         if(bidCounter == 1):
+#             print("Going once.")
+#             # time.sleep(1)
+#         if(bidCounter == 2):
+#             print("Going Twice..")
+#             # time.sleep(1)
+#         if(bidCounter == 3):
+#             print("Going Thrice...")
+#             # time.sleep(1)
+#             print(p.name, "sold to", currentBidder.name, "for", running_price)
+#             currentBidder.subtractPrice(running_price)
+#             not_sold = False
+#             p.setSellingPrice(running_price)
+#             currentBidder.addPlayerToTeam(p)
+#         if(run > 2):
+#             print(p.name, "remains unsold.")
+#             not_sold = False
+#             continue
 
         
-        placed_bid_this_round = False
-        for bidder in BidderList:
-            if bidder != currentBidder:
-                if bidder.placeBid(p, running_price+5) == 1:
-                    if bidCounter == 0:
-                        print("We get a bid from", bidder.name)
-                    if bidCounter == 1:
-                        print("We get another bid from", bidder.name)
-                    if bidCounter == 2:
-                        print("Another count, and he would have been sold to", currentBidder.name, "but we have a bid from", bidder.name)
-                    placed_bid_this_round = True
-                    running_price = running_price + 5
-                    bidCounter = 1
-                    currentBidder = bidder
+#         placed_bid_this_round = False
+#         for bidder in BidderList:
+#             if bidder != currentBidder:
+#                 if bidder.placeBid(p, running_price+5) == 1:
+#                     if bidCounter == 0:
+#                         print("We get a bid from", bidder.name)
+#                     if bidCounter == 1:
+#                         print("We get another bid from", bidder.name)
+#                     if bidCounter == 2:
+#                         print("Another count, and he would have been sold to", currentBidder.name, "but we have a bid from", bidder.name)
+#                     placed_bid_this_round = True
+#                     running_price = running_price + 5
+#                     bidCounter = 1
+#                     currentBidder = bidder
                     
-        if(placed_bid_this_round == False and bidCounter != 0):
-            bidCounter =  bidCounter +1
+#         if(placed_bid_this_round == False and bidCounter != 0):
+#             bidCounter =  bidCounter +1
         
             
         
-for bd in BidderList:
-    PrintTitleBoard(bd.name)
-    print("Remaining Budget: ", bd.budget)
-    bd.team.printTeamData()
+# for bd in BidderList:
+#     PrintTitleBoard(bd.name)
+#     print("Remaining Budget: ", bd.budget)
+#     bd.team.printTeamData()
     # printTeamPositionAndOrderSummary(bd.team)
     
 DhakaStart = StartingEleven()
