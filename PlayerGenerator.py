@@ -75,11 +75,16 @@ def pickBattingOrder(position, batting):
 
     
 def getPosition(batting, bowling, fielding):
+
+    if batting < 50 and bowling < 50:
+        return "Trainee"
     
-    if(abs(batting - bowling) < 15 or (batting > 75 and bowling > 70)):
+    if((abs(batting - bowling) < 10 and batting > 50) or (batting > 75 and bowling > 70)):
         return "Allrounder"
     elif(batting > bowling):
-        if(bowling < 50 and fielding > 70):
+        if(bowling < 50 and fielding > 75):
+            return "Wicketkeeper"
+        elif (batting - bowling > 30 and fielding > 70 and batting > 80):
             return "Wicketkeeper"
         else:
             return "Batsmen"
@@ -124,15 +129,17 @@ class Player():
 
     def __init__(self):
         self.name = NameGenerator.getPlayerName()
-        self.batting = get_random_number(10, 96)
+        self.batting = get_random_number(20, 96)
         # if(self.batting < 40):
         #     bowlingLowbound = 50
         # else:
         #     bowlingLowbound = 10
         self.bowling = get_random_number(10, 96)
-        self.fielding = get_random_number(40, 96)
+        self.fielding = get_random_number(45, 96)
         # self.position = getPosition(self.batting, self.bowling)
         self.position = getPosition(self.batting, self.bowling, self.fielding)
+        if self.position == "Trainee":
+            self.fielding = 45
         fameLowbound = max(self.batting-10, self.bowling-10, self.fielding-30, 10)
         fameHighbound = max(self.batting-5, self.bowling-5, self.fielding-20, 70)
         self.fame = get_random_number(fameLowbound, fameHighbound)
@@ -191,11 +198,21 @@ class Player():
 
     def setSellingPrice(self, price):
         self.selling_price = price
+
+    def printSkill(self):
+        print(self.name)
+        print("Batting Skill: ", self.batting)
+        print("Bowling Skill: ", self.bowling)
+        print("Fielding Skill: ", self.fielding)
+        print("")
     def printSummary(self):
         print(self.name)
         print("Position: ", self.position)
-        if(self.position == "Batsmen" or self.position == "Wicketkeeper"):
+        if(self.position == "Batsmen"):
             print("Batting Skill: ", self.batting)
+        elif (self.position == "Wicketkeeper"):
+            print("Batting Skill: ", self.batting)
+            print("Fielding Skill: ", self.fielding)
         elif(self.position == "Bowler"):
             print("Bowling Skill: ", self.bowling)
             print("Bowling Type: ", self.bowling_type)

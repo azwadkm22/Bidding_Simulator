@@ -125,13 +125,13 @@ def FindPlayersWithStatsAbove(playerList, stat, value):
     return lop
 
 
-ListOfPlayers = GenerateNPlayerList(200)
+ListOfPlayers = GenerateNPlayerList(250)
 
 TopTenBatsmen = FindTopNPlayerInCategory(ListOfPlayers, 10, "Batting")
 TopTenBowlers = FindTopNPlayerInCategory(ListOfPlayers, 10, "Bowling")
 TopTenSpinners = FindTopNPlayerInCategory(ListOfPlayers, 10, "Spinner")
 TopTenPacers = FindTopNPlayerInCategory(ListOfPlayers, 10, "Pacer")
-TopEightWicketkeepers = FindTopNPlayerInCategory(ListOfPlayers, 8, "Wicketkeeper")
+TopEightWicketkeepers = FindTopNPlayerInCategory(ListOfPlayers, 24, "Wicketkeeper")
 TopTenOpeners = FindTopNPlayerInCategory(ListOfPlayers, 10, "Opener")
 TopTenAllrounders = FindTopNPlayerInCategory(ListOfPlayers, 10, "Allrounder")
 TopTenFamous = FindTopNPlayerInCategory(ListOfPlayers, 10, "Fame")
@@ -155,41 +155,79 @@ def PrintTitleBoard(Title):
 
 
 def printSummaryOfGeneration():
-    PrintTitleBoard("Best Batsmen")
-    for pl in TopTenBatsmen:
-        pl.printSummary()
-    PrintTitleBoard("Best Bowlers")
-    for pl in TopTenBowlers:
-        pl.printSummary()
-    PrintTitleBoard("Best Allrounders")
-    for pl in TopTenAllrounders:
-        pl.printSummary()
-    PrintTitleBoard("Best Wicketkeepers")
-    for pl in TopEightWicketkeepers:
-        pl.printSummary()
-    PrintTitleBoard("Best Openers")
-    for pl in TopTenOpeners:
-        pl.printSummary()
-    PrintTitleBoard("Best Spinners")
-    for pl in TopTenSpinners:
-        pl.printSummary()
-    PrintTitleBoard("Best Pacers")
-    for pl in TopTenPacers:
-        pl.printSummary()
-    PrintTitleBoard("Most Famous")
-    for pl in TopTenFamous:
-        pl.printSummary()
-    PrintTitleBoard("Most Expensive")
-    for pl in TopTenMostExpensive:
-        pl.printSummary()
+    # PrintTitleBoard("Best Wicketkeepers")
+    # for pl in TopEightWicketkeepers:
+    #     pl.printSkill()
+    # PrintTitleBoard("Best Batsmen")
+    # for pl in TopTenBatsmen:
+    #     pl.printSummary()
+    # PrintTitleBoard("Best Bowlers")
+    # for pl in TopTenBowlers:
+    #     pl.printSummary()
+    # PrintTitleBoard("Best Allrounders")
+    # for pl in TopTenAllrounders:
+    #     pl.printSummary()
+    
+    # PrintTitleBoard("Best Openers")
+    # for pl in TopTenOpeners:
+    #     pl.printSummary()
+    # PrintTitleBoard("Best Spinners")
+    # for pl in TopTenSpinners:
+    #     pl.printSummary()
+    # PrintTitleBoard("Best Pacers")
+    # for pl in TopTenPacers:
+    #     pl.printSummary()
+    # PrintTitleBoard("Most Famous")
+    # for pl in TopTenFamous:
+    #     pl.printSummary()
+    # PrintTitleBoard("Most Expensive")
+    # for pl in TopTenMostExpensive:
+    #     pl.printSummary()
 
     PrintTitleBoard("Now all the best players with score above 80")
 
     listToPrint = [PlayersAbove80Batting, PlayersAbove80Bowling, PlayersAbove80Allrounder, PlayersAbove80Spin, PlayersAbove80Pace]
+    setList = set()
     for lst in listToPrint:
         for player in lst:
+            setList.add(player)
             player.printSummary()
 
+    print("Total Players above 80: ", len(setList))
+
+def countRatio(playerList):
+    total = len(playerList)
+    bat = 0
+    bowl = 0
+    spin = 0
+    pace = 0
+    wk = 0
+    allr = 0
+    trainee = 0
+    for player in playerList:
+        if player.position == "Batsmen":
+            bat = bat + 1
+        elif player.position == "Wicketkeeper":
+            wk = wk + 1
+        elif player.position == "Allrounder":
+            allr = allr + 1
+        elif player.position == "Bowler":
+            bowl = bowl + 1
+            if player.bowling_type == "Spinner":
+                spin = spin + 1
+            if player.bowling_type == "Pacer":
+                pace = pace + 1
+        else:
+            player.printSkill()
+            trainee = trainee + 1
+
+    print("Batsmen Count: ", bat)
+    print("Wicketkeeper Count: ", wk)
+    print("Allrounder Count: ", allr)
+    print("Bowler Count: ", bowl)
+    print("Spinner Count: ", spin)
+    print("Pacer Count: ", pace)
+    print("Trainee Count: ", trainee)
 def ShowcasePlayer(player):
     PrintTitleBoard("Next Player: " + player.name)
     if(player in TopTenAllrounders):
@@ -256,7 +294,7 @@ def ShowcasePlayer(player):
         print("If I had to say a price, I wouldn't suggest anything more than", (int(player.estimated_price/10)+1)*10, "Million")
 
 printSummaryOfGeneration()
-
+countRatio(ListOfPlayers)
 BidderList = []
 TeamList = []
 
@@ -292,6 +330,22 @@ BidderList.append(SpecialBidder("KHU", 5000, Khulna, []))
 BidderList.append(SpecialBidder("CTG", 5000, Chittagong, []))
 BidderList.append(SpecialBidder("COM", 5000, Cumilla, []))
 BidderList.append(SpecialBidder("NKH", 5000, Noakhali, []))
+
+shortList = {
+    "Dhaka": [],
+    "Rajshahi": [],
+    "Sylhet": [],
+    "Barishal": [],
+    "Khulna": [],
+    "Cumilla": [],
+    "Noakhali": [],
+    "Chittagong": [],
+    "Dinajpur": [],
+    "Jessore": [],
+    "Mymensingh": [],
+    "Rangpur": []
+
+}
 
 # for p in ListOfPlayers:
 #     ShowcasePlayer(p)
