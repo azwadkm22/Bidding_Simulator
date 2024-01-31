@@ -79,7 +79,7 @@ def getPosition(batting, bowling, fielding):
     if batting < 50 and bowling < 50:
         return "Trainee"
     
-    if((abs(batting - bowling) < 10 and batting > 50) or (batting > 75 and bowling > 70)):
+    if((abs(batting - bowling) < 10 and batting > 60) or (batting > 75 and bowling > 70)):
         return "Allrounder"
     elif(batting > bowling):
         if(bowling < 50 and fielding > 75):
@@ -88,8 +88,10 @@ def getPosition(batting, bowling, fielding):
             return "Wicketkeeper"
         else:
             return "Batsmen"
-    else:
+    elif bowling > batting:
         return "Bowler"
+    else:
+        return "Trainee"
 
 def getEstimatedPrice(batting, bowling, fielding, fame, position):
 
@@ -129,7 +131,7 @@ class Player():
 
     def __init__(self):
         self.name = NameGenerator.getPlayerName()
-        self.batting = get_random_number(20, 96)
+        self.batting = get_random_number(25, 96)
         # if(self.batting < 40):
         #     bowlingLowbound = 50
         # else:
