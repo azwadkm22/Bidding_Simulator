@@ -146,6 +146,26 @@ PlayersAbove80Spin = FindPlayersWithStatsAbove(ListOfPlayers, "Spin", 80)
 PlayersAbove80Pace = FindPlayersWithStatsAbove(ListOfPlayers, "Pace", 80)
 PlayersAbove80Allrounder = FindPlayersWithStatsAbove(ListOfPlayers, "Allrounder", 80)
 
+def findPlayersAbove80(playerList):
+    playersAbove80 = set()
+    for player in playerList:
+        if player.batting > 80 or player.bowling > 80:
+            playersAbove80.add(player)
+
+    return playersAbove80
+
+def findPlayersAbove90(playerList):
+    playersAbove90 = set()
+    for player in playerList:
+        if player.batting > 90 or player.bowling > 90:
+            playersAbove90.add(player)
+
+    return playersAbove90
+
+PlayersAbove80 = findPlayersAbove80(ListOfPlayers)
+PlayersAbove90 = findPlayersAbove90(ListOfPlayers)
+
+
 def PrintTitleBoard(Title):
     print("########")
     print("")
@@ -155,35 +175,35 @@ def PrintTitleBoard(Title):
 
 
 def printSummaryOfGeneration():
-    # PrintTitleBoard("Best Wicketkeepers")
-    # for pl in TopEightWicketkeepers:
-    #     pl.printSkill()
-    # PrintTitleBoard("Best Batsmen")
-    # for pl in TopTenBatsmen:
-    #     pl.printSummary()
-    # PrintTitleBoard("Best Bowlers")
-    # for pl in TopTenBowlers:
-    #     pl.printSummary()
-    # PrintTitleBoard("Best Allrounders")
-    # for pl in TopTenAllrounders:
-    #     pl.printSummary()
+    PrintTitleBoard("Best Wicketkeepers")
+    for pl in TopEightWicketkeepers:
+        pl.printSkill()
+    PrintTitleBoard("Best Batsmen")
+    for pl in TopTenBatsmen:
+        pl.printSummary()
+    PrintTitleBoard("Best Bowlers")
+    for pl in TopTenBowlers:
+        pl.printSummary()
+    PrintTitleBoard("Best Allrounders")
+    for pl in TopTenAllrounders:
+        pl.printSummary()
     
-    # PrintTitleBoard("Best Openers")
-    # for pl in TopTenOpeners:
-    #     pl.printSummary()
-    # PrintTitleBoard("Best Spinners")
-    # for pl in TopTenSpinners:
-    #     pl.printSummary()
-    # PrintTitleBoard("Best Pacers")
-    # for pl in TopTenPacers:
-    #     pl.printSummary()
-    # PrintTitleBoard("Most Famous")
-    # for pl in TopTenFamous:
-    #     pl.printSummary()
-    # PrintTitleBoard("Most Expensive")
-    # for pl in TopTenMostExpensive:
-    #     pl.printSummary()
-
+    PrintTitleBoard("Best Openers")
+    for pl in TopTenOpeners:
+        pl.printSummary()
+    PrintTitleBoard("Best Spinners")
+    for pl in TopTenSpinners:
+        pl.printSummary()
+    PrintTitleBoard("Best Pacers")
+    for pl in TopTenPacers:
+        pl.printSummary()
+    PrintTitleBoard("Most Famous")
+    for pl in TopTenFamous:
+        pl.printSummary()
+    PrintTitleBoard("Most Expensive")
+    for pl in TopTenMostExpensive:
+        pl.printSummary()
+    
     PrintTitleBoard("Now all the best players with score above 80")
 
     listToPrint = [PlayersAbove80Batting, PlayersAbove80Bowling, PlayersAbove80Allrounder, PlayersAbove80Spin, PlayersAbove80Pace]
@@ -194,6 +214,7 @@ def printSummaryOfGeneration():
             player.printSummary()
 
     print("Total Players above 80: ", len(setList))
+    
 
 def countRatio(playerList):
     total = len(playerList)
@@ -321,7 +342,7 @@ Cumilla = Team("Cumilla")
 
 # BidderList.append(SpecializedBidder("Rangpur", 5000, Rangpur, "Batting"))
 
-BidderList.append(SpecialBidder("RAJ", 5000, Rajshahi, ""))
+BidderList.append(SpecialBidder("RAJ", 5000, Rajshahi, []))
 BidderList.append(SpecialBidder("RAN", 5000, Rangpur, []))
 BidderList.append(SpecialBidder("DHK", 10000, Dhaka, []))
 BidderList.append(SpecialBidder("SYL", 5000, Sylhet, []))
@@ -330,21 +351,19 @@ BidderList.append(SpecialBidder("KHU", 5000, Khulna, []))
 BidderList.append(SpecialBidder("CTG", 5000, Chittagong, []))
 BidderList.append(SpecialBidder("COM", 5000, Cumilla, []))
 BidderList.append(SpecialBidder("NKH", 5000, Noakhali, []))
-
 shortList = {
-    "Dhaka": [],
-    "Rajshahi": [],
-    "Sylhet": [],
-    "Barishal": [],
-    "Khulna": [],
-    "Cumilla": [],
-    "Noakhali": [],
-    "Chittagong": [],
-    "Dinajpur": [],
-    "Jessore": [],
-    "Mymensingh": [],
-    "Rangpur": []
-
+    "Dhaka": set(),
+    "Rajshahi": set(),
+    "Sylhet": set(),
+    "Barishal": set(),
+    "Khulna": set(),
+    "Cumilla": set(),
+    "Noakhali": set(),
+    "Chittagong": set(),
+    "Dinajpur": set(),
+    "Jessore": set(),
+    "Mymensingh": set(),
+    "Rangpur": set()
 }
 
 # for p in ListOfPlayers:
