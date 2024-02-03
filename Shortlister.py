@@ -49,8 +49,26 @@ class ShortList:
         return self.players
     
     def printShortList(self):
-        for player in self.players:
-            player.printSummary()
+
+        
+        # for player in self.players:
+        #     player.printSummary()
+
+        print("Shortlisted Batsmen: ", self.batCount)
+        print("Shortlisted Bowler: ", self.bowlCount)
+        print("Shortlisted Spinner: ", self.spinnerCount)
+        print("Shortlisted Pacer: ", self.pacerCount)
+        print("Shortlisted Allrounder: ", self.allRounderCount)
+        print("Shortlisted WicketKeeper: ", self.wicketKeeperCount)
+        print("Shortlisted Estimated Cost: ", self.estimatedCost)
+        #  = 0
+        # self.bowlCount = 0
+        # self.spinnerCount = 0
+        # self. = 0
+        # self. = 0
+        # self.wicketKeeperCount = 0
+        # self.estimatedCost = 0
+        
     
 
 def getProbabilisticAnswer(probability):
@@ -64,45 +82,103 @@ def getProbabilisticAnswer(probability):
         return 0  # Return 0 otherwise
 
 
-def makeShortList(playerList, teamNames):
+def makeShortList(playerList, teamNames, estimatedCostMax=3000):
     teamShortList = {}
+    rivalsForPlayers = {}
     for team in teamNames:
         teamShortList[team] = ShortList()
     
     while(len(playerList) > 0):
         player = random.choice(playerList)
-        playerList.remove(player)
+        rivalsForPlayers[player] = set()
         if player.position == "Batsmen":
             for shortList in teamShortList:
-                yes = getProbabilisticAnswer( (4 - teamShortList[shortList].batCount) *.15)
-                if yes == 1:
-                    teamShortList[shortList].shortListPlayer(player)
-                
+                if teamShortList[shortList].estimatedCost < estimatedCostMax:
+                    battingDependentProbability = 0.15
+                    if player.batting > 95: 
+                        battingDependentProbability = .3
+                    elif player.batting > 90: 
+                        battingDependentProbability = .25
+                    elif player.batting > 85: 
+                        battingDependentProbability = .20
+                    yes = getProbabilisticAnswer( (4 - teamShortList[shortList].batCount) * battingDependentProbability)
+                    if yes == 1:
+                        teamShortList[shortList].shortListPlayer(player)
+                        if player in playerList:
+                            playerList.remove(player)
         
-        if player.position == "Wicketkeeper":
+        elif player.position == "Wicketkeeper":
             for shortList in teamShortList:
-                yes = getProbabilisticAnswer( (1 - teamShortList[shortList].wicketKeeperCount) *.5)
-                if yes == 1:
-                    teamShortList[shortList].shortListPlayer(player)
-                
+                if teamShortList[shortList].estimatedCost < estimatedCostMax:
+                    battingDependentProbability = 0.35
+                    if player.batting > 90: 
+                        battingDependentProbability = .5
+                    elif player.batting > 85: 
+                        battingDependentProbability = 0.45
+                    yes = getProbabilisticAnswer( (2 - teamShortList[shortList].wicketKeeperCount) * battingDependentProbability)
+                    if yes == 1:
+                        teamShortList[shortList].shortListPlayer(player)
+                        if player in playerList:
+                            playerList.remove(player)
+                    
         
-        if player.position == "Allrounder":
+        elif player.position == "Allrounder":
             for shortList in teamShortList:
-                yes = getProbabilisticAnswer( (2 - teamShortList[shortList].allRounderCount) *.3)
-                if yes == 1:
-                    teamShortList[shortList].shortListPlayer(player)
+                if teamShortList[shortList].estimatedCost < estimatedCostMax:
+                    avgDependentProbability = 0.25
+                    if (player.batting + player.bowling)/2 > 90 or max(player.batting, player.bowling) > 90 : 
+                        avgDependentProbability = .4
+                    elif (player.batting + player.bowling)/2 or max(player.batting, player.bowling) > 85: 
+                        avgDependentProbability = .3
+                    yes = getProbabilisticAnswer( (3 - teamShortList[shortList].allRounderCount) * avgDependentProbability)
+                    if yes == 1:
+                        teamShortList[shortList].shortListPlayer(player)
+                        if player in playerList:
+                            playerList.remove(player)
         
-        if player.position == "Bowler":
+        elif player.position == "Bowler":
+            bowlerDependentProbability = 0.20
+            if player.bowling > 95: 
+                bowlerDependentProbability = .4
+            elif player.bowling > 90: 
+                bowlerDependentProbability = .3
+            elif player.bowling > 85: 
+                bowlerDependentProbability = .25
             if player.bowling_type == 'Spinner':
                 for shortList in teamShortList:
-                    yes = getProbabilisticAnswer( (2 - teamShortList[shortList].spinnerCount) *.3)
-                    if yes == 1:
-                        teamShortList[shortList].shortListPlayer(player)
+                    if teamShortList[shortList].estimatedCost < estimatedCostMax:
+                        yes = getProbabilisticAnswer( (3 - teamShortList[shortList].spinnerCount) * bowlerDependentProbability)
+                        if yes == 1:
+                            teamShortList[shortList].shortListPlayer(player)
+                            if player in playerList:
+                                playerList.remove(player)
             else:
                 for shortList in teamShortList:
-                    yes = getProbabilisticAnswer( (2 - teamShortList[shortList].pacerCount) *.3)
+                    if teamShortList[shortList].estimatedCost < estimatedCostMax:
+                        yes = getProbabilisticAnswer( (3 - teamShortList[shortList].pacerCount) * bowlerDependentProbability)
+                        if yes == 1:
+                            teamShortList[shortList].shortListPlayer(player)
+                            if player in playerList:
+                                playerList.remove(player)
+
+        if player in playerList:
+            for shortList in teamShortList:
+                if teamShortList[shortList].estimatedCost < estimatedCostMax:
+                    maxDependentProbability = 0.1
+                    if max(player.batting, player.bowling) > 90:
+                        maxDependentProbability = 0.4
+                    elif max(player.batting, player.bowling) > 85:
+                        maxDependentProbability = 0.25
+                    yes = getProbabilisticAnswer(.1)
                     if yes == 1:
                         teamShortList[shortList].shortListPlayer(player)
+                        if player in playerList:
+                            playerList.remove(player)
+
+        for team in teamShortList:
+            if player in teamShortList[team].players:
+                rivalsForPlayers[player].add(team)
+        # print(playerList)
         
     for team in teamNames:
         print()
@@ -112,5 +188,13 @@ def makeShortList(playerList, teamNames):
         print()
         teamShortList[team].printShortList()
         
-    print(playerList)
+    
+
+    for player in rivalsForPlayers:
+        player.printSummary()
+        print("Teams eyeing him: ", rivalsForPlayers[player])
+        print("")
+    # print(rivalsForPlayers)
+
+
     return teamShortList

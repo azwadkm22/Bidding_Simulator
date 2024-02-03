@@ -164,6 +164,8 @@ def findPlayersAbove90(playerList):
     return playersAbove90
 
 PlayersAbove80 = findPlayersAbove80(ListOfPlayers)
+
+PlayersAbove80 = sorted(PlayersAbove80, key=lambda Player: max(Player.batting, Player.bowling), reverse=True)
 PlayersAbove90 = findPlayersAbove90(ListOfPlayers)
 
 
