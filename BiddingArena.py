@@ -372,8 +372,21 @@ teamNames = [
     "Rangpur"
 ]
 
-teamShortList = makeShortList(list(PlayersAbove80), teamNames)
+teamShortList, rivalsForPlayers = makeShortList(list(PlayersAbove80), teamNames)
 
+def printTeamShortLists():
+    for teamShort in teamShortList:
+        print("###", teamShort, "###")
+        teamShortList[teamShort].printShortList()
+        print("")
+
+def printPlayerRivals():
+    for player in rivalsForPlayers:
+        print("Teams eyeing him: ", rivalsForPlayers[player])
+        player.printSummary()
+
+printTeamShortLists()
+printPlayerRivals()
 # for p in ListOfPlayers:
 #     ShowcasePlayer(p)
 #     not_sold = True
