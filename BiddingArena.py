@@ -3,6 +3,7 @@ from PlayerGenerator import Player
 from TeamGenerator import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
 from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder, PriorityBidder, SpecializedBidder, SpecialBidder
 from StartingEleven import StartingEleven
+from Shortlister import ShortList, makeShortList
 
 def GenerateNPlayerList(n):
     ListOfPlayers = []
@@ -314,8 +315,8 @@ def ShowcasePlayer(player):
         print("What do you think, will he be bought this time?")
         print("If I had to say a price, I wouldn't suggest anything more than", (int(player.estimated_price/10)+1)*10, "Million")
 
-printSummaryOfGeneration()
-countRatio(ListOfPlayers)
+# printSummaryOfGeneration()
+# countRatio(ListOfPlayers)
 BidderList = []
 TeamList = []
 
@@ -351,20 +352,25 @@ BidderList.append(SpecialBidder("KHU", 5000, Khulna, []))
 BidderList.append(SpecialBidder("CTG", 5000, Chittagong, []))
 BidderList.append(SpecialBidder("COM", 5000, Cumilla, []))
 BidderList.append(SpecialBidder("NKH", 5000, Noakhali, []))
-shortList = {
-    "Dhaka": set(),
-    "Rajshahi": set(),
-    "Sylhet": set(),
-    "Barishal": set(),
-    "Khulna": set(),
-    "Cumilla": set(),
-    "Noakhali": set(),
-    "Chittagong": set(),
-    "Dinajpur": set(),
-    "Jessore": set(),
-    "Mymensingh": set(),
-    "Rangpur": set()
-}
+
+
+
+teamNames = [
+    "Dhaka", 
+    "Rajshahi", 
+    "Sylhet", 
+    "Barishal", 
+    "Khulna", 
+    "Cumilla", 
+    "Noakhali", 
+    "Chittagong", 
+    "Dinajpur", 
+    "Jessore", 
+    "Mymensingh", 
+    "Rangpur"
+]
+
+teamShortList = makeShortList(list(PlayersAbove80), teamNames)
 
 # for p in ListOfPlayers:
 #     ShowcasePlayer(p)
@@ -428,10 +434,10 @@ shortList = {
 #     bd.team.printTeamData()
     # printTeamPositionAndOrderSummary(bd.team)
     
-DhakaStart = StartingEleven()
-DhakaStart.createStartingEleven(Dhaka)
-DhakaStart.printBenchedPlayers()
-# Rangpur.printAllPlayerData()
+# DhakaStart = StartingEleven()
+# DhakaStart.createStartingEleven(Dhaka)
+# DhakaStart.printBenchedPlayers()
+# # Rangpur.printAllPlayerData()
 
 # Rangpur.findBestBatsman().printDetails()
 # Rangpur.findBestBowler().printDetails()
