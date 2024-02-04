@@ -1,5 +1,14 @@
 import random
 
+def getProbabilisticAnswer(probability):
+    # Generate a random number between 0 and 1
+    random_number = random.random()
+    
+    # Check if the random number is less than the given probability
+    if random_number < probability:
+        return 1  # Return 1 if the condition is met
+    else:
+        return 0  # Return 0 otherwise
 
 first = ['Asif', 'Sakib', 'Fahim', 'Sajib',
  'Farhan', 'Tahmid', 'Nayeem', 'Jawad',
@@ -30,19 +39,31 @@ first = ['Asif', 'Sakib', 'Fahim', 'Sajib',
      "Irtiza", "Shoummo", "Nibir", "Shafin", "Safin", "Ninad", "Raiyan",
      "Alvi", "Himel", "Shahriar", "Ramim", "Sadman", "Mahee", "Mugdho",
      "Omio", "Tawsif", "Sadik", "Jahirul", "Tasnim", "Ashraf", "Saif",
-     "Radi", "Sadi", "Ataur", "Atik", "Apurbo", "Arnab"]
+     "Radi", "Sadi", "Ataur", "Atik", "Apurbo", "Arnab", "Ankon", "Ongkon",
+     "Mahid", "Tauhid", "Zakir", "Iftikhar", "Noor", "Naseem", "Rishad", "Imrul",
+     "Mushfik", "Amir", "Kamrul", "Pranto", "Mosaddek"
+     ]
 
-last = ['Chowdhury', 'Ahmed', 'Khan', 'Hossain',
+last = ['Chowdhury', 'Ahmed', 'Khan', 'Hossain', "Choudhuri",
  'Uddin', 'Hasan', 'Haque', "Haq", "Hoq", 'Mahmud', 'Islam', "Mohammad", "Mohammed", 
-  'Ali', 'Alam', 'Rahman', 'Ahmad', 'Khondokar'
-  , 'Ahsan', 'Zaman', 'Sarker', 'Habib', 'Majumder', 
-  "Sen", "Datta", "Sarkar", "Biswas", "Ghosh", "Roy", "Pal",
+  'Ali', 'Alam', 'Rahman', 'Ahmad', 'Khondokar', "Ur-Rahman", "Sheikh",
+  'Ahsan', 'Zaman', 'Sarker', 'Habib', 'Majumder', "Al-Ahsan", "Uzzaman", "Al-Amin",
+  "Sen", "Datta", "Sarkar", "Biswas", "Ghosh", "Roy", "Pal", "Kumar",
   "Mia", "Siddique", "Karim", "Malik", "Iqbal", "Barman", "Karmakar", "Abdullah"
   ]
 
+switchPossible = ["Mahmud", "Ahsan", "Hasan", "Abdullah", "Mohammad", "Mohammed", "Sheikh", "Kumar"]
 
 def getPlayerName():
-      return random.choice(first) + " " + random.choice(last)
+      firstName = random.choice(first)
+      lastName = random.choice(last)
+      switch = 0
+      if lastName in switchPossible:
+            switch = getProbabilisticAnswer(.25)
+      
+      if switch == 1:
+           return lastName + " " + firstName
+      return firstName + " " + lastName
 
-# for i in range(1000):
-#    print(getPlayerName())
+for i in range(1000):
+   print(getPlayerName())
