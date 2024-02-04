@@ -163,10 +163,6 @@ class SpecialBidder(BaseBidder):
         if self.budget - running_price < 0:
             return 0
         
-        priority = self.team.findNewPlayerPriority(player)
-        # if priority == 0:
-        #     return 0
-        # else:
         choices = [0, 0, 0, 0, 0, 0, 0, 1]
         if(player.fame > 70):
             choices.append(1)

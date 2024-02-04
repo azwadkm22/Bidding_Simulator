@@ -2,11 +2,6 @@ import random
 from PlayerGenerator import Player
 from ProbabilisticFunctionsModule import getProbabilisticAnswer
 
-# 4 Bastsmen above 80
-# 2 Spinners above 80
-# 2 Pacers above 80
-# 2 Allrounders above 80
-# 1 Wicketkeeper above 75
 class ShortList:
     def __init__(self):
         self.players = set()

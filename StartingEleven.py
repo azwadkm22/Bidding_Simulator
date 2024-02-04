@@ -196,14 +196,7 @@ class StartingEleven:
                     newPick = mergedBowl[0]
                 else:
                     print("No players left man.")
-                # if len(self.batsmenCount) != 0 and len(self.allRounderCount) != 0:
-                #     pass
 
-
-
-                
-                # pass
-                # break
             if(newPick == None):
                 print("WHY ARE YOU NONE")
                 break
@@ -232,7 +225,6 @@ class StartingEleven:
                 self.teamBatsmen.remove(newPick)
 
             # Update Team Average Scores
-            
             print(f'Picking a {(newPick.batting_order + " ") if newPick.position != "Bowler" else ""}{newPick.position if newPick.position != "Bowler" else newPick.bowling_type}')    
             print(f'{len(self.starting)}. {newPick.name} : BAT({newPick.batting}) BWL({newPick.bowling})')
             # self.evaluateTeam()
@@ -248,10 +240,6 @@ class StartingEleven:
         print("Bowler: ", self.bowlerCount)
         print("Pacer: ", self.pacerCount)
         print("Spinner: ", self.spinnerCount)
-        # print("Players Picked: ", len(self.starting))
-        # for x in self.starting:
-        #     x.printName()
-
         self.createLineup()
         self.printLineup()  
         

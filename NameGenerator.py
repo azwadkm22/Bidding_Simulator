@@ -56,5 +56,5 @@ def getPlayerName():
            return lastName + " " + firstName
       return firstName + " " + lastName
 
-for i in range(1000):
-   print(getPlayerName())
+# for i in range(1000):
+#    print(getPlayerName())

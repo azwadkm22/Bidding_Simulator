@@ -125,33 +125,7 @@ class Player():
         self.batting_order = pickBattingOrder(self.position, self.batting)
         
         self.selling_price = 0
-    
-    # def __init__(self, name, batting, bowling, fielding, position, fame, batting_hand, bowling_type, bowling_style, bat_order):
-
-    #     self.name = name
-    #     self.batting = batting
-    #     # if(self.batting < 40):
-    #     #     bowlingLowbound = 50
-    #     # else:
-    #     #     bowlingLowbound = 10
-    #     self.bowling = bowling
-    #     self.fielding = fielding
-    #     # self.position = getPosition(self.batting, self.bowling)
-    #     self.position = position
-    #     self.fame = fame
-
-    #     self.estimated_price = getEstimatedPrice(self.batting, self.bowling, self.fielding, self.fame, self.position)
-        
-    #     self.batting_hand = batting_hand
-
-    #     self.bowling_type = bowling_type
-
-    #     self.bowling_style = bowling_style
-
-    #     self.batting_order = bat_order
-        
-    #     self.selling_price = 0
-
+ 
     def printDetails(self):
         print(self.name)
         print("Batting Skill: ", self.batting)

@@ -25,7 +25,6 @@ def get_random_normal_distribution_number_biased(start, end, bias=10, std_dev=16
     elif random_value < start:
         random_value = get_random_normal_distribution_number_biased(start, end, bias, std_dev)
     return random_value
-#     return random.gauss(mu, sigma)
 
 def check_distribution(min_value, max_value, num_samples=100000):
     results = []
