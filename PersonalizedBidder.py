@@ -1,21 +1,5 @@
 import random
-
-
-
-def getValue(start, end):
-    mean_value = (start + end) / 2
-    std_deviation = (start + end) / 4
-    # print("Mean: ", mean_value)
-    # print("SD: ", std_deviation)
-
-    random_value = int(random.gauss(mean_value, std_deviation))
-    
-    if random_value > end:
-        random_value = getValue(start, end)
-    elif random_value < start:
-        random_value = getValue(start, end)
-    return random_value
-
+from ProbabilisticFunctionsModule import get_random_normal_distribution_number_biased
 
 class PersonalizedBidder:
     def __init__(self):
@@ -27,26 +11,26 @@ class PersonalizedBidder:
 
         self.focus = random.choice(["Pace", "Spin", "Bowling", "Batting", "Balanced"])
         # Likeness to go over estimated price
-        self.over_estimate = getValue()
+        self.over_estimate = get_random_normal_distribution_number_biased()
 
         # Likeness to increase price when price is too low for a player
 
-        self.price_increaser = getValue()
+        self.price_increaser = get_random_normal_distribution_number_biased()
 
         # Likeness to follow ideal team combination
 
-        self.strictness = getValue()
+        self.strictness = get_random_normal_distribution_number_biased()
 
         # Likeness to fixate on a player
 
-        self.fixation = getValue()
+        self.fixation = get_random_normal_distribution_number_biased()
 
         # Strategic thinking
 
-        self.strategy = getValue()
+        self.strategy = get_random_normal_distribution_number_biased()
 
         # Budget Allocation
-        self.budget_handling = getValue()
+        self.budget_handling = get_random_normal_distribution_number_biased()
 
     
     def initiateBudgets(self, budget):

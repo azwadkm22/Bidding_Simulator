@@ -1,6 +1,6 @@
 import random
 from PlayerGenerator import Player
-
+from ProbabilisticFunctionsModule import getProbabilisticAnswer
 
 # 4 Bastsmen above 80
 # 2 Spinners above 80
@@ -67,15 +67,7 @@ class ShortList:
         
     
 
-def getProbabilisticAnswer(probability):
-    # Generate a random number between 0 and 1
-    random_number = random.random()
-    
-    # Check if the random number is less than the given probability
-    if random_number < probability:
-        return 1  # Return 1 if the condition is met
-    else:
-        return 0  # Return 0 otherwise
+
 
 
 def makeShortList(playerList, teamNames, estimatedCostMax=3000):

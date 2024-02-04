@@ -1,46 +1,14 @@
 import NameGenerator
-import matplotlib.pyplot as plt
 from random import randint
+from ProbabilisticFunctionsModule import get_random_normal_distribution_number_biased
 import random
 
 
-# def get_random_number(start, end):
+# def get_random_normal_distribution_number_biased(start, end):
 #     return random.gauss(mu, sigma)
 
-
-def get_random_number(start, end):
-    mean_value = (start + end) / 2 + 10
-    std_deviation = 16
-    # print("Mean: ", mean_value)
-    # print("SD: ", std_deviation)
-
-    random_value = int(random.gauss(mean_value, std_deviation))
-    
-    if random_value > end:
-        random_value = get_random_number(start, end)
-    elif random_value < start:
-        random_value = get_random_number(start, end)
-    return random_value
-#     return random.gauss(mu, sigma)
-
-
-def check_distribution(min_value, max_value, num_samples=100000):
-    results = []
-
-    for _ in range(num_samples):
-        result = get_random_number(min_value, max_value)
-        results.append(result)
-
-    # Plot the histogram
-    plt.hist(results, bins=max_value-min_value+1, range=(min_value, max_value), density=True, alpha=0.7, color='purple')
-    plt.title('Distribution Check')
-    plt.xlabel('Random Values')
-    plt.ylabel('Frequency')
-    plt.show()
-
-# get_random_number(0, 99)
+# get_random_normal_distribution_number_biased(0, 99)
 # check_distribution(10, 99)
-
 
 
 def pickBowlingStyle(bowling_type, bowling):
@@ -131,20 +99,20 @@ class Player():
 
     def __init__(self):
         self.name = NameGenerator.getPlayerName()
-        self.batting = get_random_number(25, 96)
+        self.batting = get_random_normal_distribution_number_biased(25, 96)
         # if(self.batting < 40):
         #     bowlingLowbound = 50
         # else:
         #     bowlingLowbound = 10
-        self.bowling = get_random_number(10, 96)
-        self.fielding = get_random_number(45, 96)
+        self.bowling = get_random_normal_distribution_number_biased(10, 96)
+        self.fielding = get_random_normal_distribution_number_biased(45, 96)
         # self.position = getPosition(self.batting, self.bowling)
         self.position = getPosition(self.batting, self.bowling, self.fielding)
         if self.position == "Trainee":
             self.fielding = 45
         fameLowbound = max(self.batting-10, self.bowling-10, self.fielding-30, 10)
         fameHighbound = max(self.batting-5, self.bowling-5, self.fielding-20, 70)
-        self.fame = get_random_number(fameLowbound, fameHighbound)
+        self.fame = get_random_normal_distribution_number_biased(fameLowbound, fameHighbound)
 
         self.estimated_price = getEstimatedPrice(self.batting, self.bowling, self.fielding, self.fame, self.position)
         
