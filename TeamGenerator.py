@@ -417,6 +417,24 @@ class Team:
                 best_bowler = p
         
         return best_bowler
+    def findBowlersOfType(self, bowling_type):
+        if bowling_type == "Spinner":
+            return self.getTeamSpinners()
+        if bowling_type == "Pacer":
+            return self.getTeamPacers()
+        
+    def findSimilarTeamPlayers(self, player):
+        if player.position == 'Bowler':
+            return self.findBowlersOfType(player.bowling_type)
+        
+        elif player.position == "Allrounder":
+            return self.getTeamAllrounders()
+        
+        elif player.position == "Batsmen":
+            return self.getTeamBatsmen()
+        
+        elif player.position == "Wicketkeeper":
+            return self.getTeamWicketkeepers()
 
 
 

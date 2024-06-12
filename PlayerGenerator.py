@@ -78,8 +78,8 @@ def getEstimatedPrice(batting, bowling, fielding, fame, position):
         fieldingWeight = 0.5
         bowlingWeight = 0
     elif position == "Bowler":
-        battingWeight = 0.1
-        bowlingWeight = 1.5
+        battingWeight = 0
+        bowlingWeight = 1.6
         fieldingWeight = 0.4
     elif position == "Wicketkeeper":
         battingWeight = 1.4
@@ -96,23 +96,36 @@ def getEstimatedPrice(batting, bowling, fielding, fame, position):
     return price
 
 class Player():
+    """
 
+    """
+    # def __init__(self, name, batting, bowling, fielding, position, fame, batting_hand, bowling_type, bowling_style, batting_order):
+    #     self.name = name
+    #     self.batting = batting
+    #     self.bowling = bowling
+    #     self.fielding = fielding
+    #     self.position = position
+    #     self.fame = fame
+    #     self.estimated_price = getEstimatedPrice(self.batting, self.bowling, self.fielding, self.fame, self.position)
+    #     self.batting_hand = batting_hand
+
+    #     self.bowling_type = bowling_type
+
+    #     self.bowling_style = bowling_style
+    #     self.batting_order = batting_order
+    #     self.selling_price = 0
+      
     def __init__(self):
         self.name = NameGenerator.getPlayerName()
-        self.batting = get_random_normal_distribution_number_biased(25, 96)
-        # if(self.batting < 40):
-        #     bowlingLowbound = 50
-        # else:
-        #     bowlingLowbound = 10
-        self.bowling = get_random_normal_distribution_number_biased(10, 96)
+        self.batting = get_random_normal_distribution_number_biased(20, 96)
+        self.bowling = get_random_normal_distribution_number_biased(20, 96)
         self.fielding = get_random_normal_distribution_number_biased(45, 96)
-        # self.position = getPosition(self.batting, self.bowling)
         self.position = getPosition(self.batting, self.bowling, self.fielding)
         if self.position == "Trainee":
             self.fielding = 45
         fameLowbound = max(self.batting-10, self.bowling-10, self.fielding-30, 10)
         fameHighbound = max(self.batting-5, self.bowling-5, self.fielding-20, 70)
-        self.fame = get_random_normal_distribution_number_biased(fameLowbound, fameHighbound)
+        self.fame = 50#get_random_normal_distribution_number_biased(fameLowbound, fameHighbound)
 
         self.estimated_price = getEstimatedPrice(self.batting, self.bowling, self.fielding, self.fame, self.position)
         
@@ -149,6 +162,7 @@ class Player():
         print("Bowling Skill: ", self.bowling)
         print("Fielding Skill: ", self.fielding)
         print("")
+
     def printSummary(self):
         print(self.name)
         print("Position: ", self.position)

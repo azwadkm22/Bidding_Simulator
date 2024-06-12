@@ -9,6 +9,7 @@ import random
 class StartingEleven:
     def __init__(self):
         self.starting = set()
+        self.bench = set()
         self.lineup = []
         self.batting_average = 0
         self.bowling_average = 0
@@ -333,6 +334,35 @@ class StartingEleven:
     def printLineup(self):
         for i in range(0, len(self.lineup)):
             print(f'{i+1}. {self.lineup[i].name}: BAT({self.lineup[i].batting}) BWL({self.lineup[i].bowling})')
+
+    def printBench(self):
+        benchSet = set()
+        for x in self.teamOpeners:
+            benchSet.add(x)
+        for x in self.teamTopOrders:
+            benchSet.add(x)
+        for x in self.teamMidOrders:
+            benchSet.add(x)
+        for x in self.teamLowOrders:
+            benchSet.add(x)
+        for x in self.teamWicketkeepers:
+            benchSet.add(x)
+        for x in self.teamAllRounders:
+            benchSet.add(x)
+        for x in self.teamPacers:
+            benchSet.add(x)
+        for x in self.teamSpinners:
+            benchSet.add(x)
+
+        for player in benchSet:
+
+            print(f'{player.name}: BAT({player.batting}) BWL({player.bowling})')
+
+            
+
+
+
+
     def printTeamScore(self):
         print(f'Batting Score: {self.batting_average}')
         print(f'Bowling Score: {self.bowling_average}')
