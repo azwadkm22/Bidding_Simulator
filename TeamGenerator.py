@@ -419,9 +419,22 @@ class Team:
         return best_bowler
     def findBowlersOfType(self, bowling_type):
         if bowling_type == "Spinner":
-            return self.getTeamSpinners()
+            spin = self.getTeamSpinners()
+            all_r = self.getTeamAllrounders()
+            ret = []
+            for p in spin:
+                if p not in all_r:
+                    ret.append(p)
+            return ret
+        
         if bowling_type == "Pacer":
-            return self.getTeamPacers()
+            pace = self.getTeamPacers()
+            all_r = self.getTeamAllrounders()
+            ret = []
+            for p in pace:
+                if p not in all_r:
+                    ret.append(p)
+            return ret
         
     def findSimilarTeamPlayers(self, player):
         if player.position == 'Bowler':

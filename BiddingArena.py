@@ -1,4 +1,5 @@
 import time
+import random
 from PlayerGenerator import Player
 from TeamGenerator import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
 from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder, PriorityBidder, SpecializedBidder, SpecialBidder
@@ -127,7 +128,7 @@ def FindPlayersWithStatsAbove(playerList, stat, value):
     return lop
 
 
-ListOfPlayers = GenerateNPlayerList(150)
+ListOfPlayers = GenerateNPlayerList(250)
 
 TopTenBatsmen = FindTopNPlayerInCategory(ListOfPlayers, 10, "Batting")
 TopTenBowlers = FindTopNPlayerInCategory(ListOfPlayers, 10, "Bowling")
@@ -165,9 +166,9 @@ def findPlayersAbove90(playerList):
     return playersAbove90
 
 PlayersAbove80 = findPlayersAbove80(ListOfPlayers)
-
 PlayersAbove80 = sorted(PlayersAbove80, key=lambda Player: max(Player.batting, Player.bowling), reverse=True)
 PlayersAbove90 = findPlayersAbove90(ListOfPlayers)
+
 
 
 def PrintTitleBoard(Title):
@@ -334,6 +335,15 @@ Chittagong = Team("Chittagong")
 Rangpur = Team("Rangpur")
 Cumilla = Team("Cumilla")
 
+
+
+printSummaryOfGeneration()
+
+print(f'BatsmenAbove80: {len(PlayersAbove80Batting)}')
+print(f'BowlersAbove80: {len(PlayersAbove80Bowling)}')
+print(f'AllrounderAbove80: {len(PlayersAbove80Allrounder)}')
+print(f'PacerAbove80: {len(PlayersAbove80Pace)}')
+print(f'SpinnerAbove80: {len(PlayersAbove80Spin)}')
 # Dhaka, Rajshahi, Rangpur, Barishal, Chittagong, Cumilla, Sylhet, Khulna
 
 # BidderList.append(SpecializedBidder("Rajshahi", 5000, Rajshahi, "Batting"))
@@ -347,16 +357,6 @@ Cumilla = Team("Cumilla")
 
 # BidderList.append(SpecializedBidder("Rangpur", 5000, Rangpur, "Batting"))
 
-BidderList.append(UtilityBasedBidder("RAJ", 2000, Rajshahi, []))
-BidderList.append(UtilityBasedBidder("RAN", 2000, Rangpur, []))
-BidderList.append(UtilityBasedBidder("DHK", 2000, Dhaka, []))
-BidderList.append(UtilityBasedBidder("SYL", 2000, Sylhet, []))
-BidderList.append(UtilityBasedBidder("BAR", 2000, Barishal, []))
-BidderList.append(UtilityBasedBidder("KHU", 2000, Khulna, []))
-BidderList.append(UtilityBasedBidder("CTG", 2000, Chittagong, []))
-BidderList.append(UtilityBasedBidder("COM", 2000, Cumilla, []))
-BidderList.append(UtilityBasedBidder("NKH", 2000, Noakhali, []))
-
 
 
 teamNames = [
@@ -368,27 +368,50 @@ teamNames = [
     "Cumilla", 
     "Noakhali", 
     "Chittagong", 
-    "Dinajpur", 
-    "Jessore", 
-    "Mymensingh", 
+    # "Dinajpur", 
+    # "Jessore", 
+    # "Mymensingh", 
     "Rangpur"
 ]
 
 teamShortList, rivalsForPlayers = makeShortList(list(PlayersAbove80), teamNames)
 
-def printTeamShortLists():
-    for teamShort in teamShortList:
-        print("###", teamShort, "###")
-        teamShortList[teamShort].printShortList()
-        print("")
+# def printTeamShortLists():
+#     for teamShort in teamShortList:
+#         print("###", teamShort, "###")
+#         teamShortList[teamShort].printShortList()
+#         print("")
 
-def printPlayerRivals():
-    for player in rivalsForPlayers:
-        print("Teams eyeing him: ", rivalsForPlayers[player])
-        player.printSummary()
+# def printPlayerRivals():
+#     for player in rivalsForPlayers:
+#         print("Teams eyeing him: ", rivalsForPlayers[player])
+#         player.printSummary()
 
-printTeamShortLists()
-printPlayerRivals()
+# printTeamShortLists()
+# printPlayerRivals()
+
+
+unsold_players = []
+
+RajshahiIdeal = {
+    "Batsmen" : 8,
+    "Spinner": 3,
+    "Pacer": 5,
+    "Allrounder": 3,
+    "Wicketkeeper": 2,
+    "Trainee": 0
+}
+
+
+BidderList.append(UtilityBasedBidder("RAJ", ["Safe"], 5000, Rajshahi, [], teamShortList["Rajshahi"], RajshahiIdeal))
+BidderList.append(UtilityBasedBidder("RAN", ["Risky"], 5000, Rangpur, [], teamShortList["Rangpur"],RajshahiIdeal))
+BidderList.append(UtilityBasedBidder("DHK", ["Patient"], 5000, Dhaka, [], teamShortList["Dhaka"], RajshahiIdeal))
+BidderList.append(UtilityBasedBidder("SYL", ["Flexible"], 5000, Sylhet, [], teamShortList["Sylhet"], RajshahiIdeal))
+BidderList.append(UtilityBasedBidder("BAR", ["Rigid"], 5000, Barishal, [], teamShortList["Barishal"], RajshahiIdeal))
+BidderList.append(UtilityBasedBidder("KHU", ["Safe"], 5000, Khulna, [], teamShortList["Khulna"], RajshahiIdeal))
+BidderList.append(UtilityBasedBidder("CTG", ["Patient"], 5000, Chittagong, [], teamShortList["Chittagong"], RajshahiIdeal))
+BidderList.append(UtilityBasedBidder("COM", ["Risky"], 5000, Cumilla, [], teamShortList["Cumilla"], RajshahiIdeal))
+BidderList.append(UtilityBasedBidder("NKH", ["Flexible"], 5000, Noakhali, [], teamShortList["Noakhali"], RajshahiIdeal))
 
 
 for p in ListOfPlayers:
@@ -396,42 +419,51 @@ for p in ListOfPlayers:
     not_sold = True
     placed_bid_this_round = False
     print("The player is now going up for bidding.")
-    # time.sleep(2)
+    #time.sleep(1)
     currentBidder = 0
     bidCounter = 0
-    running_price = 10  
+    running_price = 10
     run = 0
+
+    if p in rivalsForPlayers.keys() :
+        print("Teams eyeing him: ", rivalsForPlayers[p])
     while(not_sold):
+        input()
         print("Reminder to everyone", p.name, "'s current price is", running_price)
         if(bidCounter == 0):
             print("Do I get a bid from anyone?")
-            # time.sleep(1)
+            #time.sleep(1)
             run = run + 1
         if(bidCounter == 1):
             print("Going once.")
-            # time.sleep(1)
+            #time.sleep(1)
         if(bidCounter == 2):
             print("Going Twice..")
-            # time.sleep(1)
+            #time.sleep(1)
         if(bidCounter == 3):
             print("Going Thrice...")
-            # time.sleep(1)
+            print("")
+            print("#SOLD SOLD SOLD#")
             print(p.name, "sold to", currentBidder.name, "for", running_price, "(", p.estimated_price, ")")
+            print("#SOLD SOLD SOLD#")
+            print("")
             currentBidder.subtractPrice(running_price)
             not_sold = False
             p.setSellingPrice(running_price)
             currentBidder.addPlayerToTeam(p)
+
+            #time.sleep(2)
         if(run > 2):
             print(p.name, "remains unsold.")
             not_sold = False
-            # time.sleep(2)
+            unsold_players.append(p)
+            #time.sleep(1)
             continue
 
-        
         placed_bid_this_round = False
         for bidder in BidderList:
             print(bidder.name, f"-UTILITY: {bidder.playerUtility}")
-            
+        random.shuffle(BidderList)
         for bidder in BidderList:
             if bidder != currentBidder:
                 if bidder.placeBid(p, running_price+5) == 1:
@@ -442,7 +474,7 @@ for p in ListOfPlayers:
                     if bidCounter == 2:
                         print("Another count, and he would have been sold to", currentBidder.name, "but we have a bid from", bidder.name)
                     placed_bid_this_round = True
-                    running_price = running_price + 5
+                    running_price = running_price + random.choice([2, 3, 4, 5])
                     bidCounter = 1
                     currentBidder = bidder
                     
@@ -450,28 +482,102 @@ for p in ListOfPlayers:
             bidCounter =  bidCounter +1
 
 
+print("We will be going once again over the players who are left unsold from the first time.")
+input()
+
+
+for p in unsold_players:
+    ShowcasePlayer(p)
+    not_sold = True
+    placed_bid_this_round = False
+    print("The player is now going up for bidding.")
+    #time.sleep(1)
+    currentBidder = 0
+    bidCounter = 0
+    running_price = 10
+    run = 0
+
+    if p in rivalsForPlayers.keys() :
+        print("Teams eyeing him: ", rivalsForPlayers[p])
+    while(not_sold):
+        print("Reminder to everyone", p.name, "'s current price is", running_price)
+        if(bidCounter == 0):
+            print("Do I get a bid from anyone?")
+            #time.sleep(1)
+            run = run + 1
+        if(bidCounter == 1):
+            print("Going once.")
+            #time.sleep(1)
+        if(bidCounter == 2):
+            print("Going Twice..")
+            #time.sleep(1)
+        if(bidCounter == 3):
+            print("Going Thrice...")
+            print("")
+            print("#SOLD SOLD SOLD#")
+            print(p.name, "sold to", currentBidder.name, "for", running_price, "(", p.estimated_price, ")")
+            print("#SOLD SOLD SOLD#")
+            print("")
+            unsold_players.remove(p)
+            currentBidder.subtractPrice(running_price)
+            not_sold = False
+            p.setSellingPrice(running_price)
+            currentBidder.addPlayerToTeam(p)
+
+            #time.sleep(2)
+        if(run > 2):
+            print(p.name, "remains unsold.")
+            not_sold = False
+            
+            #time.sleep(1)
+            continue
+
+        placed_bid_this_round = False
+        for bidder in BidderList:
+            print(bidder.name, f"-UTILITY: {bidder.playerUtility}")
+        random.shuffle(BidderList)
+        for bidder in BidderList:
+            if bidder != currentBidder:
+                if bidder.placeBid(p, running_price+5) == 1:
+                    if bidCounter == 0:
+                        print("We get a bid from", bidder.name)
+                    if bidCounter == 1:
+                        print("We get another bid from", bidder.name)
+                    if bidCounter == 2:
+                        print("Another count, and he would have been sold to", currentBidder.name, "but we have a bid from", bidder.name)
+                    placed_bid_this_round = True
+                    running_price = running_price + 2
+                    bidCounter = 1
+                    currentBidder = bidder
+                    
+        if(placed_bid_this_round == False and bidCounter != 0):
+            bidCounter =  bidCounter +1
+
 print()
 print()
 print()
 print()
 print("NOW TIME FOR THE TEAMS TO PRESENT THEMSELVES")  
 
-time.sleep(2)
+# #time.sleep(2)
 
+TeamLineupRatings = {}
 
 for bd in BidderList:
     
     PrintTitleBoard(bd.name)
     print("Remaining Budget: ", bd.budget)
-    time.sleep(2)
+    # #time.sleep(2)
     bd.team.printTeamData()
     # printTeamPositionAndOrderSummary(bd.team)
     startEleven = StartingEleven()
+    
     startEleven.createStartingEleven(bd.team)
     print()
     print()
+    TeamLineupRatings[bd.name] = {"Bowling" :startEleven.evaluateBowling()}
     startEleven.printBench()
-    time.sleep(2)
+    # #time.sleep(2)
     # print()
     # startEleven.printBenchedPlayers()
 # DhakaStart = StartingEleven()
@@ -481,5 +587,17 @@ for bd in BidderList:
 
 # Rangpur.findBestBatsman().printDetails()
 # Rangpur.findBestBowler().printDetails()
-Rangpur.findMostPopular().printDetails()
+# Rangpur.findMostPopular().printDetails()
+    
+for t in TeamLineupRatings:
+    print(f"{t} : {TeamLineupRatings[t]}")
 
+
+print(len(unsold_players))
+
+
+k = input()
+
+print("Now for the unsold players")
+for pl in unsold_players:
+    pl.printInLine()

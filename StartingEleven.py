@@ -333,7 +333,9 @@ class StartingEleven:
     
     def printLineup(self):
         for i in range(0, len(self.lineup)):
-            print(f'{i+1}. {self.lineup[i].name}: BAT({self.lineup[i].batting}) BWL({self.lineup[i].bowling})')
+            print(f'{i+1}. ', end="")
+            self.lineup[i].printInLine()
+            # print(f'{i+1}. {self.lineup[i].name}: BAT({self.lineup[i].batting}) BWL({self.lineup[i].bowling}) :{self.lineup[i].selling_price}')
 
     def printBench(self):
         benchSet = set()
@@ -355,8 +357,8 @@ class StartingEleven:
             benchSet.add(x)
 
         for player in benchSet:
-
-            print(f'{player.name}: BAT({player.batting}) BWL({player.bowling})')
+            player.printInLine()
+            # print(f'{player.name}: BAT({player.batting}) BWL({player.bowling})')
 
             
 
@@ -425,11 +427,21 @@ class StartingEleven:
                 else:
                     self.spin_average = ( (self.spin_average * (self.spinnerCount-1)) + player.bowling) / self.spinnerCount
                 pass
+    
+    
     def evaluateBatting(self):
         
         pass
     def evaluateBowling(self):
-        pass
+        bowlSum = 0;
+        bowlerCount = 0
+        for player in self.lineup:
+            if player.position == "Bowler" or player.position == "Allrounder":
+                bowlSum = bowlSum + player.bowling
+                bowlerCount = bowlerCount + 1
+        bowlingRating = bowlSum / bowlerCount
+        return bowlingRating
+    
     def evaluateFielding(self):
         pass
 

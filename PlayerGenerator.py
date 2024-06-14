@@ -74,24 +74,24 @@ def getEstimatedPrice(batting, bowling, fielding, fame, position):
     bowlingWeight = 0.5
     # Batting + Bowling + Fielding = 2
     if position == "Batsmen":
-        battingWeight = 1.5
-        fieldingWeight = 0.5
+        battingWeight = 1.8
+        fieldingWeight = 0.2
         bowlingWeight = 0
     elif position == "Bowler":
         battingWeight = 0
-        bowlingWeight = 1.6
-        fieldingWeight = 0.4
+        bowlingWeight = 1.8
+        fieldingWeight = 0.2
     elif position == "Wicketkeeper":
-        battingWeight = 1.4
-        fieldingWeight = 0.6
+        battingWeight = 1.7
+        fieldingWeight = 0.3
         bowlingWeight = 0
     elif position == "Allrounder":
         battingWeight = .9
         bowlingWeight = .8
-        fieldingWeight = 0.3
+        fieldingWeight = 0.2
     
         
-    price = int((batting*battingWeight + bowling*bowlingWeight + fielding*fieldingWeight + fame*0.5) * 40) * 2
+    price = int((batting*battingWeight + bowling*bowlingWeight + fielding*fieldingWeight) * 40) * 2
 
     return price
 
@@ -189,6 +189,27 @@ class Player():
     def printName(self):
         print(self.name)
 
+    def printInLine(self):
+        print(f'{self.name}: ', end="")
+        if self.position == "Batsmen":
+            print(f'BAT({self.batting}) {self.batting_order} Batsmen', end="")
+        if self.position == "Wicketkeeper":
+            print(f'BAT({self.batting}) Wicketkeeper', end="")
+        if self.position == "Bowler":
+            if self.bowling_type == "Pacer":
+                print(f'BWL({self.bowling}) Pacer', end="")
+            else:
+                print(f'BWL({self.bowling}) Spinner', end="")
+        if self.position == "Allrounder":
+            if self.bowling_type == "Pacer":
+                print(f'BAT({self.batting}) BWL({self.bowling}) Allrounder Pacer', end="")
+            else:
+                print(f'BAT({self.batting}) BWL({self.bowling}) Allrounder Spinner', end="")
+
+        if self.selling_price != 0:
+            print(f'Sold At:{self.selling_price}', end="")
+
+        print(f', Est: {self.estimated_price}')
 
 
 # lowestEP = 1000000
