@@ -118,7 +118,10 @@ class Player():
     def __init__(self):
         self.name = NameGenerator.getPlayerName()
         self.batting = get_random_normal_distribution_number_biased(20, 96)
-        self.bowling = get_random_normal_distribution_number_biased(20, 96)
+        bowlSkillStart = 20
+        if self.batting > 60:
+            bowlSkillStart = 10
+        self.bowling = get_random_normal_distribution_number_biased(bowlSkillStart, 96)
         self.fielding = get_random_normal_distribution_number_biased(45, 96)
         self.position = getPosition(self.batting, self.bowling, self.fielding)
         if self.position == "Trainee":
@@ -207,7 +210,7 @@ class Player():
                 print(f'BAT({self.batting}) BWL({self.bowling}) Allrounder Spinner', end="")
 
         if self.selling_price != 0:
-            print(f'Sold At:{self.selling_price}', end="")
+            print(f' Sold At:{self.selling_price}', end="")
 
         print(f', Est: {self.estimated_price}')
 
