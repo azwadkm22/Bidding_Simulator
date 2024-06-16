@@ -39,7 +39,7 @@ islamicLastNames = ['Chowdhury', 'Ahmed', 'Khan', 'Hossain', "Choudhuri",
  'Uddin', 'Hasan', 'Haque', "Haq", "Hoq", 'Mahmud', 'Islam', "Mohammad", "Mohammed", 
   'Ali', 'Alam', 'Rahman', 'Ahmad', 'Khondokar', "Ur-Rahman", "Sheikh", "Amin",
   'Ahsan', 'Zaman', 'Habib', "Al-Ahsan", "Uzzaman", "Al-Amin", "Bhuiyan",
-  "Mia", "Siddique", "Karim", "Malik", "Iqbal", "Abdullah", "Skider",
+  "Mia", "Siddique", "Karim", "Malik", "Iqbal", "Abdullah", "Sikder",
   ]
 
 # islamicLastNames = []
@@ -67,6 +67,8 @@ def getPlayerName():
                   firstName = random.choice(first)
                   middleName = random.choice(last)
                   lastName = random.choice(first)
+                  while(lastName == firstName):
+                        lastName = random.choice(first)
                   return  firstName + " " + middleName + " " + lastName
       
       firstName = random.choice(first)
