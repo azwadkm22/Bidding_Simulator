@@ -58,7 +58,7 @@ class StartingEleven:
         while(len(self.starting) != 11):
             # create team start
             newPick = None
-            if(self.wickerKeeperCount == 0):
+            if(self.wickerKeeperCount == 0) and len(self.teamWicketkeepers) > 0:
                 newPick = self.teamWicketkeepers[0]
             elif(self.openerCount + self.topOrderCount + self.midOrderCount < 3):
                 if(len(self.teamOpeners) > 0 and len(self.teamTopOrders) > 0 and len(self.teamMidOrders) > 0):
@@ -182,12 +182,22 @@ class StartingEleven:
                 print(f'Players Left: {11 - len(self.starting)}')
                 mergedBat = self.teamBatsmen + self.teamAllRounders
                 mergedBowl = self.teamPacers + self.teamSpinners + self.teamAllRounders
-
+                print(f"Current Status: Bat-{self.batsmenCount}, All-{self.allRounderCount} Pace-{self.pacerCount}, Spin-{self.spinnerCount}")
                 mergedBat = sorted(mergedBat, key=lambda x: x.batting, reverse=True)
                 mergedBowl = sorted(mergedBowl, key=lambda x: x.bowling, reverse=True)
 
                 if(len(mergedBat) != 0 and len(mergedBowl) != 0):
-                    if self.batting_average > self.bowling_average:
+                    # if self.batting_average > self.bowling_average:
+                    if mergedBat[0].batting - mergedBowl[0].bowling > 5:
+                         newPick = mergedBat[0]
+                    elif mergedBowl[0].bowling - mergedBat[0].batting > 5:
+                         newPick = mergedBowl[0]
+                    elif self.batsmenCount + self.allRounderCount < 6:
+                    # self.batting_average > self.bowling_average:
+                        newPick = mergedBat[0]
+                    elif self.bowlerCount + self.allRounderCount < 6:
+                        newPick = mergedBowl[0]
+                    elif self.batting_average > self.bowling_average:
                         newPick = mergedBowl[0]
                     else:
                         newPick = mergedBat[0]
@@ -226,8 +236,8 @@ class StartingEleven:
                 self.teamBatsmen.remove(newPick)
 
             # Update Team Average Scores
-            print(f'Picking a {(newPick.batting_order + " ") if newPick.position != "Bowler" else ""}{newPick.position if newPick.position != "Bowler" else newPick.bowling_type}')    
-            print(f'{len(self.starting)}. {newPick.name} : BAT({newPick.batting}) BWL({newPick.bowling})')
+            print(f'{len(self.starting)}. Picking a {(newPick.batting_order + " ") if newPick.position != "Bowler" else ""}{newPick.position if newPick.position != "Bowler" else newPick.bowling_type} -- ', end = "")    
+            print(f'{newPick.name} : BAT({newPick.batting}) BWL({newPick.bowling})')
             # self.evaluateTeam()
         
         print("Players Picked: ", len(self.starting))
@@ -430,7 +440,14 @@ class StartingEleven:
     
     
     def evaluateBatting(self):
-        
+        batSum = 0
+        batterCount = 0
+        for player in self.lineup:
+            if player.position != "Bowler":
+                batSum = batSum + player.batting
+                batterCount = batterCount + 1
+        batRating = batSum / batterCount
+        return round(batRating)
         pass
     def evaluateBowling(self):
         bowlSum = 0;
@@ -440,10 +457,13 @@ class StartingEleven:
                 bowlSum = bowlSum + player.bowling
                 bowlerCount = bowlerCount + 1
         bowlingRating = bowlSum / bowlerCount
-        return bowlingRating
+        return round(bowlingRating)
     
     def evaluateFielding(self):
-        pass
+        fieldSum = 0
+        for player in self.lineup:
+            fieldSum = fieldSum + player.fielding
+        return round(fieldSum/11)
 
     def evaluateLineup(self):
         pass
