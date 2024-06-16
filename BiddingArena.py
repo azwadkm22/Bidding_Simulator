@@ -1,7 +1,9 @@
 import time
 import random
-from PlayerGenerator import Player
-from TeamGenerator import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
+from TeamNameGenerator import createTeamName
+from TeamStrength import findTeamStrength
+from Player import Player
+from Team import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
 from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder, PriorityBidder, SpecializedBidder, SpecialBidder
 from StartingEleven import StartingEleven
 from Shortlister import ShortList, makeShortList
@@ -183,6 +185,7 @@ def printSummaryOfGeneration():
     PrintTitleBoard("Best Wicketkeepers")
     for pl in TopEightWicketkeepers:
         pl.printSkill()
+    input()
     PrintTitleBoard("Best Batsmen")
     for pl in TopTenBatsmen:
         pl.printSummary()
@@ -216,7 +219,7 @@ def printSummaryOfGeneration():
     for lst in listToPrint:
         for player in lst:
             setList.add(player)
-            player.printSummary()
+            player.printInLine()
 
     print("Total Players above 80: ", len(setList))
     
@@ -322,20 +325,6 @@ def ShowcasePlayer(player):
 
 # printSummaryOfGeneration()
 # countRatio(ListOfPlayers)
-BidderList = []
-TeamList = []
-
-Rajshahi = Team("Rajshahi")
-Dhaka = Team("Dhaka")
-Sylhet = Team("Sylhet")
-Khulna = Team("Khulna")
-Barishal = Team("Barishal")
-Noakhali = Team("Noakhali")
-Chittagong = Team("Chittagong")
-Rangpur = Team("Rangpur")
-Cumilla = Team("Cumilla")
-
-
 
 printSummaryOfGeneration()
 
@@ -345,7 +334,7 @@ print(f'AllrounderAbove80: {len(PlayersAbove80Allrounder)}')
 print(f'PacerAbove80: {len(PlayersAbove80Pace)}')
 print(f'SpinnerAbove80: {len(PlayersAbove80Spin)}')
 # Dhaka, Rajshahi, Rangpur, Barishal, Chittagong, Cumilla, Sylhet, Khulna
-
+input()
 # BidderList.append(SpecializedBidder("Rajshahi", 5000, Rajshahi, "Batting"))
 # BidderList.append(PriorityBidder("Dhaka", 5000, Dhaka))
 # BidderList.append(PriorityBidder("Sylhet", 5000, Sylhet))
@@ -358,23 +347,36 @@ print(f'SpinnerAbove80: {len(PlayersAbove80Spin)}')
 # BidderList.append(SpecializedBidder("Rangpur", 5000, Rangpur, "Batting"))
 
 
+NUM_OF_TEAMS = 13
 
-teamNames = [
-    "Dhaka", 
-    "Rajshahi", 
-    "Sylhet", 
-    "Barishal", 
-    "Khulna", 
-    "Cumilla", 
-    "Noakhali", 
-    "Chittagong", 
-    # "Dinajpur", 
-    # "Jessore", 
-    # "Mymensingh", 
-    "Rangpur"
-]
+teamNames = []
+
+for i in range(NUM_OF_TEAMS):
+    teamNames.append(createTeamName())
+    print(teamNames[i])
+input()
 
 teamShortList, rivalsForPlayers = makeShortList(list(PlayersAbove80), teamNames)
+
+
+
+BidderList = []
+TeamList = []
+
+for i in range(NUM_OF_TEAMS):
+    TeamList.append(Team(teamNames[i]))
+
+# Rajshahi = Team("Rajshahi")
+# Dhaka = Team("Dhaka")
+# Sylhet = Team("Sylhet")
+# Khulna = Team("Khulna")
+# Barishal = Team("Barishal")
+# Noakhali = Team("Noakhali")
+# Chittagong = Team("Chittagong")
+# Rangpur = Team("Rangpur")
+# Cumilla = Team("Cumilla")
+
+
 
 # def printTeamShortLists():
 #     for teamShort in teamShortList:
@@ -402,18 +404,25 @@ RajshahiIdeal = {
     "Trainee": 0
 }
 
+Possible_Traits = ['Safe', 'Risky', 'Patient', 'Rigid', 'Flexible']
+budget = 2000
+for i in range(NUM_OF_TEAMS):
+    trait = random.choice(Possible_Traits)
+    name = teamNames[i]
+    BidderList.append(UtilityBasedBidder(
+        name,
+        trait,
+        budget,
+        TeamList[i],
+        [],
+        teamShortList[name],
+        []
+    ))
 
-BidderList.append(UtilityBasedBidder("RAJ", ["Safe"], 5000, Rajshahi, [], teamShortList["Rajshahi"], RajshahiIdeal))
-BidderList.append(UtilityBasedBidder("RAN", ["Risky"], 5000, Rangpur, [], teamShortList["Rangpur"],RajshahiIdeal))
-BidderList.append(UtilityBasedBidder("DHK", ["Patient"], 5000, Dhaka, [], teamShortList["Dhaka"], RajshahiIdeal))
-BidderList.append(UtilityBasedBidder("SYL", ["Flexible"], 5000, Sylhet, [], teamShortList["Sylhet"], RajshahiIdeal))
-BidderList.append(UtilityBasedBidder("BAR", ["Rigid"], 5000, Barishal, [], teamShortList["Barishal"], RajshahiIdeal))
-BidderList.append(UtilityBasedBidder("KHU", ["Safe"], 5000, Khulna, [], teamShortList["Khulna"], RajshahiIdeal))
-BidderList.append(UtilityBasedBidder("CTG", ["Patient"], 5000, Chittagong, [], teamShortList["Chittagong"], RajshahiIdeal))
-BidderList.append(UtilityBasedBidder("COM", ["Risky"], 5000, Cumilla, [], teamShortList["Cumilla"], RajshahiIdeal))
-BidderList.append(UtilityBasedBidder("NKH", ["Flexible"], 5000, Noakhali, [], teamShortList["Noakhali"], RajshahiIdeal))
 
-
+print(len(BidderList))
+input()
+highestPrice = 0
 for p in ListOfPlayers:
     ShowcasePlayer(p)
     not_sold = True
@@ -428,7 +437,7 @@ for p in ListOfPlayers:
     if p in rivalsForPlayers.keys() :
         print("Teams eyeing him: ", rivalsForPlayers[p])
     while(not_sold):
-        input()
+        # input()
         print("Reminder to everyone", p.name, "'s current price is", running_price)
         if(bidCounter == 0):
             print("Do I get a bid from anyone?")
@@ -451,6 +460,7 @@ for p in ListOfPlayers:
             not_sold = False
             p.setSellingPrice(running_price)
             currentBidder.addPlayerToTeam(p)
+            highestPrice = max(highestPrice, running_price)
 
             #time.sleep(2)
         if(run > 2):
@@ -462,7 +472,9 @@ for p in ListOfPlayers:
 
         placed_bid_this_round = False
         for bidder in BidderList:
-            print(bidder.name, f"-UTILITY: {bidder.playerUtility}")
+            print(bidder.name, bidder.trait, f"-UTILITY: {bidder.playerUtility}")
+
+        # input()
         random.shuffle(BidderList)
         for bidder in BidderList:
             if bidder != currentBidder:
@@ -535,6 +547,7 @@ for p in unsold_players:
         placed_bid_this_round = False
         for bidder in BidderList:
             print(bidder.name, f"-UTILITY: {bidder.playerUtility}")
+        # input()
         random.shuffle(BidderList)
         for bidder in BidderList:
             if bidder != currentBidder:
@@ -553,6 +566,7 @@ for p in unsold_players:
         if(placed_bid_this_round == False and bidCounter != 0):
             bidCounter =  bidCounter +1
 
+print("HIGHEST PRICE: ", highestPrice)
 print()
 print()
 print()
@@ -568,14 +582,19 @@ for bd in BidderList:
     PrintTitleBoard(bd.name)
     print("Remaining Budget: ", bd.budget)
     # #time.sleep(2)
-    bd.team.printTeamData()
+    # bd.team.printTeamData()
     # printTeamPositionAndOrderSummary(bd.team)
+    findTeamStrength(bd.team)
+    input()
+    # Generate Team Strengths and Weaknesses from the gathered Squad
+    # Insert the strength and weakness into the starting eleven creator
     startEleven = StartingEleven()
     
     startEleven.createStartingEleven(bd.team)
+    input()
     print()
     print()
-    TeamLineupRatings[bd.name] = {"Bowling" :startEleven.evaluateBowling()}
+    TeamLineupRatings[bd.name] = {"Bidder": bd.trait, "Batting" :startEleven.evaluateBatting() , "Bowling" :startEleven.evaluateBowling(), "Fielding": startEleven.evaluateFielding()}
     startEleven.printBench()
     # #time.sleep(2)
     # print()
@@ -589,6 +608,9 @@ for bd in BidderList:
 # Rangpur.findBestBowler().printDetails()
 # Rangpur.findMostPopular().printDetails()
     
+print()
+print()
+print()
 for t in TeamLineupRatings:
     print(f"{t} : {TeamLineupRatings[t]}")
 

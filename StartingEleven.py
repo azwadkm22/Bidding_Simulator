@@ -1,4 +1,4 @@
-from TeamGenerator import Team, printTeamPositionAndOrderSummary
+from Team import Team, printTeamPositionAndOrderSummary
 import random
 
 # 0, 1 self.teamOpeners

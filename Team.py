@@ -1,5 +1,5 @@
 import random
-from PlayerGenerator import Player
+from Player import Player
 
 def printTeamPositionAndOrderDetails(team):
 

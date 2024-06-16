@@ -1,5 +1,5 @@
-from PlayerGenerator import Player
-from TeamGenerator import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
+from Player import Player
+from Team import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
 from StartingEleven import StartingEleven
 from UtilityBasedBidder import UtilityBasedBidder
 import random

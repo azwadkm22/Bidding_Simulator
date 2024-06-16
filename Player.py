@@ -1,4 +1,4 @@
-import NameGenerator
+import PlayerNameGenerator
 from random import randint
 from ProbabilisticFunctionsModule import get_random_normal_distribution_number_biased
 import random
@@ -50,7 +50,7 @@ def getPosition(batting, bowling, fielding):
     if((abs(batting - bowling) < 10 and batting > 60) or (batting > 75 and bowling > 70)):
         return "Allrounder"
     elif(batting > bowling):
-        if(bowling < 50 and fielding > 75):
+        if(bowling < 40 and fielding > 75):
             return "Wicketkeeper"
         elif (batting - bowling > 30 and fielding > 70 and batting > 80):
             return "Wicketkeeper"
@@ -116,13 +116,15 @@ class Player():
     #     self.selling_price = 0
       
     def __init__(self):
-        self.name = NameGenerator.getPlayerName()
+        self.name = PlayerNameGenerator.getPlayerName()
         self.batting = get_random_normal_distribution_number_biased(20, 96)
         bowlSkillStart = 20
-        if self.batting > 60:
+        if self.batting > 75:
             bowlSkillStart = 10
+        elif self.batting < 50:
+            bowlSkillStart = 30
         self.bowling = get_random_normal_distribution_number_biased(bowlSkillStart, 96)
-        self.fielding = get_random_normal_distribution_number_biased(45, 96)
+        self.fielding = get_random_normal_distribution_number_biased(50, 85, 15)
         self.position = getPosition(self.batting, self.bowling, self.fielding)
         if self.position == "Trainee":
             self.fielding = 45
