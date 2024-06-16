@@ -21,8 +21,6 @@ PlayerDistribution = {
 }
 
 
-# traits = 'Risky', 'Safe', 'Patient', 'Flexible', 'Rigid'
-
 # Utility will be a function of players position
 class UtilityBasedBidder:
 
@@ -397,6 +395,7 @@ class UtilityBasedBidder:
         if similar_players:
             max_possible_utility = max_possible_utility + len(similar_players)*5
         
+        remaining_ut = remaining_ut*2
         
         total_utility = player_comp_ut + sim_count_ut + skill_ut + budget_ut + shortlist_ut + star_ut + remaining_ut + slot_left_ut + good_player_ut
         

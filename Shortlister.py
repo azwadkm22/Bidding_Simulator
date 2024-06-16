@@ -72,7 +72,7 @@ def makeShortList(playerList, teamNames, estimatedCostMax=3000):
         cost = cost + player.estimated_price
     
     estimatedCostMax = (cost / len(playerList)) * 15
-    print(estimatedCostMax)
+    # print(estimatedCostMax)
     rivalsForPlayers = {}
     for team in teamNames:
         teamShortList[team] = ShortList()

@@ -333,18 +333,6 @@ print(f'BowlersAbove80: {len(PlayersAbove80Bowling)}')
 print(f'AllrounderAbove80: {len(PlayersAbove80Allrounder)}')
 print(f'PacerAbove80: {len(PlayersAbove80Pace)}')
 print(f'SpinnerAbove80: {len(PlayersAbove80Spin)}')
-# Dhaka, Rajshahi, Rangpur, Barishal, Chittagong, Cumilla, Sylhet, Khulna
-input()
-# BidderList.append(SpecializedBidder("Rajshahi", 5000, Rajshahi, "Batting"))
-# BidderList.append(PriorityBidder("Dhaka", 5000, Dhaka))
-# BidderList.append(PriorityBidder("Sylhet", 5000, Sylhet))
-# BidderList.append(PriorityBidder("Khulna", 5000, Khulna))
-# BidderList.append(PriorityBidder("Barishal", 5000, Barishal))
-# BidderList.append(PriorityBidder("Noakhali", 5000, Noakhali))
-# BidderList.append(PriorityBidder("Chittagong", 5000, Chittagong))
-# # BidderList.append(PriorityBidder("Rangpur", 5000, Rangpur))
-
-# BidderList.append(SpecializedBidder("Rangpur", 5000, Rangpur, "Batting"))
 
 
 NUM_OF_TEAMS = 13
@@ -354,6 +342,7 @@ teamNames = []
 for i in range(NUM_OF_TEAMS):
     teamNames.append(createTeamName())
     print(teamNames[i])
+    
 input()
 
 teamShortList, rivalsForPlayers = makeShortList(list(PlayersAbove80), teamNames)
@@ -403,16 +392,15 @@ RajshahiIdeal = {
     "Wicketkeeper": 2,
     "Trainee": 0
 }
-
 Possible_Traits = ['Safe', 'Risky', 'Patient', 'Rigid', 'Flexible']
-budget = 2000
+BUDGET = 2000
 for i in range(NUM_OF_TEAMS):
     trait = random.choice(Possible_Traits)
     name = teamNames[i]
     BidderList.append(UtilityBasedBidder(
         name,
         trait,
-        budget,
+        BUDGET,
         TeamList[i],
         [],
         teamShortList[name],
