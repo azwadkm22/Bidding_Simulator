@@ -8,16 +8,20 @@ from Team.team import Team, printTeamPositionAndOrderDetails, printTeamPositionA
 from Team.starting_eleven import StartingEleven
 from Team.shortlister import ShortList, makeShortList
 from Bidders.utility_based_bidder import UtilityBasedBidder
-from player_generation import get_list_of_players
-from generation_stats import GenerationStat
+from Player.generate_players import get_list_of_players
+from Player.player_generation_stats import PlayerGenStat
 from showcase_utils import print_summary_of_generation, count_ratio, showcase_player, print_title_board
 
+# Generate Players
 ListOfPlayers = get_list_of_players(250)
 ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)
 
-current_generation = GenerationStat(ListOfPlayers)
+current_generation = PlayerGenStat(ListOfPlayers)
 print_summary_of_generation(current_generation)
 count_ratio(current_generation)
+
+
+# Generate Teams
 NUM_OF_TEAMS = 13
 
 teamNames = []

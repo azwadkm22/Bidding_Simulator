@@ -1,4 +1,4 @@
-from generation_stats import GenerationStat
+from Player.player_generation_stats import PlayerGenStat
 from Player.player import Player
 
 
@@ -9,7 +9,7 @@ def print_title_board(title: str):
     print("")
     print("########")
 
-def print_summary_of_generation(genStat: GenerationStat):
+def print_summary_of_generation(genStat: PlayerGenStat):
     print_title_board("Best Wicketkeepers")
     for pl in genStat.top_eight_wicketkeepers:
         pl.printSkill()
@@ -53,7 +53,7 @@ def print_summary_of_generation(genStat: GenerationStat):
     print(f'PacerAbove80: {len(genStat.players_above_80_pace)}')
     print(f'SpinnerAbove80: {len(genStat.players_above_80_spin)}')
 
-def showcase_player(player: Player, genStat: GenerationStat):
+def showcase_player(player: Player, genStat: PlayerGenStat):
     print_title_board("Next Player: " + player.name)
     if(player in genStat.top_ten_allrounders):
         print("He is one of the top contenders of this years best all rounder award.")
@@ -119,7 +119,7 @@ def showcase_player(player: Player, genStat: GenerationStat):
         print("What do you think, will he be bought this time?")
         print("If I had to say a price, I wouldn't suggest anything more than", (int(player.estimated_price/10)+1)*10, "Million")
 
-def count_ratio(genStat: GenerationStat):
+def count_ratio(genStat: PlayerGenStat):
     bat = 0
     bowl = 0
     spin = 0
