@@ -22,36 +22,3 @@ class GenerationStat:
         self.players_above_80_allrounder = find_players_with_stats_above(list_of_players, "Allrounder", 80)
         self.players_above_80 = find_players_above_rating(list_of_players, 80)
         self.players_above_90 = find_players_above_rating(list_of_players, 90)
-
-    def countRatio(self):
-        bat = 0
-        bowl = 0
-        spin = 0
-        pace = 0
-        wk = 0
-        allr = 0
-        trainee = 0
-        for player in self.list_of_players:
-            if player.position == "Batsmen":
-                bat = bat + 1
-            elif player.position == "Wicketkeeper":
-                wk = wk + 1
-            elif player.position == "Allrounder":
-                allr = allr + 1
-            elif player.position == "Bowler":
-                bowl = bowl + 1
-                if player.bowling_type == "Spinner":
-                    spin = spin + 1
-                if player.bowling_type == "Pacer":
-                    pace = pace + 1
-            else:
-                player.printSkill()
-                trainee = trainee + 1
-
-        print("Batsmen Count: ", bat)
-        print("Wicketkeeper Count: ", wk)
-        print("Allrounder Count: ", allr)
-        print("Bowler Count: ", bowl)
-        print("Spinner Count: ", spin)
-        print("Pacer Count: ", pace)
-        print("Trainee Count: ", trainee)
