@@ -1,5 +1,5 @@
 import random
-from ProbabilisticFunctionsModule import get_random_normal_distribution_number_biased
+from Utils.probability_utils import get_random_normal_distribution_number_biased
 
 class PersonalizedBidder:
     def __init__(self):

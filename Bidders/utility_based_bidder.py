@@ -1,4 +1,4 @@
-from ProbabilisticFunctionsModule import getProbabilisticAnswer
+from Utils.probability_utils import get_probabilistic_answer
 
 PlayerDistribution = {
     "Batsmen": 7,
@@ -403,7 +403,7 @@ class UtilityBasedBidder:
         elif utility > 1:
             return 1
         else:
-            return getProbabilisticAnswer(utility)
+            return get_probabilistic_answer(utility)
     
     def subtractPrice(self, running_price):
         self.budget = self.budget - running_price

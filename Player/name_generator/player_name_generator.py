@@ -1,7 +1,7 @@
 from pathlib import Path
 import random
 import json
-from ProbabilisticFunctionsModule import getProbabilisticAnswer
+from Utils.probability_utils import get_probabilistic_answer
 
 def getPlayerName():
       current_dir = Path(__file__).resolve().parent
@@ -15,10 +15,10 @@ def getPlayerName():
       switchPossible = data["switchPossible"]
       additionalFirstNames = data["additionalFirstNames"]
 
-      three_part_name_prob = getProbabilisticAnswer(.15)
+      three_part_name_prob = get_probabilistic_answer(.15)
 
       if three_part_name_prob == 1:
-            newFirstName = getProbabilisticAnswer(.2)
+            newFirstName = get_probabilistic_answer(.2)
             if newFirstName == 1:
                   firstName = random.choice(additionalFirstNames)
                   middleName = random.choice(first)
@@ -42,7 +42,7 @@ def getPlayerName():
 
       switch = 0
       if lastName in switchPossible:
-            switch = getProbabilisticAnswer(.25)
+            switch = get_probabilistic_answer(.25)
       
       if switch == 1:
            return lastName + " " + firstName

@@ -12,7 +12,7 @@ from Player.player_generation_stats import PlayerGenStat
 
 from Team.generate_teams import generate_teams, generate_bidders
 from Team.team_generation_stats import TeamGenStat
-from showcase_utils import *
+from Utils.showcase_utils import *
 
 # Generate Players
 ListOfPlayers = get_list_of_players(250)

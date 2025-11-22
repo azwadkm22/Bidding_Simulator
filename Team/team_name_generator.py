@@ -1,5 +1,5 @@
 import random
-from ProbabilisticFunctionsModule import getProbabilisticAnswer
+from Utils.probability_utils import get_probabilistic_answer
 
 Regions = [
     "Dhaka", 
@@ -48,7 +48,7 @@ def createTeamName():
     Regions.remove(reg)
 
     if len(StartNames) > 0:
-        if(getProbabilisticAnswer(0.2)):
+        if(get_probabilistic_answer(0.2)):
             start = random.choice(StartNames)
             StartNames.remove(start)
             return start + " " + reg

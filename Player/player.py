@@ -2,7 +2,7 @@
 from Player.name_generator.player_name_generator import getPlayerName
 
 from random import randint
-from ProbabilisticFunctionsModule import get_random_normal_distribution_number_biased
+from Utils.probability_utils import get_random_normal_distribution_number_biased
 import random
 
 class Player():

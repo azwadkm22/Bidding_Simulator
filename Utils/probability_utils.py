@@ -1,7 +1,7 @@
 import random
 import matplotlib.pyplot as plt
 
-def getProbabilisticAnswer(probability):
+def get_probabilistic_answer(probability):
     # Generate a random number between 0 and 1
     random_number = random.random()
     

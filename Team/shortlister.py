@@ -1,6 +1,6 @@
 import random
 from Player.player import Player
-from ProbabilisticFunctionsModule import getProbabilisticAnswer
+from Utils.probability_utils import get_probabilistic_answer
 
 class ShortList:
     def __init__(self):
@@ -80,7 +80,7 @@ def makeShortList(playerList, teams, estimatedCostMax=3000):
                         battingDependentProbability = .25
                     elif player.batting >= 85: 
                         battingDependentProbability = .20
-                    yes = getProbabilisticAnswer( (4 - teamShortList[shortList].batCount) * battingDependentProbability)
+                    yes = get_probabilistic_answer( (4 - teamShortList[shortList].batCount) * battingDependentProbability)
                     if yes == 1:
                         teamShortList[shortList].shortListPlayer(player)
                         if player in playerList:
@@ -94,7 +94,7 @@ def makeShortList(playerList, teams, estimatedCostMax=3000):
                         battingDependentProbability = .5
                     elif player.batting >= 85: 
                         battingDependentProbability = 0.45
-                    yes = getProbabilisticAnswer( (2 - teamShortList[shortList].wicketKeeperCount) * battingDependentProbability)
+                    yes = get_probabilistic_answer( (2 - teamShortList[shortList].wicketKeeperCount) * battingDependentProbability)
                     if yes == 1:
                         teamShortList[shortList].shortListPlayer(player)
                         if player in playerList:
@@ -109,7 +109,7 @@ def makeShortList(playerList, teams, estimatedCostMax=3000):
                         avgDependentProbability = .4
                     elif (player.batting + player.bowling)/2 >= 85 or max(player.batting, player.bowling) >= 85: 
                         avgDependentProbability = .3
-                    yes = getProbabilisticAnswer( (3 - teamShortList[shortList].allRounderCount) * avgDependentProbability)
+                    yes = get_probabilistic_answer( (3 - teamShortList[shortList].allRounderCount) * avgDependentProbability)
                     if yes == 1:
                         teamShortList[shortList].shortListPlayer(player)
                         if player in playerList:
@@ -126,7 +126,7 @@ def makeShortList(playerList, teams, estimatedCostMax=3000):
             if player.bowling_type == 'Spinner':
                 for shortList in teamShortList:
                     if teamShortList[shortList].estimatedCost < estimatedCostMax:
-                        yes = getProbabilisticAnswer( (4 - teamShortList[shortList].spinnerCount) * bowlerDependentProbability)
+                        yes = get_probabilistic_answer( (4 - teamShortList[shortList].spinnerCount) * bowlerDependentProbability)
                         if yes == 1:
                             teamShortList[shortList].shortListPlayer(player)
                             if player in playerList:
@@ -134,7 +134,7 @@ def makeShortList(playerList, teams, estimatedCostMax=3000):
             else:
                 for shortList in teamShortList:
                     if teamShortList[shortList].estimatedCost < estimatedCostMax:
-                        yes = getProbabilisticAnswer( (4 - teamShortList[shortList].pacerCount) * bowlerDependentProbability)
+                        yes = get_probabilistic_answer( (4 - teamShortList[shortList].pacerCount) * bowlerDependentProbability)
                         if yes == 1:
                             teamShortList[shortList].shortListPlayer(player)
                             if player in playerList:
@@ -150,7 +150,7 @@ def makeShortList(playerList, teams, estimatedCostMax=3000):
                         maxDependentProbability = 0.35
                     elif max(player.batting, player.bowling) >= 85:
                         maxDependentProbability = 0.15
-                    yes = getProbabilisticAnswer(maxDependentProbability)
+                    yes = get_probabilistic_answer(maxDependentProbability)
                     if yes == 1:
                         teamShortList[shortList].shortListPlayer(player)
                         if player in playerList:

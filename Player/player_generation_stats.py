@@ -1,4 +1,4 @@
-from player_list_utils import find_top_N_player_in_category, find_players_with_stats_above, find_players_above_rating
+from Utils.player_list_utils import find_top_N_player_in_category, find_players_with_stats_above, find_players_above_rating
 from Player.player import Player
 
 class PlayerGenStat:
