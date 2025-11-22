@@ -13,14 +13,14 @@ def getPlayerName():
       islamicLastNames = data["islamicLastNames"]
       hinduLastNames = data["hinduLastNames"]
       switchPossible = data["switchPossible"]
+      additionalFirstNames = data["additionalFirstNames"]
 
       three_part_name_prob = getProbabilisticAnswer(.15)
 
       if three_part_name_prob == 1:
             newFirstName = getProbabilisticAnswer(.2)
             if newFirstName == 1:
-                  NewFirst = ["Kazi", "Syed", "Md.", "Mohammed", "K.M."]
-                  firstName = random.choice(NewFirst)
+                  firstName = random.choice(additionalFirstNames)
                   middleName = random.choice(first)
                   lastName = random.choice(islamicLastNames)
                   if firstName in ["Md.", "Mohammed"]:
