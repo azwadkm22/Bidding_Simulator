@@ -4,10 +4,9 @@ from TeamNameGenerator import createTeamName
 from TeamStrength import findTeamStrength
 from Player import Player
 from Team import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
-from Bidders import RandomBidder, AlwaysBidder, NeverBidder, SafeBidder, RiskyBidder, PriorityBidder, SpecializedBidder, SpecialBidder
 from StartingEleven import StartingEleven
 from Shortlister import ShortList, makeShortList
-from UtilityBasedBidder import UtilityBasedBidder
+from Bidders.utility_based_bidder import UtilityBasedBidder
 
 def GenerateNPlayerList(n):
     ListOfPlayers = []
@@ -16,8 +15,6 @@ def GenerateNPlayerList(n):
         NewPlayer = Player()
         ListOfPlayers.append(NewPlayer)
     return ListOfPlayers
-
-
 
 def getPlayerSubset(playerList, role):
     subList = []

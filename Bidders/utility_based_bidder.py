@@ -1,15 +1,3 @@
-# Placing a bid for a player depends on
-# The players position
-# The players skill
-# The players current price
-# The players estimated price
-
-
-# The teams current squad
-# The teams current position stat of the player
-# the teams first 11
-# The teams focus
-
 from ProbabilisticFunctionsModule import getProbabilisticAnswer
 
 PlayerDistribution = {
