@@ -143,7 +143,8 @@ def print_team_position_and_order_summary(team):
 
 
 class Team:
-    def __init__(self, team_name):
+    def __init__(self, team_id, team_name):
+        self.team_id = team_id
         self.name = team_name
         self.player_list = []
         self.number_of_players = 0
@@ -448,7 +449,6 @@ class Team:
 
     def get_team_data_to_JSON(self):
         team_data = {}
-        
         team_data["team_name"] = self.name
         team_data["number_of_players"] = self.number_of_players
         team_data["number_of_batsmen"] = self.number_of_batsmen
@@ -471,9 +471,11 @@ class Team:
         team_data["low_order_batsmen"] = self.low_order_batsmen
         team_data["teamRating"] = self.teamRating
         team_data["fame_average"] = self.fame_average
-        team_data["players_data"] = {}
-        for p in self.player_list:
-            team_data["players_data"][p.player_id] = p.get_JSON_data()
+        player_id_list = []
+        for p in self.player_list: 
+            player_id_list.append(p.player_id)
+
+        team_data["players_data"] = player_id_list
         
         return team_data
 

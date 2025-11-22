@@ -46,52 +46,48 @@ print("NOW TIME FOR THE TEAMS TO PRESENT THEMSELVES")
 
 team_lineup_ratings = {}
 
+team_data = {}
+team_lineups = {}
+
 for bd in bidder_list:
     
+    lineup_data = {}
     print_title_board(bd.name)
     print("Remaining Budget: ", bd.budget)
-    # ##time.sleep(2)
-    # bd.team.printTeamData()
-    # printTeamPositionAndOrderSummary(bd.team)
     find_team_strength(bd.team)
-    team_json_data = bd.team.get_team_data_to_JSON()
 
-
-    with open(f"./generated/teams/{bd.name}.json", 'w') as f:
-        json.dump(team_json_data, f, indent=4)
+    team_data[bd.team.team_id] = bd.team.get_team_data_to_JSON()
 
     input()
-    # Generate Team Strengths and Weaknesses from the gathered Squad
-    # Insert the strength and weakness into the starting eleven creator
+    # TODO:Generate Team Strengths and Weaknesses from the gathered Squad
+    # TODO:Insert the strength and weakness into the starting eleven creator
+
     startEleven = StartingEleven()
     
-    startEleven.create_starting_eleven(bd.team)
-    input()
-    print()
-    print()
-    team_lineup_ratings[bd.name] = {"Bidder": bd.trait, "Batting" :startEleven.evaluate_batting() , "Bowling" :startEleven.evaluate_bowling(), "Fielding": startEleven.evaluate_fielding()}
-    startEleven.print_bench()
-    # ##time.sleep(2)
-    # print()
-    # startEleven.printBenchedPlayers()
-# DhakaStart = StartingEleven()
-# DhakaStart.createStartingEleven(Dhaka)
-# DhakaStart.printBenchedPlayers()
-# # Rangpur.printAllPlayerData()
+    starting_eleven = startEleven.create_starting_eleven(bd.team)
+    lineup = {}
+    for i in range(len(starting_eleven)):
+        lineup[i] = starting_eleven[i].player_id
 
-# Rangpur.findBestBatsman().printDetails()
-# Rangpur.findBestBowler().printDetails()
-# Rangpur.findMostPopular().printDetails()
+    lineup_data["starting_lineup"] = lineup
+    lineup_data["batting"] = startEleven.evaluate_batting() 
+    lineup_data["bowling"] = startEleven.evaluate_bowling()
+    lineup_data["fielding"] = startEleven.evaluate_fielding()
+    lineup_data["bench"] = startEleven.print_bench()
+
+    team_lineups[bd.team.team_id] = lineup_data    
+
+with open(f"./generated/team_data.json", 'w') as f:
+        json.dump(team_data, f, indent=4)
+
+with open(f"./generated/team_lineups.json", 'w') as f:
+        json.dump(team_lineups, f, indent=4)
     
-print()
-print()
 print()
 for t in team_lineup_ratings:
     print(f"{t} : {team_lineup_ratings[t]}")
 
-
 print(len(simulation.list_of_unsold_players))
-
 
 k = input()
 

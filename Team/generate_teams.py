@@ -7,7 +7,7 @@ import random
 def generate_teams(n):
     team_list = []
     for i in range(n):
-        team_list.append(Team(createTeamName()))
+        team_list.append(Team(i, createTeamName()))
     return team_list
     
 

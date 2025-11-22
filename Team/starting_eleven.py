@@ -254,6 +254,8 @@ class StartingEleven:
         print("Spinner: ", self.spinner_count)
         self.create_lineup()
         self.print_lineup()  
+
+        return self.lineup
         
         # self.batting_average = 0
         # 2 Openers
@@ -367,8 +369,12 @@ class StartingEleven:
         for x in self.team_spinners:
             benchSet.add(x)
 
+        bench_list = []
         for player in benchSet:
             player.printInLine()
+            bench_list.append(player.player_id)
+
+        return bench_list
             # print(f'{player.name}: BAT({player.batting}) BWL({player.bowling})')
 
         
