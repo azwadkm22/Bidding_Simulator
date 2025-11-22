@@ -33,7 +33,7 @@ class PersonalizedBidder:
         self.budget_handling = get_random_normal_distribution_number_biased()
 
     
-    def initiateBudgets(self, budget):
+    def initiate_budgets(self, budget):
         variability = 10 - self.strictness
         wk_ct = 2
         batsmen_ct = 7
@@ -79,16 +79,16 @@ class PersonalizedBidder:
 
         self.spinner_budget = 0
         self.pacer_budget = 0
-    def placeBid(self, player, running_price):
+    def place_bid(self, player, running_price):
         pass
 
-    def subtractPrice(self, running_price):
+    def subtract_price(self, running_price):
         self.budget = self.budget - running_price
     
-    def addPlayerToTeam(self, player):
-        self.team.addPlayer(player) 
+    def add_player_to_team(self, player):
+        self.team.add_player(player) 
 
-    def PrintStats(self):
+    def print_stats(self):
         print("Going over price: ", self.over_estimate)
         print("Increasing rice: ", self.price_increaser)
         print("Fixating on a player: ", self.fixation)

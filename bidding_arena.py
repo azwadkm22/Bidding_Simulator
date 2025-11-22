@@ -1,5 +1,5 @@
 import json
-from Team.team_strength import findTeamStrength
+from Team.team_strength import find_team_strength
 from Team.starting_eleven import StartingEleven
 from Player.generate_players import get_list_of_players
 from Player.player_generation_stats import PlayerGenStat
@@ -44,7 +44,7 @@ simulation.simulate_bidding()
 print("HIGHEST PRICE: ", simulation.highest_price)
 print("NOW TIME FOR THE TEAMS TO PRESENT THEMSELVES")  
 
-TeamLineupRatings = {}
+team_lineup_ratings = {}
 
 for bd in bidder_list:
     
@@ -53,7 +53,7 @@ for bd in bidder_list:
     # ##time.sleep(2)
     # bd.team.printTeamData()
     # printTeamPositionAndOrderSummary(bd.team)
-    findTeamStrength(bd.team)
+    find_team_strength(bd.team)
     team_json_data = bd.team.get_team_data_to_JSON()
 
 
@@ -65,12 +65,12 @@ for bd in bidder_list:
     # Insert the strength and weakness into the starting eleven creator
     startEleven = StartingEleven()
     
-    startEleven.createStartingEleven(bd.team)
+    startEleven.create_starting_eleven(bd.team)
     input()
     print()
     print()
-    TeamLineupRatings[bd.name] = {"Bidder": bd.trait, "Batting" :startEleven.evaluateBatting() , "Bowling" :startEleven.evaluateBowling(), "Fielding": startEleven.evaluateFielding()}
-    startEleven.printBench()
+    team_lineup_ratings[bd.name] = {"Bidder": bd.trait, "Batting" :startEleven.evaluate_batting() , "Bowling" :startEleven.evaluate_bowling(), "Fielding": startEleven.evaluate_fielding()}
+    startEleven.print_bench()
     # ##time.sleep(2)
     # print()
     # startEleven.printBenchedPlayers()
@@ -86,8 +86,8 @@ for bd in bidder_list:
 print()
 print()
 print()
-for t in TeamLineupRatings:
-    print(f"{t} : {TeamLineupRatings[t]}")
+for t in team_lineup_ratings:
+    print(f"{t} : {team_lineup_ratings[t]}")
 
 
 print(len(simulation.list_of_unsold_players))

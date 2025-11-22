@@ -1,13 +1,12 @@
 from Team.team import Team
 
-
-def findTeamStrength(team: Team):
+def find_team_strength(team: Team):
     strength = []
     good_batsmen_count = 0
     good_allrounder_count = 0
     good_spinner_count = 0
     good_pacer_count = 0
-    for player in team.playerList:
+    for player in team.player_list:
         if player.position == "Batsmen" or player.position == "Wicketkeeper":
             if player.batting >= 80:
                 good_batsmen_count = good_batsmen_count + 1

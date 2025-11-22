@@ -5,7 +5,7 @@ class RandomBidder(BaseBidder):
     def __init__(self, name, budget, team):
         super().__init__(name, budget, "Random", team)
     
-    def placeBid(self, player, running_price):
+    def place_bid(self, player, running_price):
         if self.budget - running_price < 0:
             return 0
         if self.team.number_of_players > 20:

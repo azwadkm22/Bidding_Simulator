@@ -1,7 +1,7 @@
-from Team.team import Team, printTeamPositionAndOrderSummary
+from Team.team import Team
 import random
 
-# 0, 1 self.teamOpeners
+# 0, 1 self.team_openers
 # 2, 3, top order
 # 4, 5, 6, middle order
 # 7, 8, 9, 10, 11 low order
@@ -16,243 +16,244 @@ class StartingEleven:
         self.fielding_average = 0
         self.spin_average = 0
         self.pace_average = 0
-    def createStartingEleven(self, team):
 
-        self.teamOpeners = team.getTeamOpeners()
-        self.teamOpeners = sorted(self.teamOpeners, key=lambda Player: Player.batting, reverse=True)
-        
-        self.teamTopOrders = team.getTeamTopOrder()
-        self.teamTopOrders = sorted(self.teamTopOrders, key=lambda Player: Player.batting, reverse=True)
-        
-        self.teamMidOrders = team.getTeamMidOrder()
-        self.teamMidOrders = sorted(self.teamMidOrders, key=lambda Player: Player.batting, reverse=True)
-        
-        self.teamLowOrders = team.getTeamLowOrder()
-        self.teamLowOrders = sorted(self.teamLowOrders, key=lambda Player: Player.batting, reverse=True)
-        
-        self.teamPacers = team.getTeamPacers()
-        self.teamPacers = sorted(self.teamPacers, key=lambda Player: Player.bowling, reverse=True)
-        
-        self.teamSpinners = team.getTeamSpinners()
-        self.teamSpinners = sorted(self.teamSpinners, key=lambda Player: Player.bowling, reverse=True)
-        
-        self.teamBatsmen = team.getTeamBatsmen()
-        self.teamBatsmen = sorted(self.teamBatsmen, key=lambda Player: Player.batting, reverse=True)
-        self.teamAllRounders = team.getTeamAllrounders()
-        self.teamAllRounders = sorted(self.teamAllRounders, key=lambda x: (x.batting + x.bowling) / 2, reverse=True)
-        
-        self.teamWicketkeepers = team.getTeamWicketkeepers()
-        self.teamWicketkeepers = sorted(self.teamWicketkeepers, key=lambda Player: Player.batting, reverse=True)
+    def create_starting_eleven(self, team: Team):
 
-        self.openerCount = 0
-        self.topOrderCount = 0
-        self.midOrderCount = 0
-        self.lowOrderCount = 0
-        self.batsmenCount = 0
-        self.bowlerCount = 0
-        self.pacerCount = 0
-        self.spinnerCount = 0
-        self.allRounderCount = 0
-        self.wickerKeeperCount = 0
+        self.team_openers = team.get_team_openers()
+        self.team_openers = sorted(self.team_openers, key=lambda Player: Player.batting, reverse=True)
+        
+        self.team_top_orders = team.get_team_top_order()
+        self.team_top_orders = sorted(self.team_top_orders, key=lambda Player: Player.batting, reverse=True)
+        
+        self.team_mid_orders = team.get_team_mid_order()
+        self.team_mid_orders = sorted(self.team_mid_orders, key=lambda Player: Player.batting, reverse=True)
+        
+        self.team_low_orders = team.get_team_low_order()
+        self.team_low_orders = sorted(self.team_low_orders, key=lambda Player: Player.batting, reverse=True)
+        
+        self.team_pacers = team.get_team_pacers()
+        self.team_pacers = sorted(self.team_pacers, key=lambda Player: Player.bowling, reverse=True)
+        
+        self.team_spinners = team.get_team_spinners()
+        self.team_spinners = sorted(self.team_spinners, key=lambda Player: Player.bowling, reverse=True)
+        
+        self.team_batsmen = team.get_team_batsmen()
+        self.team_batsmen = sorted(self.team_batsmen, key=lambda Player: Player.batting, reverse=True)
+        self.team_all_rounders = team.get_team_allrounders()
+        self.team_all_rounders = sorted(self.team_all_rounders, key=lambda x: (x.batting + x.bowling) / 2, reverse=True)
+        
+        self.team_wicketkeepers = team.get_team_wicketkeepers()
+        self.team_wicketkeepers = sorted(self.team_wicketkeepers, key=lambda Player: Player.batting, reverse=True)
+
+        self.opener_count = 0
+        self.top_order_count = 0
+        self.mid_order_count = 0
+        self.low_order_count = 0
+        self.batsmen_count = 0
+        self.bowler_count = 0
+        self.pacer_count = 0
+        self.spinner_count = 0
+        self.all_rounder_count = 0
+        self.wicketkeeper_count = 0
         print(len(self.starting))
         while(len(self.starting) != 11):
             # create team start
-            newPick = None
-            if(self.wickerKeeperCount == 0) and len(self.teamWicketkeepers) > 0:
-                newPick = self.teamWicketkeepers[0]
-            elif(self.openerCount + self.topOrderCount + self.midOrderCount < 3):
-                if(len(self.teamOpeners) > 0 and len(self.teamTopOrders) > 0 and len(self.teamMidOrders) > 0):
-                    if (self.teamOpeners[0].batting > self.teamTopOrders[0].batting-10 and self.teamOpeners[0].batting > self.teamMidOrders[0].batting-20):
-                        newPick = self.teamOpeners[0]
-                    elif (self.teamTopOrders[0].batting-10 > self.teamMidOrders[0].batting-20):
-                        newPick = self.teamTopOrders[0]
+            new_pick = None
+            if(self.wicketkeeper_count == 0) and len(self.team_wicketkeepers) > 0:
+                new_pick = self.team_wicketkeepers[0]
+            elif(self.opener_count + self.top_order_count + self.mid_order_count < 3):
+                if(len(self.team_openers) > 0 and len(self.team_top_orders) > 0 and len(self.team_mid_orders) > 0):
+                    if (self.team_openers[0].batting > self.team_top_orders[0].batting-10 and self.team_openers[0].batting > self.team_mid_orders[0].batting-20):
+                        new_pick = self.team_openers[0]
+                    elif (self.team_top_orders[0].batting-10 > self.team_mid_orders[0].batting-20):
+                        new_pick = self.team_top_orders[0]
                     else:
-                        newPick = self.teamMidOrders[0]
-                elif(len(self.teamOpeners) == 0 and len(self.teamTopOrders) == 0 and len(self.teamMidOrders) == 0):
+                        new_pick = self.team_mid_orders[0]
+                elif(len(self.team_openers) == 0 and len(self.team_top_orders) == 0 and len(self.team_mid_orders) == 0):
                     pass
-                elif len(self.teamOpeners) == 0:
-                    if(len(self.teamTopOrders) != 0):
-                        if (self.teamTopOrders[0].batting-10 > self.teamMidOrders[0].batting-20):
-                            newPick = self.teamTopOrders[0]
+                elif len(self.team_openers) == 0:
+                    if(len(self.team_top_orders) != 0):
+                        if (self.team_top_orders[0].batting-10 > self.team_mid_orders[0].batting-20):
+                            new_pick = self.team_top_orders[0]
                         else:
-                            newPick = self.teamMidOrders[0]
+                            new_pick = self.team_mid_orders[0]
                     else:
-                        newPick = self.teamMidOrders[0]
+                        new_pick = self.team_mid_orders[0]
 
-                elif len(self.teamTopOrders) == 0:
-                    if(len(self.teamOpeners) != 0):
-                        if (self.teamOpeners[0].batting > self.teamMidOrders[0].batting-20):
-                            newPick = self.teamOpeners[0]
+                elif len(self.team_top_orders) == 0:
+                    if(len(self.team_openers) != 0):
+                        if (self.team_openers[0].batting > self.team_mid_orders[0].batting-20):
+                            new_pick = self.team_openers[0]
                         else:
-                            newPick = self.teamMidOrders[0]
+                            new_pick = self.team_mid_orders[0]
                     else:
-                        newPick = self.teamMidOrders[0]
+                        new_pick = self.team_mid_orders[0]
 
-                elif len(self.teamMidOrders) == 0:
-                    if(len(self.teamTopOrders) != 0):
-                        if (self.teamOpeners[0].batting > self.teamTopOrders[0].batting-10):
-                            newPick = self.teamOpeners[0]
+                elif len(self.team_mid_orders) == 0:
+                    if(len(self.team_top_orders) != 0):
+                        if (self.team_openers[0].batting > self.team_top_orders[0].batting-10):
+                            new_pick = self.team_openers[0]
                         else:
-                            newPick = self.teamTopOrders[0]
+                            new_pick = self.team_top_orders[0]
                     else:
-                        newPick = self.teamTopOrders[0]
+                        new_pick = self.team_top_orders[0]
                 else:                                                                                       
                     print("#########################ERROR#########################")
                     break
-                    # newPick = self.teamTopOrders[0]
+                    # new_pick = self.team_top_orders[0]
             
-            elif(self.bowlerCount + self.allRounderCount < 5 and len(self.teamAllRounders) + len(self.teamPacers) + len(self.teamSpinners) != 0):
-                pacePick = None
-                spinPick = None
-                rounderPick = None
-                all_rounder_BWL = sorted(self.teamAllRounders, key=lambda x: x.bowling, reverse=True)
-                if(len(self.teamPacers) > 0):
-                    pacePick = self.teamPacers[0]
-                if(len(self.teamSpinners) > 0):
-                    spinPick = self.teamSpinners[0]
-                if(len(self.teamAllRounders) > 0):
-                    rounderPick = all_rounder_BWL[0]
-                if(pacePick != None and spinPick != None and rounderPick != None):
-                    if((pacePick.bowling - self.pacerCount*5) > (spinPick.bowling - self.spinnerCount*5) and (pacePick.bowling - self.pacerCount*5) > (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5)):
-                        newPick = self.teamPacers[0]
+            elif(self.bowler_count + self.all_rounder_count < 5 and len(self.team_all_rounders) + len(self.team_pacers) + len(self.team_spinners) != 0):
+                pace_pick = None
+                spin_pick = None
+                rounder_pick = None
+                all_rounder_BWL = sorted(self.team_all_rounders, key=lambda x: x.bowling, reverse=True)
+                if(len(self.team_pacers) > 0):
+                    pace_pick = self.team_pacers[0]
+                if(len(self.team_spinners) > 0):
+                    spin_pick = self.team_spinners[0]
+                if(len(self.team_all_rounders) > 0):
+                    rounder_pick = all_rounder_BWL[0]
+                if(pace_pick != None and spin_pick != None and rounder_pick != None):
+                    if((pace_pick.bowling - self.pacer_count*5) > (spin_pick.bowling - self.spinner_count*5) and (pace_pick.bowling - self.pacer_count*5) > (rounder_pick.bowling - self.spinner_count*5 if rounder_pick.bowling_type == "Spinner" else rounder_pick.bowling - self.pacer_count*5)):
+                        new_pick = self.team_pacers[0]
 
-                    elif((spinPick.bowling - self.spinnerCount*5) > (pacePick.bowling - self.pacerCount*5) and (spinPick.bowling - self.spinnerCount*5) > (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5)):
-                        newPick = self.teamSpinners[0]
+                    elif((spin_pick.bowling - self.spinner_count*5) > (pace_pick.bowling - self.pacer_count*5) and (spin_pick.bowling - self.spinner_count*5) > (rounder_pick.bowling - self.spinner_count*5 if rounder_pick.bowling_type == "Spinner" else rounder_pick.bowling - self.pacer_count*5)):
+                        new_pick = self.team_spinners[0]
                 
-                    elif((rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5) >= (pacePick.bowling - self.pacerCount*5) and (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5) >= (spinPick.bowling - self.spinnerCount*5)):
-                        newPick = all_rounder_BWL[0]
-                    elif((spinPick.bowling - self.spinnerCount*5) == (pacePick.bowling - self.pacerCount*5)):
-                        newPick = random.choice([spinPick, pacePick])
-                elif(pacePick == None and spinPick == None and rounderPick == None):
+                    elif((rounder_pick.bowling - self.spinner_count*5 if rounder_pick.bowling_type == "Spinner" else rounder_pick.bowling - self.pacer_count*5) >= (pace_pick.bowling - self.pacer_count*5) and (rounder_pick.bowling - self.spinner_count*5 if rounder_pick.bowling_type == "Spinner" else rounder_pick.bowling - self.pacer_count*5) >= (spin_pick.bowling - self.spinner_count*5)):
+                        new_pick = all_rounder_BWL[0]
+                    elif((spin_pick.bowling - self.spinner_count*5) == (pace_pick.bowling - self.pacer_count*5)):
+                        new_pick = random.choice([spin_pick, pace_pick])
+                elif(pace_pick == None and spin_pick == None and rounder_pick == None):
                     print("No Bowlers Available")
                     break
                 else:
-                    if(pacePick == None):
-                        if(spinPick == None):
-                            newPick = all_rounder_BWL[0]
-                        elif(rounderPick == None):
-                            newPick = self.teamSpinners[0]
+                    if(pace_pick == None):
+                        if(spin_pick == None):
+                            new_pick = all_rounder_BWL[0]
+                        elif(rounder_pick == None):
+                            new_pick = self.team_spinners[0]
                         else:
-                            if((spinPick.bowling - self.spinnerCount*5) > (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5)):
-                                newPick = self.teamSpinners[0]
+                            if((spin_pick.bowling - self.spinner_count*5) > (rounder_pick.bowling - self.spinner_count*5 if rounder_pick.bowling_type == "Spinner" else rounder_pick.bowling - self.pacer_count*5)):
+                                new_pick = self.team_spinners[0]
                             else:
-                                newPick = all_rounder_BWL[0]
-                    elif(spinPick == None):
-                        if(pacePick == None):
-                            newPick = all_rounder_BWL[0]
-                        elif(rounderPick == None):
-                            newPick = self.teamPacers[0]
+                                new_pick = all_rounder_BWL[0]
+                    elif(spin_pick == None):
+                        if(pace_pick == None):
+                            new_pick = all_rounder_BWL[0]
+                        elif(rounder_pick == None):
+                            new_pick = self.team_pacers[0]
                         else:
-                            if((pacePick.bowling - self.pacerCount*5) > (rounderPick.bowling - self.spinnerCount*5 if rounderPick.bowling_type == "Spinner" else rounderPick.bowling - self.pacerCount*5)):
-                                newPick = self.teamPacers[0]
+                            if((pace_pick.bowling - self.pacer_count*5) > (rounder_pick.bowling - self.spinner_count*5 if rounder_pick.bowling_type == "Spinner" else rounder_pick.bowling - self.pacer_count*5)):
+                                new_pick = self.team_pacers[0]
                             else:
-                                newPick = all_rounder_BWL[0]
-                    elif(rounderPick == None):
-                        if(pacePick == None):
-                            newPick = self.teamSpinners[0]
-                        elif(spinPick == None):
-                            newPick = self.teamPacers[0]
+                                new_pick = all_rounder_BWL[0]
+                    elif(rounder_pick == None):
+                        if(pace_pick == None):
+                            new_pick = self.team_spinners[0]
+                        elif(spin_pick == None):
+                            new_pick = self.team_pacers[0]
                         else:
-                            if((spinPick.bowling - self.spinnerCount*5) >= (spinPick.bowling - self.spinnerCount*5)):
-                                newPick = self.teamPacers[0]
+                            if((spin_pick.bowling - self.spinner_count*5) >= (spin_pick.bowling - self.spinner_count*5)):
+                                new_pick = self.team_pacers[0]
                             else:
-                                newPick = self.teamSpinners[0]
+                                new_pick = self.team_spinners[0]
                     else:
                         print("ONE IS NONE")
                         break
                     # break
 
-            elif(self.batsmenCount + self.allRounderCount < 5 and len(self.teamBatsmen) + len(self.teamAllRounders) > 0 ):
-                batPick = None
-                allRounderPick = None
-                all_rounder_BAT = sorted(self.teamAllRounders, key=lambda x: x.batting, reverse=True)
-                if(len(self.teamBatsmen) != 0 and len(self.teamAllRounders) != 0):
-                    batPick = self.teamBatsmen[0]
-                    allRounderPick = all_rounder_BAT[0]
-                    if batPick.batting > allRounderPick.batting:
-                        newPick = self.teamBatsmen[0]
+            elif(self.batsmen_count + self.all_rounder_count < 5 and len(self.team_batsmen) + len(self.team_all_rounders) > 0 ):
+                bat_pick = None
+                all_rounder_pick = None
+                all_rounder_BAT = sorted(self.team_all_rounders, key=lambda x: x.batting, reverse=True)
+                if(len(self.team_batsmen) != 0 and len(self.team_all_rounders) != 0):
+                    bat_pick = self.team_batsmen[0]
+                    all_rounder_pick = all_rounder_BAT[0]
+                    if bat_pick.batting > all_rounder_pick.batting:
+                        new_pick = self.team_batsmen[0]
                     else:
-                        newPick = all_rounder_BAT[0]
-                elif(len(self.teamBatsmen) == 0):
-                    newPick = all_rounder_BAT[0]
+                        new_pick = all_rounder_BAT[0]
+                elif(len(self.team_batsmen) == 0):
+                    new_pick = all_rounder_BAT[0]
                 else:
-                    newPick = self.teamBatsmen[0]
+                    new_pick = self.team_batsmen[0]
             
             else:
                 print(f'Players Left: {11 - len(self.starting)}')
-                mergedBat = self.teamBatsmen + self.teamAllRounders
-                mergedBowl = self.teamPacers + self.teamSpinners + self.teamAllRounders
-                print(f"Current Status: Bat-{self.batsmenCount}, All-{self.allRounderCount} Pace-{self.pacerCount}, Spin-{self.spinnerCount}")
-                mergedBat = sorted(mergedBat, key=lambda x: x.batting, reverse=True)
-                mergedBowl = sorted(mergedBowl, key=lambda x: x.bowling, reverse=True)
+                merged_bat = self.team_batsmen + self.team_all_rounders
+                merged_bowl = self.team_pacers + self.team_spinners + self.team_all_rounders
+                print(f"Current Status: Bat-{self.batsmen_count}, All-{self.all_rounder_count} Pace-{self.pacer_count}, Spin-{self.spinner_count}")
+                merged_bat = sorted(merged_bat, key=lambda x: x.batting, reverse=True)
+                merged_bowl = sorted(merged_bowl, key=lambda x: x.bowling, reverse=True)
 
-                if(len(mergedBat) != 0 and len(mergedBowl) != 0):
+                if(len(merged_bat) != 0 and len(merged_bowl) != 0):
                     # if self.batting_average > self.bowling_average:
-                    if mergedBat[0].batting - mergedBowl[0].bowling > 5:
-                         newPick = mergedBat[0]
-                    elif mergedBowl[0].bowling - mergedBat[0].batting > 5:
-                         newPick = mergedBowl[0]
-                    elif self.batsmenCount + self.allRounderCount < 6:
+                    if merged_bat[0].batting - merged_bowl[0].bowling > 5:
+                         new_pick = merged_bat[0]
+                    elif merged_bowl[0].bowling - merged_bat[0].batting > 5:
+                         new_pick = merged_bowl[0]
+                    elif self.batsmen_count + self.all_rounder_count < 6:
                     # self.batting_average > self.bowling_average:
-                        newPick = mergedBat[0]
-                    elif self.bowlerCount + self.allRounderCount < 6:
-                        newPick = mergedBowl[0]
+                        new_pick = merged_bat[0]
+                    elif self.bowler_count + self.all_rounder_count < 6:
+                        new_pick = merged_bowl[0]
                     elif self.batting_average > self.bowling_average:
-                        newPick = mergedBowl[0]
+                        new_pick = merged_bowl[0]
                     else:
-                        newPick = mergedBat[0]
-                elif(len(mergedBat) != 0):
-                    newPick = mergedBat[0]
-                elif(len(mergedBowl) != 0):
-                    newPick = mergedBowl[0]
+                        new_pick = merged_bat[0]
+                elif(len(merged_bat) != 0):
+                    new_pick = merged_bat[0]
+                elif(len(merged_bowl) != 0):
+                    new_pick = merged_bowl[0]
                 else:
                     print("No players left man.")
 
-            if(newPick == None):
+            if(new_pick == None):
                 print("WHY ARE YOU NONE")
                 break
 
-            self.starting.add(newPick)
-            self.updateCounts(newPick)
-            self.updateAverage(newPick)
+            self.starting.add(new_pick)
+            self.update_counts(new_pick)
+            self.update_average(new_pick)
             # Delete from all lists
-            if newPick in self.teamOpeners:
-                self.teamOpeners.remove(newPick)
-            if newPick in self.teamWicketkeepers:
-                self.teamWicketkeepers.remove(newPick)
-            if newPick in self.teamTopOrders:
-                self.teamTopOrders.remove(newPick)
-            if newPick in self.teamMidOrders:
-                self.teamMidOrders.remove(newPick)
-            if newPick in self.teamLowOrders:
-                self.teamLowOrders.remove(newPick)
-            if newPick in self.teamPacers:
-                self.teamPacers.remove(newPick)
-            if newPick in self.teamSpinners:
-                self.teamSpinners.remove(newPick)
-            if newPick in self.teamAllRounders:
-                self.teamAllRounders.remove(newPick)
-            if newPick in self.teamBatsmen:
-                self.teamBatsmen.remove(newPick)
+            if new_pick in self.team_openers:
+                self.team_openers.remove(new_pick)
+            if new_pick in self.team_wicketkeepers:
+                self.team_wicketkeepers.remove(new_pick)
+            if new_pick in self.team_top_orders:
+                self.team_top_orders.remove(new_pick)
+            if new_pick in self.team_mid_orders:
+                self.team_mid_orders.remove(new_pick)
+            if new_pick in self.team_low_orders:
+                self.team_low_orders.remove(new_pick)
+            if new_pick in self.team_pacers:
+                self.team_pacers.remove(new_pick)
+            if new_pick in self.team_spinners:
+                self.team_spinners.remove(new_pick)
+            if new_pick in self.team_all_rounders:
+                self.team_all_rounders.remove(new_pick)
+            if new_pick in self.team_batsmen:
+                self.team_batsmen.remove(new_pick)
 
             # Update Team Average Scores
-            print(f'{len(self.starting)}. Picking a {(newPick.batting_order + " ") if newPick.position != "Bowler" else ""}{newPick.position if newPick.position != "Bowler" else newPick.bowling_type} -- ', end = "")    
-            print(f'{newPick.name} : BAT({newPick.batting}) BWL({newPick.bowling})')
+            print(f'{len(self.starting)}. _picking a {(new_pick.batting_order + " ") if new_pick.position != "Bowler" else ""}{new_pick.position if new_pick.position != "Bowler" else new_pick.bowling_type} -- ', end = "")    
+            print(f'{new_pick.name} : BAT({new_pick.batting}) BWL({new_pick.bowling})')
             # self.evaluateTeam()
         
-        print("Players Picked: ", len(self.starting))
-        print("Openers: ", self.openerCount)
-        print("Top Order: ", self.topOrderCount)
-        print("Mid Order: ", self.midOrderCount)
-        print("Low Order: ", self.lowOrderCount)
-        print("Batsmen: ", self.batsmenCount)
-        print("Wicketkeeper: ", self.wickerKeeperCount)
-        print("Allrounder: ", self.allRounderCount)
-        print("Bowler: ", self.bowlerCount)
-        print("Pacer: ", self.pacerCount)
-        print("Spinner: ", self.spinnerCount)
-        self.createLineup()
-        self.printLineup()  
+        print("Players _picked: ", len(self.starting))
+        print("Openers: ", self.opener_count)
+        print("Top Order: ", self.top_order_count)
+        print("Mid Order: ", self.mid_order_count)
+        print("Low Order: ", self.low_order_count)
+        print("Batsmen: ", self.batsmen_count)
+        print("Wicketkeeper: ", self.wicketkeeper_count)
+        print("Allrounder: ", self.all_rounder_count)
+        print("Bowler: ", self.bowler_count)
+        print("Pacer: ", self.pacer_count)
+        print("Spinner: ", self.spinner_count)
+        self.create_lineup()
+        self.print_lineup()  
         
         # self.batting_average = 0
         # 2 Openers
@@ -262,51 +263,51 @@ class StartingEleven:
         # 1 Wicketkeeper
         # 2 Allrounder
         
-    def printBenchedPlayers(self):
+    def print_benched_players(self):
 
         print("")
         print("###PLAYERS LEFT###")
         print("#################")
         print("Openers")
-        for x in self.teamOpeners:
+        for x in self.team_openers:
             x.printSummary()
         
         print("#################")
         print("Top-Order")
-        for x in self.teamTopOrders:
+        for x in self.team_top_orders:
             x.printSummary()
 
         print("#################")
         print("Middle-Order")
-        for x in self.teamMidOrders:
+        for x in self.team_mid_orders:
             x.printSummary()
 
         print("#################")
         print("Low-Order")
-        for x in self.teamLowOrders:
+        for x in self.team_low_orders:
             x.printSummary()
 
         print("#################")
         print("Wicketkeepers")
-        for x in self.teamWicketkeepers:
+        for x in self.team_wicketkeepers:
             x.printSummary()
 
         print("#################")
         print("All Rounders")
-        for x in self.teamAllRounders:
+        for x in self.team_all_rounders:
             x.printSummary()
 
         print("#################")
         print("Pacers")
-        for x in self.teamPacers:
+        for x in self.team_pacers:
             x.printSummary()
 
         print("#################")
         print("Spinners")
-        for x in self.teamSpinners:
+        for x in self.team_spinners:
             x.printSummary()
 
-    def createLineup(self):
+    def create_lineup(self):
         eleven = list(self.starting)
         print("Squad Members: ", len(eleven))
         opens = []
@@ -341,148 +342,129 @@ class StartingEleven:
         for x in low_ord:
             self.lineup.append(x)
     
-    def printLineup(self):
+    def print_lineup(self):
         for i in range(0, len(self.lineup)):
             print(f'{i+1}. ', end="")
             self.lineup[i].printInLine()
             # print(f'{i+1}. {self.lineup[i].name}: BAT({self.lineup[i].batting}) BWL({self.lineup[i].bowling}) :{self.lineup[i].selling_price}')
 
-    def printBench(self):
+    def print_bench(self):
         benchSet = set()
-        for x in self.teamOpeners:
+        for x in self.team_openers:
             benchSet.add(x)
-        for x in self.teamTopOrders:
+        for x in self.team_top_orders:
             benchSet.add(x)
-        for x in self.teamMidOrders:
+        for x in self.team_mid_orders:
             benchSet.add(x)
-        for x in self.teamLowOrders:
+        for x in self.team_low_orders:
             benchSet.add(x)
-        for x in self.teamWicketkeepers:
+        for x in self.team_wicketkeepers:
             benchSet.add(x)
-        for x in self.teamAllRounders:
+        for x in self.team_all_rounders:
             benchSet.add(x)
-        for x in self.teamPacers:
+        for x in self.team_pacers:
             benchSet.add(x)
-        for x in self.teamSpinners:
+        for x in self.team_spinners:
             benchSet.add(x)
 
         for player in benchSet:
             player.printInLine()
             # print(f'{player.name}: BAT({player.batting}) BWL({player.bowling})')
 
-            
+        
 
-
-
-
-    def printTeamScore(self):
+    def print_team_score(self):
         print(f'Batting Score: {self.batting_average}')
         print(f'Bowling Score: {self.bowling_average}')
         print(f'Spin Score: {self.spin_average}')
         print(f'Pace Score: {self.pace_average}')
         print(f'Fielding Score: {self.fielding_average}')
-    def updateCounts(self, player):
+
+    def update_counts(self, player):
         if(player.position == "Wicketkeeper"):
-            self.wickerKeeperCount = self.wickerKeeperCount + 1
-            self.batsmenCount = self.batsmenCount + 1
+            self.wicketkeeper_count = self.wicketkeeper_count + 1
+            self.batsmen_count = self.batsmen_count + 1
 
             
         if(player.position == "Batsmen"):
-            self.batsmenCount = self.batsmenCount + 1
+            self.batsmen_count = self.batsmen_count + 1
             pass
         if(player.position == "Bowler"):
-            self.bowlerCount = self.bowlerCount + 1
+            self.bowler_count = self.bowler_count + 1
             if player.bowling_type == "Spinner":
-                self.spinnerCount = self.spinnerCount + 1
+                self.spinner_count = self.spinner_count + 1
             else:
-                self.pacerCount = self.pacerCount + 1
+                self.pacer_count = self.pacer_count + 1
             pass
         if(player.position == "Allrounder"):
-            self.allRounderCount = self.allRounderCount+1
+            self.all_rounder_count = self.all_rounder_count+1
             if player.bowling_type == "Spinner":
-                self.spinnerCount = self.spinnerCount + 1
+                self.spinner_count = self.spinner_count + 1
             else:
-                self.pacerCount = self.pacerCount + 1
+                self.pacer_count = self.pacer_count + 1
             pass
         
         if player.batting_order == "Opener":
-            self.openerCount = self.openerCount + 1
+            self.opener_count = self.opener_count + 1
         elif player.batting_order == "Top Order":
-            self.topOrderCount = self.topOrderCount + 1
+            self.top_order_count = self.top_order_count + 1
         elif player.batting_order == "Middle Order":
-            self.midOrderCount = self.midOrderCount + 1
+            self.mid_order_count = self.mid_order_count + 1
         else:
-            self.lowOrderCount = self.lowOrderCount + 1
+            self.low_order_count = self.low_order_count + 1
 
-    def updateAverage(self, player):
+    def update_average(self, player):
             
             self.fielding_average = ( (self.fielding_average * (len(self.starting) -1)) + player.fielding) / (len(self.starting))
 
             if player.position == "Batsmen" or player.position == "Wicketkeeper":
-                self.batting_average = ( (self.batting_average * (self.batsmenCount + self.allRounderCount-1)) + player.batting) / (self.batsmenCount + self.allRounderCount)
+                self.batting_average = ( (self.batting_average * (self.batsmen_count + self.all_rounder_count-1)) + player.batting) / (self.batsmen_count + self.all_rounder_count)
 
             elif player.position == "Bowler":
-                self.bowling_average = ( (self.bowling_average * (self.bowlerCount + self.allRounderCount-1)) + player.bowling) / (self.bowlerCount + self.allRounderCount)
+                self.bowling_average = ( (self.bowling_average * (self.bowler_count + self.all_rounder_count-1)) + player.bowling) / (self.bowler_count + self.all_rounder_count)
                 if player.bowling_type == "Pacer":    
-                    self.pace_average = ( (self.pace_average * (self.pacerCount-1)) + player.bowling) / self.pacerCount
+                    self.pace_average = ( (self.pace_average * (self.pacer_count-1)) + player.bowling) / self.pacer_count
                 else:
-                    self.spin_average = ( (self.spin_average * (self.spinnerCount-1)) + player.bowling) / self.spinnerCount
+                    self.spin_average = ( (self.spin_average * (self.spinner_count-1)) + player.bowling) / self.spinner_count
                 pass
             else:
-                self.batting_average = ( (self.batting_average * (self.batsmenCount + self.allRounderCount-1)) + player.batting) / (self.batsmenCount + self.allRounderCount)
+                self.batting_average = ( (self.batting_average * (self.batsmen_count + self.all_rounder_count-1)) + player.batting) / (self.batsmen_count + self.all_rounder_count)
                 #UPDATE BOWLING AVERAGE
-                self.bowling_average = ( (self.bowling_average * (self.bowlerCount + self.allRounderCount-1)) + player.bowling) / (self.bowlerCount + self.allRounderCount)
+                self.bowling_average = ( (self.bowling_average * (self.bowler_count + self.all_rounder_count-1)) + player.bowling) / (self.bowler_count + self.all_rounder_count)
                 if player.bowling_type == "Pacer":    
-                    self.pace_average = ( (self.pace_average * (self.pacerCount-1)) + player.bowling) / self.pacerCount
+                    self.pace_average = ( (self.pace_average * (self.pacer_count-1)) + player.bowling) / self.pacer_count
                 else:
-                    self.spin_average = ( (self.spin_average * (self.spinnerCount-1)) + player.bowling) / self.spinnerCount
+                    self.spin_average = ( (self.spin_average * (self.spinner_count-1)) + player.bowling) / self.spinner_count
                 pass
     
     
-    def evaluateBatting(self):
+    def evaluate_batting(self):
         batSum = 0
-        batterCount = 0
+        batter_count = 0
         for player in self.lineup:
             if player.position != "Bowler":
                 batSum = batSum + player.batting
-                batterCount = batterCount + 1
-        batRating = batSum / batterCount
+                batter_count = batter_count + 1
+        batRating = batSum / batter_count
         return round(batRating)
         pass
-    def evaluateBowling(self):
+    def evaluate_bowling(self):
         bowlSum = 0;
-        bowlerCount = 0
+        bowler_count = 0
         for player in self.lineup:
             if player.position == "Bowler" or player.position == "Allrounder":
                 bowlSum = bowlSum + player.bowling
-                bowlerCount = bowlerCount + 1
-        bowlingRating = bowlSum / bowlerCount
+                bowler_count = bowler_count + 1
+        bowlingRating = bowlSum / bowler_count
         return round(bowlingRating)
     
-    def evaluateFielding(self):
+    def evaluate_fielding(self):
         fieldSum = 0
         for player in self.lineup:
             fieldSum = fieldSum + player.fielding
         return round(fieldSum/11)
 
-    def evaluateLineup(self):
+    def evaluate_lineup(self):
         pass
-    def evaluateTeam(self):
-
-    
-        # batting_average
-        # bowling_average
-        # fielding_average
-
-        # opening_rating
-        # top_order_rating
-        # mid_order_rating
-        # low_order_rating
-        
-        # pace_average
-        # spin_average
-        
-        # wicketkeeper
-
-        
+    def evaluate_team(self):        
         pass

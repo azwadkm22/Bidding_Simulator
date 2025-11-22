@@ -7,11 +7,11 @@ class BaseBidder:
         self.budget = budget
         self.team = team
     
-    def placeBid(self, player, running_price):
+    def place_bid(self, player, running_price):
         raise NotImplementedError("Subclasses must implement the placeBid method.")
     
-    def subtractPrice(self, running_price):
+    def subtract_price(self, running_price):
         self.budget = self.budget - running_price
     
-    def addPlayerToTeam(self, player):
-        self.team.addPlayer(player)
+    def add_player_to_team(self, player):
+        self.team.add_player(player)

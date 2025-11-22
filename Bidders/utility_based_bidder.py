@@ -1,6 +1,6 @@
 from Utils.probability_utils import get_probabilistic_answer
-
-PlayerDistribution = {
+from Team.team import Team
+PLAYER_DISTRIBUTION = {
     "Batsmen": 7,
     "Bowler": 7,
     "Allrounder": 5,
@@ -12,7 +12,7 @@ PlayerDistribution = {
 # Utility will be a function of players position
 class UtilityBasedBidder:
 
-    def __init__(self, name, trait, budget, team, focus, shortlist, expected_distribution):
+    def __init__(self, name, trait, budget, team: Team, focus, shortlist, expected_distribution):
         self.focus = focus
         self.trait = trait
         self.budget = budget
@@ -24,14 +24,14 @@ class UtilityBasedBidder:
         self.expected_distribution = expected_distribution
 
 
-    def calculateUtility(self, player, running_price):
+    def calculate_utility(self, player, running_price):
         utility = 0
         similar_players = self.team.findSimilarTeamPlayers(player)
         
         # print(player.name)
         if similar_players:
             # if player.position == "Batsmen":
-            utility = utility + (PlayerDistribution[player.position] - len(similar_players))
+            utility = utility + (PLAYER_DISTRIBUTION[player.position] - len(similar_players))
         else:
             utility = utility + 10
 
@@ -39,25 +39,22 @@ class UtilityBasedBidder:
 
         if player.position != "Bowler":
             if player.batting_order == "Opener":
-                if len(self.team.getTeamOpeners()) > 3:
+                if len(self.team.get_team_openers()) > 3:
                     utility = utility - 10    
             if player.batting_order == "Top Order":  
-                if len(self.team.getTeamTopOrder()) > 4:
+                if len(self.team.get_team_top_order()) > 4:
                     utility = utility - 10          
             if player.batting_order == "Middle Order":
-                if len(self.team.getTeamMidOrder()) > 4:
+                if len(self.team.get_team_mid_order()) > 4:
                     utility = utility - 10
             if player.batting_order == "Low Order":
-                if len(self.team.getTeamLowOrder()) > 3:
+                if len(self.team.get_team_low_order()) > 3:
                     utility = utility - 10
 
         sim_count_ut = utility
         utility = 0
 
-
-            
         # print("Similar Player Count Utility: ", utility)  
-        
 
         #Increase utility if player is better than similar players
         #Increase utility based on how good the player is compared to team players
@@ -127,8 +124,6 @@ class UtilityBasedBidder:
         # print("Similar Player Skill Utility: ", utility)  
         player_comp_ut = utility
 
-
-
         # Good player count utility
 
         utility = 0
@@ -137,7 +132,7 @@ class UtilityBasedBidder:
         good_allrounder_count = 0
         good_spinner_count = 0
         good_pacer_count = 0
-        for other in self.team.playerList:
+        for other in self.team.player_list:
             if other.position == "Batsmen" or other.position == "Wicketkeeper":
                 if other.batting >= 80:
                     good_batsmen_count = good_batsmen_count + 1
@@ -300,7 +295,7 @@ class UtilityBasedBidder:
         utility = 0
         if player.batting > 85 or player.bowling > 85:
             utility = utility + 20
-            for other in self.team.playerList:
+            for other in self.team.player_list:
                 if other.batting > player.batting or other.bowling > player.bowling:
                     utility = utility - 5
         star_ut = utility
@@ -378,7 +373,7 @@ class UtilityBasedBidder:
 
 
 
-        max_possible_utility = PlayerDistribution[player.position]*2 + 120
+        max_possible_utility = PLAYER_DISTRIBUTION[player.position]*2 + 120
 
         if similar_players:
             max_possible_utility = max_possible_utility + len(similar_players)*5
@@ -397,7 +392,7 @@ class UtilityBasedBidder:
         
         if self.team.number_of_players > 20:
             return 0
-        utility = self.calculateUtility(player, running_price)
+        utility = self.calculate_utility(player, running_price)
         if utility < 0:
             return 0
         elif utility > 1:

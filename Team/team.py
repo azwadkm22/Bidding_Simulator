@@ -1,30 +1,30 @@
 import random
 from Player.player import Player
 
-def printTeamPositionAndOrderDetails(team):
+def print_team_position_and_order_details(team):
 
-        openers = team.getTeamOpeners()
+        openers = team.get_team_Openers()
         openers = sorted(openers, key=lambda Player: Player.batting, reverse=True)
         
-        top_orders = team.getTeamTopOrder()
+        top_orders = team.get_team_TopOrder()
         top_orders = sorted(top_orders, key=lambda Player: Player.batting, reverse=True)
         
-        mid_orders = team.getTeamMidOrder()
+        mid_orders = team.get_team_MidOrder()
         mid_orders = sorted(mid_orders, key=lambda Player: Player.batting, reverse=True)
         
-        low_order = team.getTeamLowOrder()
+        low_order = team.get_team_LowOrder()
         low_order = sorted(low_order, key=lambda Player: Player.batting, reverse=True)
         
-        pacers = team.getTeamPacers()
+        pacers = team.get_team_Pacers()
         pacers = sorted(pacers, key=lambda Player: Player.bowling, reverse=True)
         
-        spinners = team.getTeamSpinners()
+        spinners = team.get_team_Spinners()
         spinners = sorted(spinners, key=lambda Player: Player.bowling, reverse=True)
         
-        all_rounders = team.getTeamAllrounders()
+        all_rounders = team.get_team_Allrounders()
         all_rounders = sorted(all_rounders, key=lambda x: (x.batting + x.bowling) / 2, reverse=True)
         
-        wicketkeepers = team.getTeamWicketkeepers()
+        wicketkeepers = team.get_team_Wicketkeepers()
         wicketkeepers = sorted(wicketkeepers, key=lambda Player: Player.batting, reverse=True)
 
         print("")
@@ -72,29 +72,29 @@ def printTeamPositionAndOrderDetails(team):
             p.printDetails()
             print("")
 
-def printTeamPositionAndOrderSummary(team):
-        openers = team.getTeamOpeners()
+def print_team_position_and_order_summary(team):
+        openers = team.get_team_Openers()
         openers = sorted(openers, key=lambda Player: Player.batting, reverse=True)
         
-        top_orders = team.getTeamTopOrder()
+        top_orders = team.get_team_TopOrder()
         top_orders = sorted(top_orders, key=lambda Player: Player.batting, reverse=True)
         
-        mid_orders = team.getTeamMidOrder()
+        mid_orders = team.get_team_MidOrder()
         mid_orders = sorted(mid_orders, key=lambda Player: Player.batting, reverse=True)
         
-        low_order = team.getTeamLowOrder()
+        low_order = team.get_team_LowOrder()
         low_order = sorted(low_order, key=lambda Player: Player.batting, reverse=True)
         
-        pacers = team.getTeamPacers()
+        pacers = team.get_team_Pacers()
         pacers = sorted(pacers, key=lambda Player: Player.bowling, reverse=True)
         
-        spinners = team.getTeamSpinners()
+        spinners = team.get_team_Spinners()
         spinners = sorted(spinners, key=lambda Player: Player.bowling, reverse=True)
         
-        all_rounders = team.getTeamAllrounders()
+        all_rounders = team.get_team_Allrounders()
         all_rounders = sorted(all_rounders, key=lambda x: (x.batting + x.bowling) / 2, reverse=True)
         
-        wicketkeepers = team.getTeamWicketkeepers()
+        wicketkeepers = team.get_team_Wicketkeepers()
         wicketkeepers = sorted(wicketkeepers, key=lambda Player: Player.batting, reverse=True)
 
         print("")
@@ -143,9 +143,9 @@ def printTeamPositionAndOrderSummary(team):
 
 
 class Team:
-    def __init__(self, TeamName):
-        self.name = TeamName
-        self.playerList = []
+    def __init__(self, team_name):
+        self.name = team_name
+        self.player_list = []
         self.number_of_players = 0
         self.number_of_batsmen = 0
         self.number_of_bowlers = 0
@@ -168,8 +168,8 @@ class Team:
         self.teamRating = 0
         self.fame_average = 0
     
-    def addPlayer(self, player):
-        self.playerList.append(player)
+    def addPlayer(self, player: Player):
+        self.player_list.append(player)
         self.number_of_players = self.number_of_players + 1
         self.fielding_average = ( (self.fielding_average * (self.number_of_players-1)) + player.fielding) / self.number_of_players
         #Handle Stars
@@ -224,7 +224,7 @@ class Team:
             if(player.position == "Wicketkeeper"):
                 self.number_of_wicketkeepers = self.number_of_wicketkeepers + 1
 
-    def printTeamData(self):
+    def print_team_ata(self):
         print(self.name)
         print("============================")
         print("Player Count: ", self.number_of_players)
@@ -250,7 +250,7 @@ class Team:
         print("### FAME ###", self.fame_average)
         print("Fielding Average", self.fielding_average)
 
-    def printTeamPlayerData(self):
+    def print_team_player_data(self):
         print(self.name)
         print("============================")
         print("Player Count: ", self.number_of_players)
@@ -259,7 +259,7 @@ class Team:
         print("Wicketkeeper Count: ", self.number_of_wicketkeepers)
         print("Allrounder Count: ", self.number_of_allrounders)
 
-    def findNewPlayerPriority(self, player):
+    def find_new_player_priority(self, player):
         priority = 0
         if player.position == "Bowler" or (player.position == "Allrounder" and player.bowling > 60):
             if player.bowling_type == "Spinner":
@@ -315,108 +315,109 @@ class Team:
                 priority = 1
         return priority
     
-    def printAllPlayerData(self):
-        for p in self.playerList:
+    def print_all_player_data(self):
+        for p in self.player_list:
             p.printDetails()
             print()
         
-    def getTeamOpeners(self):
+    def get_team_openers(self):
         openerList = []
-        for p in self.playerList:
+        for p in self.player_list:
             if p.batting_order == "Opener":
                 openerList.append(p)
         return openerList
 
-    def getTeamTopOrder(self):
+    def get_team_top_order(self):
         topOrderList = []
-        for p in self.playerList:
+        for p in self.player_list:
             if p.batting_order == "Top Order":
                 topOrderList.append(p)
         return topOrderList
 
-    def getTeamMidOrder(self):
+    def get_team_mid_order(self):
         midOrderList = []
-        for p in self.playerList:
+        for p in self.player_list:
             if p.batting_order == "Middle Order":
                 midOrderList.append(p)
         return midOrderList
     
-    def getTeamLowOrder(self):
+    def get_team_low_order(self):
         lowOrderList = []
-        for p in self.playerList:
+        for p in self.player_list:
             if p.batting_order == "Low Order":
                 lowOrderList.append(p)
         return lowOrderList
 
-    def getTeamPacers(self):
+    def get_team_pacers(self):
         pacerList = []
-        for p in self.playerList:
+        for p in self.player_list:
             if p.position == "Bowler" or p.position == "Allrounder":
                 if p.bowling_type == "Pacer":
                     pacerList.append(p)
         return pacerList
 
-    def getTeamSpinners(self):
+    def get_team_spinners(self):
         spinnerList = []
-        for p in self.playerList:
+        for p in self.player_list:
             if p.position == "Bowler" or p.position == "Allrounder":
                 if p.bowling_type == "Spinner":
                     spinnerList.append(p)
         return spinnerList
 
-    def getTeamBatsmen(self):
+    def get_team_batsmen(self):
         batsmenList = []
-        for p in self.playerList:
+        for p in self.player_list:
             if p.position == "Batsmen" or p.position == "Wicketkeeper":
                 batsmenList.append(p)
         return batsmenList
     
-    def getTeamAllrounders(self):
+    def get_team_allrounders(self):
         all_rounderList = []
-        for p in self.playerList:
+        for p in self.player_list:
             if p.position == "Allrounder":
                 all_rounderList.append(p)
         return all_rounderList
 
-    def getTeamWicketkeepers(self):
+    def get_team_wicketkeepers(self):
         wkList = []
-        for p in self.playerList:
+        for p in self.player_list:
             if p.position == "Wicketkeeper":
                 wkList.append(p)
         return wkList
 
 
-    def findMostPopular(self):
+    def find_most_popular(self):
         fame = -1
         famous_player = 0
-        for p in self.playerList:
+        for p in self.player_list:
             if p.fame > fame:
                 fame = p.fame
                 famous_player = p
         return famous_player
     
-    def findBestBatsman(self):
+    def find_best_batsman(self):
         bat = -1
         best_batsman = 0
-        for p in self.playerList:
+        for p in self.player_list:
             if p.batting > bat:
                 bat = p.batting
                 best_batsman = p
         return best_batsman
     
-    def findBestBowler(self):
+    def find_best_bowler(self):
         bat = -1
         best_bowler = 0
-        for p in self.playerList:
+        for p in self.player_list:
             if p.bowling > bat:
                 bat = p.bowling
                 best_bowler = p
         
         return best_bowler
-    def findBowlersOfType(self, bowling_type):
+    
+    def find_bowlers_of_type(self, bowling_type):
         if bowling_type == "Spinner":
-            spin = self.getTeamSpinners()
-            all_r = self.getTeamAllrounders()
+            spin = self.get_team_spinners()
+            all_r = self.get_team_allrounders()
             ret = []
             for p in spin:
                 if p not in all_r:
@@ -424,8 +425,8 @@ class Team:
             return ret
         
         if bowling_type == "Pacer":
-            pace = self.getTeamPacers()
-            all_r = self.getTeamAllrounders()
+            pace = self.get_team_pacers()
+            all_r = self.get_team_allrounders()
             ret = []
             for p in pace:
                 if p not in all_r:
@@ -434,16 +435,16 @@ class Team:
         
     def findSimilarTeamPlayers(self, player):
         if player.position == 'Bowler':
-            return self.findBowlersOfType(player.bowling_type)
+            return self.find_bowlers_of_type(player.bowling_type)
         
         elif player.position == "Allrounder":
-            return self.getTeamAllrounders()
+            return self.get_team_allrounders()
         
         elif player.position == "Batsmen":
-            return self.getTeamBatsmen()
+            return self.get_team_batsmen()
         
         elif player.position == "Wicketkeeper":
-            return self.getTeamWicketkeepers()
+            return self.get_team_wicketkeepers()
 
     def get_team_data_to_JSON(self):
         team_data = {}
@@ -471,7 +472,7 @@ class Team:
         team_data["teamRating"] = self.teamRating
         team_data["fame_average"] = self.fame_average
         team_data["players_data"] = {}
-        for p in self.playerList:
+        for p in self.player_list:
             team_data["players_data"][p.player_id] = p.get_JSON_data()
         
         return team_data
@@ -486,8 +487,8 @@ class Team:
 #     # x = input()
 #     # if x == " ":
 
-# # Team1.printTeamPlayerData()
-# Team1.printTeamData()
+# # Team1.print_team_player_data()
+# Team1.print_team_ata()
 
 # print("")
 # print("")
@@ -496,19 +497,19 @@ class Team:
 # print("MOST FAMOUS")
 
 # print("")
-# famP = Team1.findMostPopular()
+# famP = Team1.find_mostPopular()
 # famP.printDetails()
 
 
 # print("BEST BATTING")
 
 # print("")
-# famP = Team1.findBestBowler()
+# famP = Team1.find_best_Bowler()
 # famP.printDetails()
 
 
 # print("BEST BOWLING")
 
 # print("")
-# famP = Team1.findBestBatsman()
+# famP = Team1.find_best_Batsman()
 # famP.printDetails()
