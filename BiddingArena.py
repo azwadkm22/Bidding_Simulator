@@ -10,24 +10,14 @@ from Team.shortlister import ShortList, makeShortList
 from Bidders.utility_based_bidder import UtilityBasedBidder
 from player_generation import get_list_of_players
 from generation_stats import GenerationStat
-from showcase_utils import *
+from showcase_utils import print_summary_of_generation, count_ratio
 
 ListOfPlayers = get_list_of_players(250)
-
-print(ListOfPlayers)
-input()
-
 ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)
-
-print(len(ListOfPlayers))
-
-for p in ListOfPlayers:
-    p.printInLine()
-input()
 
 current_generation = GenerationStat(ListOfPlayers)
 print_summary_of_generation(current_generation)
-
+count_ratio(current_generation)
 NUM_OF_TEAMS = 13
 
 teamNames = []

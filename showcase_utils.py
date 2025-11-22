@@ -1,5 +1,7 @@
 from generation_stats import GenerationStat
 from Player.player import Player
+
+
 def print_title_board(title: str):
     print("########")
     print("")
@@ -8,7 +10,6 @@ def print_title_board(title: str):
     print("########")
 
 def print_summary_of_generation(genStat: GenerationStat):
-
     print_title_board("Best Wicketkeepers")
     for pl in genStat.top_eight_wicketkeepers:
         pl.printSkill()
@@ -118,35 +119,35 @@ def showcase_player(player: Player, genStat: GenerationStat):
         print("What do you think, will he be bought this time?")
         print("If I had to say a price, I wouldn't suggest anything more than", (int(player.estimated_price/10)+1)*10, "Million")
 
-    def countRatio(genStat: GenerationStat):
-        bat = 0
-        bowl = 0
-        spin = 0
-        pace = 0
-        wk = 0
-        allr = 0
-        trainee = 0
-        for player in genStat.list_of_players:
-            if player.position == "Batsmen":
-                bat = bat + 1
-            elif player.position == "Wicketkeeper":
-                wk = wk + 1
-            elif player.position == "Allrounder":
-                allr = allr + 1
-            elif player.position == "Bowler":
-                bowl = bowl + 1
-                if player.bowling_type == "Spinner":
-                    spin = spin + 1
-                if player.bowling_type == "Pacer":
-                    pace = pace + 1
-            else:
-                player.printSkill()
-                trainee = trainee + 1
+def count_ratio(genStat: GenerationStat):
+    bat = 0
+    bowl = 0
+    spin = 0
+    pace = 0
+    wk = 0
+    allr = 0
+    trainee = 0
+    for player in genStat.list_of_players:
+        if player.position == "Batsmen":
+            bat = bat + 1
+        elif player.position == "Wicketkeeper":
+            wk = wk + 1
+        elif player.position == "Allrounder":
+            allr = allr + 1
+        elif player.position == "Bowler":
+            bowl = bowl + 1
+            if player.bowling_type == "Spinner":
+                spin = spin + 1
+            if player.bowling_type == "Pacer":
+                pace = pace + 1
+        else:
+            player.printSkill()
+            trainee = trainee + 1
 
-        print("Batsmen Count: ", bat)
-        print("Wicketkeeper Count: ", wk)
-        print("Allrounder Count: ", allr)
-        print("Bowler Count: ", bowl)
-        print("Spinner Count: ", spin)
-        print("Pacer Count: ", pace)
-        print("Trainee Count: ", trainee)
+    print("Batsmen Count: ", bat)
+    print("Wicketkeeper Count: ", wk)
+    print("Allrounder Count: ", allr)
+    print("Bowler Count: ", bowl)
+    print("Spinner Count: ", spin)
+    print("Pacer Count: ", pace)
+    print("Trainee Count: ", trainee)
