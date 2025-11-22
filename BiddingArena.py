@@ -10,7 +10,7 @@ from Team.shortlister import ShortList, makeShortList
 from Bidders.utility_based_bidder import UtilityBasedBidder
 from player_generation import get_list_of_players
 from generation_stats import GenerationStat
-from showcase_utils import print_summary_of_generation, count_ratio
+from showcase_utils import print_summary_of_generation, count_ratio, showcase_player, print_title_board
 
 ListOfPlayers = get_list_of_players(250)
 ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)
