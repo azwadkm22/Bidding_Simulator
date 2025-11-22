@@ -225,7 +225,6 @@ class Team:
             if(player.position == "Wicketkeeper"):
                 self.number_of_wicketkeepers = self.number_of_wicketkeepers + 1
 
-    
     def printTeamData(self):
         print(self.name)
         print("============================")

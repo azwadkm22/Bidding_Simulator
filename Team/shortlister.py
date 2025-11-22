@@ -58,12 +58,6 @@ class ShortList:
 
         for player in self.players:
             player.printSummary()
-        
-        
-    
-
-
-
 
 def makeShortList(playerList, teamNames, estimatedCostMax=3000):
     teamShortList = {}

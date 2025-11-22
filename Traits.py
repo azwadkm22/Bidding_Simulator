@@ -1,6 +1,3 @@
-
-
-
 class Trait:
     def __init__(self, typeOfTrait, name, attr):
         self.type = typeOfTrait

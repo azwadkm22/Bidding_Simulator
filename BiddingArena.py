@@ -1,11 +1,11 @@
 import time
 import random
-from TeamNameGenerator import createTeamName
-from TeamStrength import findTeamStrength
+from Team.team_name_generator import createTeamName
+from Team.team_strength import findTeamStrength
 from Player.player import Player
-from Team import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
-from StartingEleven import StartingEleven
-from Shortlister import ShortList, makeShortList
+from Team.team import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
+from Team.starting_eleven import StartingEleven
+from Team.shortlister import ShortList, makeShortList
 from Bidders.utility_based_bidder import UtilityBasedBidder
 
 def GenerateNPlayerList(n):

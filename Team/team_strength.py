@@ -1,4 +1,4 @@
-from Team import Team
+from Team.team import Team
 
 
 def findTeamStrength(team: Team):
