@@ -1,38 +1,57 @@
-import Player.player_name_generator as player_name_generator
+
+from Player.name_generator.player_name_generator import getPlayerName
+
 from random import randint
 from ProbabilisticFunctionsModule import get_random_normal_distribution_number_biased
 import random
 
 class Player():
-      
-    def __init__(self):
-        self.name = player_name_generator.getPlayerName()
-        self.batting = get_random_normal_distribution_number_biased(20, 96)
-        bowlSkillStart = 20
-        if self.batting > 75:
-            bowlSkillStart = 10
-        elif self.batting < 50:
-            bowlSkillStart = 30
-        self.bowling = get_random_normal_distribution_number_biased(bowlSkillStart, 96)
-        self.fielding = get_random_normal_distribution_number_biased(50, 85, 15)
-        self.position = self.getPosition()
-        if self.position == "Trainee":
-            self.fielding = 45
-        fameLowbound = max(self.batting-10, self.bowling-10, self.fielding-30, 10)
-        fameHighbound = max(self.batting-5, self.bowling-5, self.fielding-20, 70)
-        self.fame = 50#get_random_normal_distribution_number_biased(fameLowbound, fameHighbound)
 
-        self.estimated_price = self.getEstimatedPrice()
-        
-        self.batting_hand = random.choice(["Left", "Right"])
+    def __init__(self, player_id, json_data = None):
 
-        self.bowling_type = random.choice(["Spinner", "Pacer"])
+        if json_data == None:
+            self.player_id = player_id
+            self.name = getPlayerName()
+            self.batting = get_random_normal_distribution_number_biased(20, 96)
+            bowlSkillStart = 20
+            if self.batting > 75:
+                bowlSkillStart = 10
+            elif self.batting < 50:
+                bowlSkillStart = 30
+            self.bowling = get_random_normal_distribution_number_biased(bowlSkillStart, 96)
+            self.fielding = get_random_normal_distribution_number_biased(50, 85, 15)
+            self.position = self.getPosition()
+            if self.position == "Trainee":
+                self.fielding = 45
+            fameLowbound = max(self.batting-10, self.bowling-10, self.fielding-30, 10)
+            fameHighbound = max(self.batting-5, self.bowling-5, self.fielding-20, 70)
+            self.fame = 50#get_random_normal_distribution_number_biased(fameLowbound, fameHighbound)
 
-        self.bowling_style = self.pickBowlingStyle()
+            self.estimated_price = self.getEstimatedPrice()
+            
+            self.batting_hand = random.choice(["Left", "Right"])
 
-        self.batting_order = self.pickBattingOrder()
-        
-        self.selling_price = 0
+            self.bowling_type = random.choice(["Spinner", "Pacer"])
+
+            self.bowling_style = self.pickBowlingStyle()
+
+            self.batting_order = self.pickBattingOrder()
+            
+            self.selling_price = 0
+        else:
+            self.player_id = player_id
+            self.name = json_data["name"]
+            self.batting = json_data["batting"]
+            self.bowling = json_data["bowling"]
+            self.fielding = json_data["fielding"]
+            self.position = json_data["position"]
+            self.fame = json_data["fame"]
+            self.estimated_price = json_data["estimated_price"]
+            self.batting_hand = json_data["batting_hand"]
+            self.bowling_type = json_data["bowling_type"]
+            self.bowling_style = json_data["bowling_style"]
+            self.batting_order = json_data["batting_order"]
+            self.selling_price = json_data["selling_price"]
  
     def printDetails(self):
         print(self.name)
@@ -185,6 +204,23 @@ class Player():
         price = int((batting*battingWeight + bowling*bowlingWeight + fielding*fieldingWeight) * 40) * 2
 
         return price
+    
+    def get_JSON_data(self):
+        return {
+            "name": self.name,
+            "batting": self.batting,
+            "bowling": self.bowling,
+            "fielding": self.fielding,
+            "position": self.position,
+            "fame": self.fame,
+            "estimated_price": self.estimated_price,
+            "batting_hand": self.batting_hand,
+            "bowling_type": self.bowling_type,
+            "bowling_style": self.bowling_style,
+            "batting_order": self.batting_order,
+            "selling_price": self.selling_price
+        }
+        
 
 
 # lowestEP = 1000000
