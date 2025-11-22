@@ -1,5 +1,7 @@
 import time
 import random
+import json
+from pathlib import Path
 from Team.team_name_generator import createTeamName
 from Team.team_strength import findTeamStrength
 from Player.player import Player
@@ -8,13 +10,27 @@ from Team.starting_eleven import StartingEleven
 from Team.shortlister import ShortList, makeShortList
 from Bidders.utility_based_bidder import UtilityBasedBidder
 
+generated_players = {}
+
 def GenerateNPlayerList(n):
     ListOfPlayers = []
 
     for i in range(n):
-        NewPlayer = Player()
+        NewPlayer = Player(i)
+        generated_players[i] = NewPlayer.get_JSON_data()
         ListOfPlayers.append(NewPlayer)
     return ListOfPlayers
+
+
+def generate_player_list_from_JSON(n):
+    ListOfPlayers = []
+
+    for i in range(n):
+        new_player = Player(player_id=i, json_data=generated_players[f"{i}"])
+        ListOfPlayers.append(new_player)
+
+    return ListOfPlayers
+
 
 def getPlayerSubset(playerList, role):
     subList = []
@@ -126,8 +142,20 @@ def FindPlayersWithStatsAbove(playerList, stat, value):
                 lop.append(player)
     return lop
 
+file_path = Path("./generated/generated_players_data.json")
 
-ListOfPlayers = GenerateNPlayerList(250)
+ListOfPlayers = []
+
+if file_path.exists():
+    with open(file_path, 'r') as f:
+        generated_players = json.load(f)
+        print(generated_players)
+        ListOfPlayers = generate_player_list_from_JSON(250)
+else:
+    ListOfPlayers = GenerateNPlayerList(250)
+    with open(f"./generated/generated_players_data.json", 'w') as f:
+        json.dump(generated_players, f, indent=4)
+
 print(ListOfPlayers)
 input()
 TopTenBatsmen = FindTopNPlayerInCategory(ListOfPlayers, 10, "Batting")
@@ -350,8 +378,6 @@ input()
 
 teamShortList, rivalsForPlayers = makeShortList(list(PlayersAbove80), teamNames)
 
-
-
 BidderList = []
 TeamList = []
 
@@ -370,19 +396,19 @@ for i in range(NUM_OF_TEAMS):
 
 
 
-# def printTeamShortLists():
-#     for teamShort in teamShortList:
-#         print("###", teamShort, "###")
-#         teamShortList[teamShort].printShortList()
-#         print("")
+def printTeamShortLists():
+    for teamShort in teamShortList:
+        print("###", teamShort, "###")
+        teamShortList[teamShort].printShortList()
+        print("")
 
-# def printPlayerRivals():
-#     for player in rivalsForPlayers:
-#         print("Teams eyeing him: ", rivalsForPlayers[player])
-#         player.printSummary()
+def printPlayerRivals():
+    for player in rivalsForPlayers:
+        player.printSummary()
+        print("Teams eyeing him: ", rivalsForPlayers[player])
 
-# printTeamShortLists()
-# printPlayerRivals()
+printTeamShortLists()
+printPlayerRivals()
 
 
 unsold_players = []
@@ -419,7 +445,7 @@ for p in ListOfPlayers:
     not_sold = True
     placed_bid_this_round = False
     print("The player is now going up for bidding.")
-    #time.sleep(1)
+    ##time.sleep(1)
     currentBidder = 0
     bidCounter = 0
     running_price = 10
@@ -432,14 +458,14 @@ for p in ListOfPlayers:
         print("Reminder to everyone", p.name, "'s current price is", running_price)
         if(bidCounter == 0):
             print("Do I get a bid from anyone?")
-            #time.sleep(1)
+            ##time.sleep(1)
             run = run + 1
         if(bidCounter == 1):
             print("Going once.")
-            #time.sleep(1)
+            ##time.sleep(1)
         if(bidCounter == 2):
             print("Going Twice..")
-            #time.sleep(1)
+            ##time.sleep(1)
         if(bidCounter == 3):
             print("Going Thrice...")
             print("")
@@ -453,12 +479,12 @@ for p in ListOfPlayers:
             currentBidder.addPlayerToTeam(p)
             highestPrice = max(highestPrice, running_price)
 
-            #time.sleep(2)
+            ##time.sleep(2)
         if(run > 2):
             print(p.name, "remains unsold.")
             not_sold = False
             unsold_players.append(p)
-            #time.sleep(1)
+            ##time.sleep(1)
             continue
 
         placed_bid_this_round = False
@@ -532,7 +558,7 @@ for p in unsold_players:
             print(p.name, "remains unsold.")
             not_sold = False
             
-            #time.sleep(1)
+            ##time.sleep(1)
             continue
 
         placed_bid_this_round = False
@@ -564,7 +590,7 @@ print()
 print()
 print("NOW TIME FOR THE TEAMS TO PRESENT THEMSELVES")  
 
-# #time.sleep(2)
+# ##time.sleep(2)
 
 TeamLineupRatings = {}
 
@@ -572,10 +598,16 @@ for bd in BidderList:
     
     PrintTitleBoard(bd.name)
     print("Remaining Budget: ", bd.budget)
-    # #time.sleep(2)
+    # ##time.sleep(2)
     # bd.team.printTeamData()
     # printTeamPositionAndOrderSummary(bd.team)
     findTeamStrength(bd.team)
+    team_json_data = bd.team.get_team_data_to_JSON()
+
+
+    with open(f"./generated/teams/{bd.name}.json", 'w') as f:
+        json.dump(team_json_data, f, indent=4)
+
     input()
     # Generate Team Strengths and Weaknesses from the gathered Squad
     # Insert the strength and weakness into the starting eleven creator
@@ -587,7 +619,7 @@ for bd in BidderList:
     print()
     TeamLineupRatings[bd.name] = {"Bidder": bd.trait, "Batting" :startEleven.evaluateBatting() , "Bowling" :startEleven.evaluateBowling(), "Fielding": startEleven.evaluateFielding()}
     startEleven.printBench()
-    # #time.sleep(2)
+    # ##time.sleep(2)
     # print()
     # startEleven.printBenchedPlayers()
 # DhakaStart = StartingEleven()

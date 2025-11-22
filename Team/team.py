@@ -143,7 +143,6 @@ def printTeamPositionAndOrderSummary(team):
 
 
 class Team:
-    
     def __init__(self, TeamName):
         self.name = TeamName
         self.playerList = []
@@ -446,6 +445,36 @@ class Team:
         elif player.position == "Wicketkeeper":
             return self.getTeamWicketkeepers()
 
+    def get_team_data_to_JSON(self):
+        team_data = {}
+        
+        team_data["team_name"] = self.name
+        team_data["number_of_players"] = self.number_of_players
+        team_data["number_of_batsmen"] = self.number_of_batsmen
+        team_data["number_of_bowlers"] = self.number_of_bowlers
+        team_data["number_of_allrounders"] = self.number_of_allrounders
+        team_data["number_of_wicketkeepers"] = self.number_of_wicketkeepers
+        team_data["number_of_pacers"] = self.number_of_pacers
+        team_data["number_of_spinners"] = self.number_of_spinners
+        team_data["number_of_stars"] = self.number_of_stars
+        team_data["batting_average"] = self.batting_average
+        team_data["bowling_average"] = self.bowling_average
+        team_data["fielding_average"] = self.fielding_average
+        team_data["pace_bowling_average"] = self.pace_bowling_average
+        team_data["spin_bowling_average"] = self.spin_bowling_average
+        team_data["number_of_openers"] = self.number_of_openers
+        team_data["number_of_right_handed_batsmen"] = self.number_of_right_handed_batsmen
+        team_data["number_of_left_handed_batsmen"] = self.number_of_left_handed_batsmen
+        team_data["top_order_batsmen"] = self.top_order_batsmen
+        team_data["mid_order_batsmen"] = self.mid_order_batsmen
+        team_data["low_order_batsmen"] = self.low_order_batsmen
+        team_data["teamRating"] = self.teamRating
+        team_data["fame_average"] = self.fame_average
+        team_data["players_data"] = {}
+        for p in self.playerList:
+            team_data["players_data"][p.player_id] = p.get_JSON_data()
+        
+        return team_data
 
 
 
