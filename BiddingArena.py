@@ -1,7 +1,6 @@
 import time
 import random
 import json
-from Team.team_name_generator import createTeamName
 from Team.team_strength import findTeamStrength
 from Player.player import Player
 from Team.team import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
@@ -10,94 +9,35 @@ from Team.shortlister import ShortList, makeShortList
 from Bidders.utility_based_bidder import UtilityBasedBidder
 from Player.generate_players import get_list_of_players
 from Player.player_generation_stats import PlayerGenStat
-from showcase_utils import print_summary_of_generation, count_ratio, showcase_player, print_title_board
+
+from Team.generate_teams import generate_teams, generate_bidders
+from Team.team_generation_stats import TeamGenStat
+from showcase_utils import *
 
 # Generate Players
 ListOfPlayers = get_list_of_players(250)
 ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)
 
-current_generation = PlayerGenStat(ListOfPlayers)
-print_summary_of_generation(current_generation)
-count_ratio(current_generation)
-
+current_player_generation = PlayerGenStat(ListOfPlayers)
+print_summary_of_generation(current_player_generation)
+count_ratio(current_player_generation)
 
 # Generate Teams
 NUM_OF_TEAMS = 13
 
-teamNames = []
+team_list = generate_teams(NUM_OF_TEAMS)
 
-for i in range(NUM_OF_TEAMS):
-    teamNames.append(createTeamName())
-    print(teamNames[i])
-    
-input()
+current_team_generation = TeamGenStat(team_list=team_list, player_generation=current_player_generation)
 
-teamShortList, rivalsForPlayers = makeShortList(list(current_generation.players_above_80), teamNames)
+bidder_list = generate_bidders(NUM_OF_TEAMS, current_team_generation)
 
-BidderList = []
-TeamList = []
-
-for i in range(NUM_OF_TEAMS):
-    TeamList.append(Team(teamNames[i]))
-
-# Rajshahi = Team("Rajshahi")
-# Dhaka = Team("Dhaka")
-# Sylhet = Team("Sylhet")
-# Khulna = Team("Khulna")
-# Barishal = Team("Barishal")
-# Noakhali = Team("Noakhali")
-# Chittagong = Team("Chittagong")
-# Rangpur = Team("Rangpur")
-# Cumilla = Team("Cumilla")
-
-
-
-def printTeamShortLists():
-    for teamShort in teamShortList:
-        print("###", teamShort, "###")
-        teamShortList[teamShort].printShortList()
-        print("")
-
-def printPlayerRivals():
-    for player in rivalsForPlayers:
-        player.printSummary()
-        print("Teams eyeing him: ", rivalsForPlayers[player])
-
-printTeamShortLists()
-printPlayerRivals()
-
+printTeamShortLists(current_team_generation)
+printPlayerRivals(current_team_generation)
 
 unsold_players = []
-
-RajshahiIdeal = {
-    "Batsmen" : 8,
-    "Spinner": 3,
-    "Pacer": 5,
-    "Allrounder": 3,
-    "Wicketkeeper": 2,
-    "Trainee": 0
-}
-Possible_Traits = ['Safe', 'Risky', 'Patient', 'Rigid', 'Flexible']
-BUDGET = 2000
-for i in range(NUM_OF_TEAMS):
-    trait = random.choice(Possible_Traits)
-    name = teamNames[i]
-    BidderList.append(UtilityBasedBidder(
-        name,
-        trait,
-        BUDGET,
-        TeamList[i],
-        [],
-        teamShortList[name],
-        []
-    ))
-
-
-print(len(BidderList))
-input()
 highestPrice = 0
 for p in ListOfPlayers:
-    showcase_player(p, current_generation)
+    showcase_player(p, current_player_generation)
     not_sold = True
     placed_bid_this_round = False
     print("The player is now going up for bidding.")
@@ -107,8 +47,8 @@ for p in ListOfPlayers:
     running_price = 10
     run = 0
 
-    if p in rivalsForPlayers.keys() :
-        print("Teams eyeing him: ", rivalsForPlayers[p])
+    if p in current_team_generation.rivals_for_players.keys() :
+        print("Teams eyeing him: ", current_team_generation.rivals_for_players[p])
     while(not_sold):
         # input()
         print("Reminder to everyone", p.name, "'s current price is", running_price)
@@ -144,12 +84,12 @@ for p in ListOfPlayers:
             continue
 
         placed_bid_this_round = False
-        for bidder in BidderList:
+        for bidder in bidder_list:
             print(bidder.name, bidder.trait, f"-UTILITY: {bidder.playerUtility}")
 
         # input()
-        random.shuffle(BidderList)
-        for bidder in BidderList:
+        random.shuffle(bidder_list)
+        for bidder in bidder_list:
             if bidder != currentBidder:
                 if bidder.placeBid(p, running_price+5) == 1:
                     if bidCounter == 0:
@@ -172,7 +112,7 @@ input()
 
 
 for p in unsold_players:
-    showcase_player(p, current_generation)
+    showcase_player(p, current_player_generation)
     not_sold = True
     placed_bid_this_round = False
     print("The player is now going up for bidding.")
@@ -182,8 +122,8 @@ for p in unsold_players:
     running_price = 10
     run = 0
 
-    if p in rivalsForPlayers.keys() :
-        print("Teams eyeing him: ", rivalsForPlayers[p])
+    if p in current_team_generation.rivals_for_players.keys() :
+        print("Teams eyeing him: ", current_team_generation.rivals_for_players[p])
     while(not_sold):
         print("Reminder to everyone", p.name, "'s current price is", running_price)
         if(bidCounter == 0):
@@ -218,11 +158,11 @@ for p in unsold_players:
             continue
 
         placed_bid_this_round = False
-        for bidder in BidderList:
+        for bidder in bidder_list:
             print(bidder.name, f"-UTILITY: {bidder.playerUtility}")
         # input()
-        random.shuffle(BidderList)
-        for bidder in BidderList:
+        random.shuffle(bidder_list)
+        for bidder in bidder_list:
             if bidder != currentBidder:
                 if bidder.placeBid(p, running_price+5) == 1:
                     if bidCounter == 0:
@@ -250,7 +190,7 @@ print("NOW TIME FOR THE TEAMS TO PRESENT THEMSELVES")
 
 TeamLineupRatings = {}
 
-for bd in BidderList:
+for bd in bidder_list:
     
     print_title_board(bd.name)
     print("Remaining Budget: ", bd.budget)

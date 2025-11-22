@@ -44,9 +44,6 @@ class ShortList:
         return self.players
     
     def printShortList(self):
-
-        
-
         print("Shortlisted Batsmen: ", self.batCount)
         print("Shortlisted Bowler: ", self.bowlCount)
         print("Shortlisted Spinner: ", self.spinnerCount)
@@ -55,11 +52,10 @@ class ShortList:
         print("Shortlisted WicketKeeper: ", self.wicketKeeperCount)
         print("Shortlisted Estimated Cost: ", self.estimatedCost)
 
-
         for player in self.players:
-            player.printSummary()
+            player.printInLine()
 
-def makeShortList(playerList, teamNames, estimatedCostMax=3000):
+def makeShortList(playerList, teams, estimatedCostMax=3000):
     teamShortList = {}
     cost = 0
     for player in playerList:
@@ -68,8 +64,8 @@ def makeShortList(playerList, teamNames, estimatedCostMax=3000):
     estimatedCostMax = (cost / len(playerList)) * 15
     # print(estimatedCostMax)
     rivalsForPlayers = {}
-    for team in teamNames:
-        teamShortList[team] = ShortList()
+    for team in teams:
+        teamShortList[team.name] = ShortList()
     
     while(len(playerList) > 0):
         player = random.choice(playerList)

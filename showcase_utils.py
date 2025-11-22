@@ -1,5 +1,6 @@
 from Player.player_generation_stats import PlayerGenStat
 from Player.player import Player
+from Team.team_generation_stats import TeamGenStat
 
 
 def print_title_board(title: str):
@@ -151,3 +152,16 @@ def count_ratio(genStat: PlayerGenStat):
     print("Spinner Count: ", spin)
     print("Pacer Count: ", pace)
     print("Trainee Count: ", trainee)
+
+
+
+def printTeamShortLists(team_gen_stat : TeamGenStat):
+    for teamShort in team_gen_stat.team_short_list:
+        print("###", teamShort, "###")
+        team_gen_stat.team_short_list[teamShort].printShortList()
+        print("")
+
+def printPlayerRivals(team_gen_stat : TeamGenStat):
+    for player in team_gen_stat.rivals_for_players:
+        player.printInLine()
+        print("Teams eyeing him: ", team_gen_stat.rivals_for_players[player])
