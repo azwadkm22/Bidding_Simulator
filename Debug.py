@@ -1,7 +1,7 @@
-from Player import Player
+from Player.player import Player
 from Team import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
 from StartingEleven import StartingEleven
-from UtilityBasedBidder import UtilityBasedBidder
+from Bidders.utility_based_bidder import UtilityBasedBidder
 import random
 
 

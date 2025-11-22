@@ -1,122 +1,12 @@
-import PlayerNameGenerator
+import Player.player_name_generator as player_name_generator
 from random import randint
 from ProbabilisticFunctionsModule import get_random_normal_distribution_number_biased
 import random
 
-
-# def get_random_normal_distribution_number_biased(start, end):
-#     return random.gauss(mu, sigma)
-
-# get_random_normal_distribution_number_biased(0, 99)
-# check_distribution(10, 99)
-
-
-def pickBowlingStyle(bowling_type, bowling):
-    if bowling_type == "Spinner":
-        return random.choice(["Off-Spin", "Leg-Spin", "Left-arm orthodox spin", "Left-arm unorthodox spin"])
-    else:
-        if(bowling > 95):
-            return "Fast"
-        elif(bowling > 90):
-            return random.choice(["Fast", "Fast-medium"])
-        elif(bowling > 80):
-            return random.choice(["Fast", "Fast-medium", "Medium"])
-        elif(bowling > 70):
-            return random.choice(["Fast-medium", "Medium", "Slow"])
-        else:
-            return random.choice(["Medium", "Slow"])
-
-def pickBattingOrder(position, batting):
-    if position == "Bowler":
-        return "Low Order"
-    
-    roll = random.randint(0, 100)
-    if(roll > 75):
-        return "Opener"
-    elif(roll > 45):
-        return "Top Order"
-    elif(roll > 15):
-        return "Middle Order"
-    else:
-        return "Low Order"
-
-
-    
-def getPosition(batting, bowling, fielding):
-
-    if batting < 50 and bowling < 50:
-        return "Trainee"
-    
-    if((abs(batting - bowling) < 10 and batting > 60) or (batting > 75 and bowling > 70)):
-        return "Allrounder"
-    elif(batting > bowling):
-        if(bowling < 40 and fielding > 75):
-            return "Wicketkeeper"
-        elif (batting - bowling > 30 and fielding > 70 and batting > 80):
-            return "Wicketkeeper"
-        else:
-            return "Batsmen"
-    elif bowling > batting:
-        return "Bowler"
-    else:
-        return "Trainee"
-
-def getEstimatedPrice(batting, bowling, fielding, fame, position):
-
-    batting = (batting - 10) / (99 - 10)
-    bowling = (bowling - 10) / (99 - 10)
-    fielding = (fielding - 30) / (90 - 30)
-    fame = (fame - 10) / (90 - 10)
-
-    fameWeight = 0.5
-    fieldingWeight = 0.5
-    battingWeight = 0.5
-    bowlingWeight = 0.5
-    # Batting + Bowling + Fielding = 2
-    if position == "Batsmen":
-        battingWeight = 1.8
-        fieldingWeight = 0.2
-        bowlingWeight = 0
-    elif position == "Bowler":
-        battingWeight = 0
-        bowlingWeight = 1.8
-        fieldingWeight = 0.2
-    elif position == "Wicketkeeper":
-        battingWeight = 1.7
-        fieldingWeight = 0.3
-        bowlingWeight = 0
-    elif position == "Allrounder":
-        battingWeight = .9
-        bowlingWeight = .8
-        fieldingWeight = 0.2
-    
-        
-    price = int((batting*battingWeight + bowling*bowlingWeight + fielding*fieldingWeight) * 40) * 2
-
-    return price
-
 class Player():
-    """
-
-    """
-    # def __init__(self, name, batting, bowling, fielding, position, fame, batting_hand, bowling_type, bowling_style, batting_order):
-    #     self.name = name
-    #     self.batting = batting
-    #     self.bowling = bowling
-    #     self.fielding = fielding
-    #     self.position = position
-    #     self.fame = fame
-    #     self.estimated_price = getEstimatedPrice(self.batting, self.bowling, self.fielding, self.fame, self.position)
-    #     self.batting_hand = batting_hand
-
-    #     self.bowling_type = bowling_type
-
-    #     self.bowling_style = bowling_style
-    #     self.batting_order = batting_order
-    #     self.selling_price = 0
       
     def __init__(self):
-        self.name = PlayerNameGenerator.getPlayerName()
+        self.name = player_name_generator.getPlayerName()
         self.batting = get_random_normal_distribution_number_biased(20, 96)
         bowlSkillStart = 20
         if self.batting > 75:
@@ -125,22 +15,22 @@ class Player():
             bowlSkillStart = 30
         self.bowling = get_random_normal_distribution_number_biased(bowlSkillStart, 96)
         self.fielding = get_random_normal_distribution_number_biased(50, 85, 15)
-        self.position = getPosition(self.batting, self.bowling, self.fielding)
+        self.position = self.getPosition()
         if self.position == "Trainee":
             self.fielding = 45
         fameLowbound = max(self.batting-10, self.bowling-10, self.fielding-30, 10)
         fameHighbound = max(self.batting-5, self.bowling-5, self.fielding-20, 70)
         self.fame = 50#get_random_normal_distribution_number_biased(fameLowbound, fameHighbound)
 
-        self.estimated_price = getEstimatedPrice(self.batting, self.bowling, self.fielding, self.fame, self.position)
+        self.estimated_price = self.getEstimatedPrice()
         
         self.batting_hand = random.choice(["Left", "Right"])
 
         self.bowling_type = random.choice(["Spinner", "Pacer"])
 
-        self.bowling_style = pickBowlingStyle(self.bowling_type, self.bowling)
+        self.bowling_style = self.pickBowlingStyle()
 
-        self.batting_order = pickBattingOrder(self.position, self.batting)
+        self.batting_order = self.pickBattingOrder()
         
         self.selling_price = 0
  
@@ -215,6 +105,86 @@ class Player():
             print(f' Sold At:{self.selling_price}', end="")
 
         print(f', Est: {self.estimated_price}')
+
+    def getPosition(self):
+        if self.batting < 50 and self.bowling < 50:
+            return "Trainee"
+        
+        if((abs(self.batting - self.bowling) < 10 and self.batting > 60) or (self.batting > 75 and self.bowling > 70)):
+            return "Allrounder"
+        elif(self.batting > self.bowling):
+            if(self.bowling < 40 and self.fielding > 75):
+                return "Wicketkeeper"
+            elif (self.batting - self.bowling > 30 and self.fielding > 70 and self.batting > 80):
+                return "Wicketkeeper"
+            else:
+                return "Batsmen"
+        elif self.bowling > self.batting:
+            return "Bowler"
+        else:
+            return "Trainee"
+        
+    def pickBowlingStyle(self):
+        if self.bowling_type == "Spinner":
+            return random.choice(["Off-Spin", "Leg-Spin", "Left-arm orthodox spin", "Left-arm unorthodox spin"])
+        else:
+            if(self.bowling > 95):
+                return "Fast"
+            elif(self.bowling > 90):
+                return random.choice(["Fast", "Fast-medium"])
+            elif(self.bowling > 80):
+                return random.choice(["Fast", "Fast-medium", "Medium"])
+            elif(self.bowling > 70):
+                return random.choice(["Fast-medium", "Medium", "Slow"])
+            else:
+                return random.choice(["Medium", "Slow"])
+
+    def pickBattingOrder(self):
+        if self.position == "Bowler":
+            return "Low Order"
+        
+        roll = random.randint(0, 100)
+        if(roll > 75):
+            return "Opener"
+        elif(roll > 45):
+            return "Top Order"
+        elif(roll > 15):
+            return "Middle Order"
+        else:
+            return "Low Order"
+
+    def getEstimatedPrice(self):
+        batting = (self.batting - 10) / (99 - 10)
+        bowling = (self.bowling - 10) / (99 - 10)
+        fielding = (self.fielding - 30) / (90 - 30)
+        fame = (self.fame - 10) / (90 - 10)
+
+        fameWeight = 0.5
+        fieldingWeight = 0.5
+        battingWeight = 0.5
+        bowlingWeight = 0.5
+        # Batting + Bowling + Fielding = 2
+        if self.position == "Batsmen":
+            battingWeight = 1.8
+            fieldingWeight = 0.2
+            bowlingWeight = 0
+        elif self.position == "Bowler":
+            battingWeight = 0
+            bowlingWeight = 1.8
+            fieldingWeight = 0.2
+        elif self.position == "Wicketkeeper":
+            battingWeight = 1.7
+            fieldingWeight = 0.3
+            bowlingWeight = 0
+        elif self.position == "Allrounder":
+            battingWeight = .9
+            bowlingWeight = .8
+            fieldingWeight = 0.2
+        
+            
+        price = int((batting*battingWeight + bowling*bowlingWeight + fielding*fieldingWeight) * 40) * 2
+
+        return price
 
 
 # lowestEP = 1000000

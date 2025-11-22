@@ -2,7 +2,7 @@ import time
 import random
 from TeamNameGenerator import createTeamName
 from TeamStrength import findTeamStrength
-from Player import Player
+from Player.player import Player
 from Team import Team, printTeamPositionAndOrderDetails, printTeamPositionAndOrderSummary
 from StartingEleven import StartingEleven
 from Shortlister import ShortList, makeShortList
@@ -128,7 +128,8 @@ def FindPlayersWithStatsAbove(playerList, stat, value):
 
 
 ListOfPlayers = GenerateNPlayerList(250)
-
+print(ListOfPlayers)
+input()
 TopTenBatsmen = FindTopNPlayerInCategory(ListOfPlayers, 10, "Batting")
 TopTenBowlers = FindTopNPlayerInCategory(ListOfPlayers, 10, "Bowling")
 TopTenSpinners = FindTopNPlayerInCategory(ListOfPlayers, 10, "Spinner")
@@ -168,6 +169,11 @@ PlayersAbove80 = findPlayersAbove80(ListOfPlayers)
 PlayersAbove80 = sorted(PlayersAbove80, key=lambda Player: max(Player.batting, Player.bowling), reverse=True)
 PlayersAbove90 = findPlayersAbove90(ListOfPlayers)
 
+print(len(ListOfPlayers))
+
+for p in ListOfPlayers:
+    p.printInLine()
+input()
 
 
 def PrintTitleBoard(Title):

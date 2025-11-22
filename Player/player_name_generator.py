@@ -82,6 +82,3 @@ def getPlayerName():
       if switch == 1:
            return lastName + " " + firstName
       return firstName + " " + lastName
-
-# for i in range(1000):
-#    print(getPlayerName())

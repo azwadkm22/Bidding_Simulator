@@ -1,5 +1,5 @@
 import random
-from Player import Player
+from Player.player import Player
 from ProbabilisticFunctionsModule import getProbabilisticAnswer
 
 class ShortList:

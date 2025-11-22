@@ -1,5 +1,5 @@
 import random
-from Player import Player
+from Player.player import Player
 
 def printTeamPositionAndOrderDetails(team):
 
@@ -140,8 +140,6 @@ def printTeamPositionAndOrderSummary(team):
         for p in pacers:
             p.printSummary()
             print("")
-
-        
 
 
 class Team:
