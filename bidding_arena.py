@@ -29,17 +29,19 @@ for p in current_player_generation.players_above_90:
 # input()
 
 # Generate Teams
+     
+BUDGET = 2000
 NUM_OF_TEAMS = 11
 
 team_list = generate_teams(NUM_OF_TEAMS)
 
 current_team_generation = TeamGenStat(team_list=team_list, player_generation=current_player_generation)
 
-bidder_list = generate_bidders(NUM_OF_TEAMS, current_team_generation)
+bidder_list = generate_bidders(NUM_OF_TEAMS, current_team_generation, budget=BUDGET)
 
 user_team_name = "Azwads Team"
 user_team = Team(69, user_team_name)
-user_bidder = UserBidder(user_team_name, 20000, user_team)
+user_bidder = UserBidder(user_team_name, BUDGET-200, user_team)
 
 printTeamShortLists(current_team_generation)
 printPlayerRivals(current_team_generation)

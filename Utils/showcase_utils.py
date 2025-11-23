@@ -1,7 +1,7 @@
 from Player.player_generation_stats import PlayerGenStat
 from Player.player import Player
 from Team.team_generation_stats import TeamGenStat
-
+from UI.commentary_window import show_commentary_info_in_window
 
 def print_title_board(title: str):
     print("########")
@@ -119,6 +119,75 @@ def showcase_player(player: Player, genStat: PlayerGenStat):
     if(player.estimated_price < 50):
         print("What do you think, will he be bought this time?")
         print("If I had to say a price, I wouldn't suggest anything more than", (int(player.estimated_price/10)+1)*10, "Million")
+
+def showcase_player_UI(player: Player, genStat: PlayerGenStat):
+    comments = []
+    print_title_board("Next Player: " + player.name)
+    if(player in genStat.top_ten_allrounders):
+        comments.append("He is one of the top contenders of this years best all rounder award.")
+
+    elif(player in genStat.top_ten_batsmen):
+        comments.append("He is one of the top contenders of this years best batsmen award.")
+
+    elif(player in genStat.top_ten_bowlers):
+        comments.append("He is one of the top contenders of this years best bowler award.")
+
+    if(player in genStat.top_eight_wicketkeepers):
+        comments.append("He should be a regular in one of the teams for sure.")
+    
+    if(player in genStat.top_ten_pacers):
+        comments.append("Very few pacers out there with skills like his.")
+    elif (player in genStat.top_ten_spinners):
+        comments.append("Just give him the ball and watch it spin all the way.")
+
+    if (player in genStat.top_ten_openers):
+        comments.append("Which team will he open for this year.")
+
+    if(player in genStat.top_ten_famous):
+        comments.append("He's got a lot of fans around the world.")
+
+    comments.append(f"He is well known as a {player.position}")
+
+    if(player.position == "Batsmen" or player.position == "Wicketkeeper"):
+        # Add Traits based commentary here later
+        if(player.batting > 90):
+            comments.append("Definitely one of the best batsmen I've ever seen playing.")
+        elif(player.batting > 80):
+            comments.append("He's quite good with his footwork.")
+        comments.append(f"He's got a batting score of: {player.batting}")
+    
+    elif(player.position == "Bowler"):
+        # Add Traits based commentary here later
+        if(player.bowling > 90):
+            comments.append("Definitely one of the best bowlers I've ever witnessed.")
+        elif(player.bowling > 80):
+            comments.append("He's quite adept with his bowling.")
+        comments.append(f"He's got a bowling score of: {player.bowling}")
+    
+    elif(player.position == "Allrounder"):
+        # Add Traits based commentary here later
+        if(player.bowling > 90 and player.batting > 90):
+            comments.append("Is there anything he's not good at?")
+        elif(player.bowling > 80 and player.batting > 80):
+            comments.append("Good with the bowl and the bat.")
+
+        comments.append(f"He's got a batting score of: {player.batting}")
+        comments.append(f"He's got a bowling score of: {player.bowling}")
+    
+    if player.fielding > 90:
+        comments.append("He's also a terrific fielder. Nothing gets past him.")
+    elif player.fielding > 80:
+        comments.append("His fielding skill is also remarkable")
+    
+    comments.append(player.estimated_price)
+    if(player.estimated_price > 100):
+        comments.append("I don't think any team is willing to let him go for a low price: ")
+        comments.append(f"If I had to say a price, I wouldn't suggest anything less than {int(player.estimated_price/10)*10} Million")
+    if(player.estimated_price < 50):
+        comments.append("What do you think, will he be bought this time?")
+        comments.append(f"If I had to say a price, I wouldn't suggest anything more than {(int(player.estimated_price/10)+1)*10} Million")
+
+    return comments
 
 def count_ratio(genStat: PlayerGenStat):
     bat = 0

@@ -61,7 +61,7 @@ def _create_team_window(team_dict):
     
     _team_window = tk.Toplevel(root)
     _team_window.title("Team Squad Information")
-    _team_window.geometry("900x600+100+150")
+    _team_window.geometry("900x500+450+50")
 
     notebook = ttk.Notebook(_team_window, name="notebook")
     notebook.pack(fill="both", expand=True)

@@ -1,12 +1,13 @@
 import random
 import time
-from Utils.showcase_utils import showcase_player
+from Utils.showcase_utils import showcase_player, showcase_player_UI
 from Player.player_generation_stats import PlayerGenStat
 from Team.team_generation_stats import TeamGenStat
 from Bidders.user_bidder import UserBidder
 from UI.market_window import show_market_status_window
 from UI.player_window import show_player_info_in_window
 from UI.team_squad_info_window import show_team_info_window
+from UI.commentary_window import show_commentary_info_in_window
 
 class BiddingSimulation:
     def __init__(self, user_bidder: UserBidder, bidder_list, player_generation: PlayerGenStat, team_generation: TeamGenStat):
@@ -27,10 +28,12 @@ class BiddingSimulation:
     def simulate_bidding(self, sleep_time=0):
         auction_number = 0
         unsold_players = []
+        comments = []
         for p in self.list_of_unsold_players:
-            showcase_player(p, self.player_generation)
+            comments = showcase_player_UI(p, self.player_generation)
             not_sold = True
             placed_bid_this_round = False
+            comments.append(f"{p.name} is now going up for bidding.")
             print("The player is now going up for bidding.")
             time.sleep(sleep_time)
             current_bidder = 0
@@ -41,28 +44,38 @@ class BiddingSimulation:
             show_market_status_window(auction_number, self.player_count - auction_number, len(unsold_players))
             show_team_info_window(self.team_squad_data, self.player_sold_data)
             if p in self.team_generation.rivals_for_players.keys() :
+                comments.append(f"Teams eyeing him: {self.team_generation.rivals_for_players[p]}")
                 print("Teams eyeing him: ", self.team_generation.rivals_for_players[p])
+
+            show_commentary_info_in_window(comments)
             while(not_sold):
-                # input()
+                comments = []
                 user_bid = ""
+                comments.append(f"Reminder to everyone {p.name}'s current price is {running_price}")
                 print("Reminder to everyone", p.name, "'s current price is", running_price)
                 if(bid_counter == 0):
+                    comments.append(f"Do I get a bid from anyone?")
                     print("Do I get a bid from anyone?")
                     if current_bidder != self.user_bidder:
                         user_bid = input("Place Bid?")
                     time.sleep(sleep_time)
                     run = run + 1
                 if(bid_counter == 1):
+                    comments.append(f"Going once.")
                     print("Going once.")
                     if current_bidder != self.user_bidder:
                         user_bid = input("Place Bid?")
                     time.sleep(sleep_time)
                 if(bid_counter == 2):
+                    comments.append(f"Going twice.")
                     print("Going Twice..")
                     if current_bidder != self.user_bidder:
                         user_bid = input("Place Bid?")
                     time.sleep(sleep_time)
                 if(bid_counter == 3):
+                    comments.append(f"Going thrice.")
+                    comments.append(f"SOLD")
+                    comments.append(f"{p.name} sold to {current_bidder.name}, for , {running_price}")
                     print("Going Thrice...")
                     print("")
                     print("#SOLD SOLD SOLD#")
@@ -82,6 +95,7 @@ class BiddingSimulation:
 
                 if(run > 2):
                     print(p.name, "remains unsold.")
+                    comments.append(f"{p.name} remains unsold.")
                     not_sold = False
                     unsold_players.append(p)
                     time.sleep(sleep_time)
@@ -94,6 +108,8 @@ class BiddingSimulation:
                     try:
                         if int(user_bid):
                             running_price = running_price + int(user_bid)
+                            comments.append(f"We get a bid from {self.user_bidder.name}.")
+                            comments.append(f"{p.name}'s current price is {running_price}")
                             print(f"We get a bid from {self.user_bidder.name}.")
                             print(f"{p.name}'s current price is {running_price}")
                             placed_bid_this_round = True
@@ -116,6 +132,9 @@ class BiddingSimulation:
                             placed_bid_this_round = True
                             increase = random.choice([2, 3, 4, 5])
                             running_price = running_price + increase
+
+                            comments.append(f"{pre_text} with + {increase}")
+                            comments.append(f"{p.name}'s current price is {running_price}")
                             print(f"{pre_text} with + {increase}")
                             print(f"{p.name}'s current price is {running_price}")
                             bid_counter = 1
@@ -123,6 +142,8 @@ class BiddingSimulation:
                             
                 if(placed_bid_this_round == False and bid_counter != 0):
                     bid_counter =  bid_counter +1
+
+                show_commentary_info_in_window(comments)
 
         self.list_of_unsold_players = unsold_players
 
