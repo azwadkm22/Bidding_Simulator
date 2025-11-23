@@ -6,6 +6,7 @@ from Team.team_generation_stats import TeamGenStat
 from Bidders.user_bidder import UserBidder
 from UI.market_window import show_market_status_window
 from UI.player_window import show_player_info_in_window
+from UI.team_info_window import show_team_info_window
 
 class BiddingSimulation:
     def __init__(self, user_bidder: UserBidder, bidder_list, player_generation: PlayerGenStat, team_generation: TeamGenStat):
@@ -16,9 +17,14 @@ class BiddingSimulation:
         self.highest_price = 0
         self.player_count = len(player_generation.list_of_players)
         self.user_bidder = user_bidder
-        self.sold_players_count = 0
+        self.team_squad_data = {}
+
+        for bd in bidder_list:
+            self.team_squad_data[bd.name] = []
+        self.team_squad_data[user_bidder.name] = []
 
     def simulate_bidding(self, sleep_time=0):
+        auction_number = 0
         unsold_players = []
         for p in self.list_of_unsold_players:
             showcase_player(p, self.player_generation)
@@ -31,7 +37,9 @@ class BiddingSimulation:
             running_price = 10
             run = 0
             show_player_info_in_window(p.player_id)
-            show_market_status_window(self.sold_players_count, self.player_count - self.sold_players_count, len(unsold_players))
+            show_market_status_window(auction_number, self.player_count - auction_number, len(unsold_players))
+            show_team_info_window(self.team_squad_data)
+            print(self.team_squad_data)
             if p in self.team_generation.rivals_for_players.keys() :
                 print("Teams eyeing him: ", self.team_generation.rivals_for_players[p])
             while(not_sold):
@@ -59,6 +67,7 @@ class BiddingSimulation:
                     print("")
                     print("#SOLD SOLD SOLD#")
                     print(p.name, "sold to", current_bidder.name, "for", running_price, "(", p.estimated_price, ")")
+                    self.team_squad_data[current_bidder.name].append(p.player_id)
                     print("#SOLD SOLD SOLD#")
                     print("")
                     current_bidder.subtractPrice(running_price)
@@ -66,8 +75,8 @@ class BiddingSimulation:
                     p.setSellingPrice(running_price)
                     current_bidder.addPlayerToTeam(p)
                     self.highest_price = max(self.highest_price, running_price)
+                    auction_number = auction_number + 1
                     time.sleep(sleep_time * 2)
-                    self.sold_players_count = self.sold_players_count + 1
                     continue
 
                 if(run > 2):
@@ -75,6 +84,7 @@ class BiddingSimulation:
                     not_sold = False
                     unsold_players.append(p)
                     time.sleep(sleep_time)
+                    auction_number = auction_number + 1
                     continue
 
                 placed_bid_this_round = False
