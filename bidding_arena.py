@@ -10,12 +10,23 @@ from Utils.showcase_utils import *
 
 # Generate Players
 ListOfPlayers = get_list_of_players(250)
-ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)
+# ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)
 
 current_player_generation = PlayerGenStat(ListOfPlayers)
+
+input()
 print_summary_of_generation(current_player_generation)
+
+input()
 count_ratio(current_player_generation)
 
+
+input()
+for p in current_player_generation.players_above_90:
+     p.printInLine()
+     print()
+
+input()
 # Generate Teams
 NUM_OF_TEAMS = 13
 
@@ -50,9 +61,10 @@ team_data = {}
 team_lineups = {}
 
 for bd in bidder_list:
-    
+    input()
     lineup_data = {}
     print_title_board(bd.name)
+    print(bd.trait)
     print("Remaining Budget: ", bd.budget)
     find_team_strength(bd.team)
 
@@ -75,7 +87,9 @@ for bd in bidder_list:
     lineup_data["fielding"] = startEleven.evaluate_fielding()
     lineup_data["bench"] = startEleven.print_bench()
 
-    team_lineups[bd.team.team_id] = lineup_data    
+    team_lineups[bd.team.team_id] = lineup_data   
+
+    print(lineup_data) 
 
 with open(f"./generated/team_data.json", 'w') as f:
         json.dump(team_data, f, indent=4)
