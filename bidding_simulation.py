@@ -4,6 +4,8 @@ from Utils.showcase_utils import showcase_player
 from Player.player_generation_stats import PlayerGenStat
 from Team.team_generation_stats import TeamGenStat
 from Bidders.user_bidder import UserBidder
+from UI.market_window import show_market_status_window
+from UI.player_window import show_player_info_in_window
 
 class BiddingSimulation:
     def __init__(self, user_bidder: UserBidder, bidder_list, player_generation: PlayerGenStat, team_generation: TeamGenStat):
@@ -12,7 +14,9 @@ class BiddingSimulation:
         self.bidder_list = bidder_list
         self.list_of_unsold_players = player_generation.list_of_players
         self.highest_price = 0
+        self.player_count = len(player_generation.list_of_players)
         self.user_bidder = user_bidder
+        self.sold_players_count = 0
 
     def simulate_bidding(self, sleep_time=0):
         unsold_players = []
@@ -26,7 +30,8 @@ class BiddingSimulation:
             bid_counter = 0
             running_price = 10
             run = 0
-
+            show_player_info_in_window(p.player_id)
+            show_market_status_window(self.sold_players_count, self.player_count - self.sold_players_count, len(unsold_players))
             if p in self.team_generation.rivals_for_players.keys() :
                 print("Teams eyeing him: ", self.team_generation.rivals_for_players[p])
             while(not_sold):
@@ -62,6 +67,7 @@ class BiddingSimulation:
                     current_bidder.addPlayerToTeam(p)
                     self.highest_price = max(self.highest_price, running_price)
                     time.sleep(sleep_time * 2)
+                    self.sold_players_count = self.sold_players_count + 1
                     continue
 
                 if(run > 2):

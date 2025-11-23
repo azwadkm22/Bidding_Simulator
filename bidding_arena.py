@@ -10,26 +10,27 @@ from bidding_simulation import BiddingSimulation
 from Utils.showcase_utils import *
 from Bidders.user_bidder import UserBidder
 # Generate Players
-ListOfPlayers = get_list_of_players(250)
+ListOfPlayers = get_list_of_players(100)
 ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)
 
 current_player_generation = PlayerGenStat(ListOfPlayers)
 
-input()
+# input()
 print_summary_of_generation(current_player_generation)
 
-input()
+# input()
 count_ratio(current_player_generation)
 
 
-input()
+# input()
 for p in current_player_generation.players_above_90:
      p.printInLine()
      print()
 
-input()
+# input()
+
 # Generate Teams
-NUM_OF_TEAMS = 12
+NUM_OF_TEAMS = 4
 
 team_list = generate_teams(NUM_OF_TEAMS)
 
@@ -48,12 +49,12 @@ printPlayerRivals(current_team_generation)
 
 simulation = BiddingSimulation(user_bidder, bidder_list=bidder_list, player_generation=current_player_generation, team_generation=current_team_generation)
 
-simulation.simulate_bidding(sleep_time=1)
+simulation.simulate_bidding(sleep_time=0)
 
 print("We will be going once again over the players who are left unsold from the first time.")
 input()
 
-simulation.simulate_bidding(sleep_time=1)
+simulation.simulate_bidding(sleep_time=0)
 
 # After effects
 
@@ -61,7 +62,6 @@ print("HIGHEST PRICE: ", simulation.highest_price)
 print("NOW TIME FOR THE TEAMS TO PRESENT THEMSELVES")  
 
 team_lineup_ratings = {}
-
 team_data = {}
 team_lineups = {}
 
@@ -73,7 +73,7 @@ for bd in bidder_list:
     print("Remaining Budget: ", bd.budget)
     find_team_strength(bd.team)
 
-    team_data[bd.team.team_id] = bd.team.get_team_data_to_JSON()
+    team_data[bd.team.name] = bd.team.get_team_data_to_JSON()
 
     input()
     # TODO:Generate Team Strengths and Weaknesses from the gathered Squad
@@ -92,9 +92,27 @@ for bd in bidder_list:
     lineup_data["fielding"] = startEleven.evaluate_fielding()
     lineup_data["bench"] = startEleven.print_bench()
 
-    team_lineups[bd.team.team_id] = lineup_data   
+    team_lineups[bd.team.name] = lineup_data   
 
     print(lineup_data) 
+
+print_title_board(user_bidder.name)
+
+team_data[user_bidder.name] = user_bidder.team.get_team_data_to_JSON()
+
+startEleven = StartingEleven()
+
+starting_eleven = startEleven.create_starting_eleven(user_bidder.team)
+lineup = {}
+for i in range(len(starting_eleven)):
+    lineup[i] = starting_eleven[i].player_id
+
+lineup_data["starting_lineup"] = lineup
+lineup_data["batting"] = startEleven.evaluate_batting() 
+lineup_data["bowling"] = startEleven.evaluate_bowling()
+lineup_data["fielding"] = startEleven.evaluate_fielding()
+lineup_data["bench"] = startEleven.print_bench()
+team_lineups[bd.team.name] = lineup_data 
 
 with open(f"./generated/team_data.json", 'w') as f:
         json.dump(team_data, f, indent=4)

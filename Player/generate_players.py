@@ -10,7 +10,7 @@ def get_list_of_players(n):
             generated_players = json.load(f)
             list_of_players = generate_player_list_from_JSON(generated_players, n)
     else:
-        list_of_players = generate_N_player_list(n)
+        list_of_players, generated_players = generate_N_player_list(n)
         with open(f"./generated/generated_players_data.json", 'w') as f:
             json.dump(generated_players, f, indent=4)
 
