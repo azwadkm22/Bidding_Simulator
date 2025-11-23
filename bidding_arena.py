@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from Team.team_strength import find_team_strength
 from Team.starting_eleven import StartingEleven
 from Team.team import Team
@@ -9,6 +10,9 @@ from Team.team_generation_stats import TeamGenStat
 from bidding_simulation import BiddingSimulation
 from Utils.showcase_utils import *
 from Bidders.user_bidder import UserBidder
+from Manager.player_manager import load_highlights
+from UI.player_highlights_window import show_highlight_info_window
+
 # Generate Players
 ListOfPlayers = get_list_of_players(100)
 ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)

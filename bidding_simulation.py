@@ -1,5 +1,7 @@
+import json
 import random
 import time
+from pathlib import Path
 from Utils.showcase_utils import showcase_player, showcase_player_UI
 from Player.player_generation_stats import PlayerGenStat
 from Team.team_generation_stats import TeamGenStat
@@ -8,6 +10,8 @@ from UI.market_window import show_market_status_window
 from UI.player_window import show_player_info_in_window
 from UI.team_squad_info_window import show_team_info_window
 from UI.commentary_window import show_commentary_info_in_window
+from UI.player_highlights_window import show_highlight_info_window
+from Manager.player_manager import load_highlights
 
 class BiddingSimulation:
     def __init__(self, user_bidder: UserBidder, bidder_list, player_generation: PlayerGenStat, team_generation: TeamGenStat):
@@ -20,17 +24,28 @@ class BiddingSimulation:
         self.user_bidder = user_bidder
         self.team_squad_data = {}
         self.player_sold_data = {}
+        self.generation_highlights = {}
 
         for bd in bidder_list:
             self.team_squad_data[bd.name] = []
         self.team_squad_data[user_bidder.name] = []
+
+        file_path = Path("./generated/players_highlights.json")
+
+        if file_path.exists():
+            self.generation_highlights = load_highlights()
+        else:
+            self.generation_highlights = self.player_generation.get_all_highlight_player_ids()
+            with open(file_path, 'w') as f:
+                json.dump(self.generation_highlights, f, indent=4)
+
 
     def simulate_bidding(self, sleep_time=0):
         auction_number = 0
         unsold_players = []
         comments = []
         for p in self.list_of_unsold_players:
-            comments = showcase_player_UI(p, self.player_generation)
+            showcase_player(p, self.player_generation)
             not_sold = True
             placed_bid_this_round = False
             comments.append(f"{p.name} is now going up for bidding.")
@@ -43,11 +58,12 @@ class BiddingSimulation:
             show_player_info_in_window(p.player_id)
             show_market_status_window(auction_number, self.player_count - auction_number, len(unsold_players))
             show_team_info_window(self.team_squad_data, self.player_sold_data)
+            show_highlight_info_window(self.generation_highlights)
             if p in self.team_generation.rivals_for_players.keys() :
                 comments.append(f"Teams eyeing him: {self.team_generation.rivals_for_players[p]}")
                 print("Teams eyeing him: ", self.team_generation.rivals_for_players[p])
 
-            show_commentary_info_in_window(comments)
+            # show_commentary_info_in_window(comments)
             while(not_sold):
                 comments = []
                 user_bid = ""

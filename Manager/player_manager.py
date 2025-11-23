@@ -2,7 +2,7 @@
 import json
 
 _players = None
-
+_players_highlights = None 
 def load_players():
     """Loads player.json only once (cached)."""
     global _players
@@ -11,6 +11,12 @@ def load_players():
             _players = json.load(f)
     return _players
 
+def load_highlights():
+    global _players_highlights
+    if _players_highlights is None:
+        with open("generated/players_highlights.json", "r") as f:
+            _players_highlights = json.load(f)
+    return _players_highlights
 
 def get_player(pid):
     """Get a single player by ID as int or str."""

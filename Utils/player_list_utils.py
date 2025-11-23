@@ -116,3 +116,11 @@ def find_players_above_rating(list_of_players, rating):
             players_above_rating.add(player)
 
     return players_above_rating
+
+
+def get_player_ids_from_player_list(list_of_players):
+    player_ids = []
+    for p in list_of_players:
+        player_ids.append(p.player_id)
+
+    return player_ids
