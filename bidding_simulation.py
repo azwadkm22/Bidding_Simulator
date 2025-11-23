@@ -3,14 +3,16 @@ import time
 from Utils.showcase_utils import showcase_player
 from Player.player_generation_stats import PlayerGenStat
 from Team.team_generation_stats import TeamGenStat
+from Bidders.user_bidder import UserBidder
 
 class BiddingSimulation:
-    def __init__(self, bidder_list, player_generation: PlayerGenStat, team_generation: TeamGenStat):
+    def __init__(self, user_bidder: UserBidder, bidder_list, player_generation: PlayerGenStat, team_generation: TeamGenStat):
         self.team_generation = team_generation
         self.player_generation = player_generation
         self.bidder_list = bidder_list
         self.list_of_unsold_players = player_generation.list_of_players
         self.highest_price = 0
+        self.user_bidder = user_bidder
 
     def simulate_bidding(self, sleep_time=0):
         unsold_players = []
@@ -29,16 +31,23 @@ class BiddingSimulation:
                 print("Teams eyeing him: ", self.team_generation.rivals_for_players[p])
             while(not_sold):
                 # input()
+                user_bid = ""
                 print("Reminder to everyone", p.name, "'s current price is", running_price)
                 if(bid_counter == 0):
                     print("Do I get a bid from anyone?")
+                    if current_bidder != self.user_bidder:
+                        user_bid = input("Place Bid?")
                     time.sleep(sleep_time)
                     run = run + 1
                 if(bid_counter == 1):
                     print("Going once.")
+                    if current_bidder != self.user_bidder:
+                        user_bid = input("Place Bid?")
                     time.sleep(sleep_time)
                 if(bid_counter == 2):
                     print("Going Twice..")
+                    if current_bidder != self.user_bidder:
+                        user_bid = input("Place Bid?")
                     time.sleep(sleep_time)
                 if(bid_counter == 3):
                     print("Going Thrice...")
@@ -52,8 +61,9 @@ class BiddingSimulation:
                     p.setSellingPrice(running_price)
                     current_bidder.addPlayerToTeam(p)
                     self.highest_price = max(self.highest_price, running_price)
-
                     time.sleep(sleep_time * 2)
+                    continue
+
                 if(run > 2):
                     print(p.name, "remains unsold.")
                     not_sold = False
@@ -62,22 +72,31 @@ class BiddingSimulation:
                     continue
 
                 placed_bid_this_round = False
-                for bidder in self.bidder_list:
-                    print(bidder.name, bidder.trait, f"-UTILITY: {bidder.playerUtility}")
-
-                # input()
+                
+                if user_bid != "":
+                    running_price = running_price + int(user_bid)
+                    print(f"We get a bid from {self.user_bidder.name}.")
+                    print(f"{p.name}'s current price is {running_price}")
+                    placed_bid_this_round = True
+                    current_bidder = self.user_bidder
+                    bid_counter = 1
+                
                 random.shuffle(self.bidder_list)
                 for bidder in self.bidder_list:
                     if bidder != current_bidder:
                         if bidder.placeBid(p, running_price+5) == 1:
+                            pre_text = ""
                             if bid_counter == 0:
-                                print("We get a bid from", bidder.name)
+                                pre_text = f"We get a bid from {bidder.name}"
                             if bid_counter == 1:
-                                print("We get another bid from", bidder.name)
+                                pre_text = f"We get another bid from {bidder.name}"
                             if bid_counter == 2:
-                                print("Another count, and he would have been sold to", current_bidder.name, "but we have a bid from", bidder.name)
+                                pre_text = f"Another count, and he would have been sold to {current_bidder.name} but we have a bid from {bidder.name}"
                             placed_bid_this_round = True
-                            running_price = running_price + random.choice([2, 3, 4, 5])
+                            increase = random.choice([2, 3, 4, 5])
+                            running_price = running_price + increase
+                            print(f"{pre_text} with + {increase}")
+                            print(f"{p.name}'s current price is {running_price}")
                             bid_counter = 1
                             current_bidder = bidder
                             

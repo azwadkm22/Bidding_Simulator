@@ -1,16 +1,17 @@
 import json
 from Team.team_strength import find_team_strength
 from Team.starting_eleven import StartingEleven
+from Team.team import Team
 from Player.generate_players import get_list_of_players
 from Player.player_generation_stats import PlayerGenStat
 from Team.generate_teams import generate_teams, generate_bidders
 from Team.team_generation_stats import TeamGenStat
 from bidding_simulation import BiddingSimulation
 from Utils.showcase_utils import *
-
+from Bidders.user_bidder import UserBidder
 # Generate Players
 ListOfPlayers = get_list_of_players(250)
-# ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)
+ListOfPlayers = sorted(ListOfPlayers, key=lambda Player: Player.estimated_price, reverse=True)
 
 current_player_generation = PlayerGenStat(ListOfPlayers)
 
@@ -28,7 +29,7 @@ for p in current_player_generation.players_above_90:
 
 input()
 # Generate Teams
-NUM_OF_TEAMS = 13
+NUM_OF_TEAMS = 12
 
 team_list = generate_teams(NUM_OF_TEAMS)
 
@@ -36,19 +37,23 @@ current_team_generation = TeamGenStat(team_list=team_list, player_generation=cur
 
 bidder_list = generate_bidders(NUM_OF_TEAMS, current_team_generation)
 
+user_team_name = "Azwads Team"
+user_team = Team(69, user_team_name)
+user_bidder = UserBidder(user_team_name, 20000, user_team)
+
 printTeamShortLists(current_team_generation)
 printPlayerRivals(current_team_generation)
 
 # Bidding Simulation
 
-simulation = BiddingSimulation(bidder_list=bidder_list, player_generation=current_player_generation, team_generation=current_team_generation)
+simulation = BiddingSimulation(user_bidder, bidder_list=bidder_list, player_generation=current_player_generation, team_generation=current_team_generation)
 
-simulation.simulate_bidding()
+simulation.simulate_bidding(sleep_time=1)
 
 print("We will be going once again over the players who are left unsold from the first time.")
 input()
 
-simulation.simulate_bidding()
+simulation.simulate_bidding(sleep_time=1)
 
 # After effects
 

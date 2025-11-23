@@ -143,7 +143,7 @@ def print_team_position_and_order_summary(team):
 
 
 class Team:
-    def __init__(self, team_id, team_name):
+    def __init__(self, team_id, team_name: str):
         self.team_id = team_id
         self.name = team_name
         self.player_list = []
