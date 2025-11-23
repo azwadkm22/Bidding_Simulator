@@ -90,12 +90,16 @@ class BiddingSimulation:
                 placed_bid_this_round = False
                 
                 if user_bid != "":
-                    running_price = running_price + int(user_bid)
-                    print(f"We get a bid from {self.user_bidder.name}.")
-                    print(f"{p.name}'s current price is {running_price}")
-                    placed_bid_this_round = True
-                    current_bidder = self.user_bidder
-                    bid_counter = 1
+                    try:
+                        if int(user_bid):
+                            running_price = running_price + int(user_bid)
+                            print(f"We get a bid from {self.user_bidder.name}.")
+                            print(f"{p.name}'s current price is {running_price}")
+                            placed_bid_this_round = True
+                            current_bidder = self.user_bidder
+                            bid_counter = 1
+                    except ValueError:
+                        print("Exception: User bid invalid.")
                 
                 random.shuffle(self.bidder_list)
                 for bidder in self.bidder_list:
