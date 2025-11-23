@@ -3,22 +3,11 @@ import json
 import tkinter as tk
 from tkinter import ttk
 from UI.ui_core import get_root
+from Manager.player_manager import get_many
 
 _team_window = None
 _team_tabs = {}
 _players_db = None   # cache player.json
-
-
-# ---------------------------------------------
-# Load players from player.json once
-# ---------------------------------------------
-def load_players():
-    global _players_db
-    if _players_db is None:
-        with open("generated/generated_players_data.json", "r") as f:
-            _players_db = json.load(f)
-    return _players_db
-
 
 # ---------------------------------------------
 # Build TreeView inside each tab
@@ -85,8 +74,7 @@ def _create_team_window(team_dict):
     global _team_window, _team_tabs
 
     root = get_root()
-    players_db = load_players()
-
+    
     _team_window = tk.Toplevel(root)
     _team_window.title("Team Information")
     _team_window.geometry("900x600+100+150")
@@ -100,11 +88,8 @@ def _create_team_window(team_dict):
         frame = ttk.Frame(notebook, padding=10)
         notebook.add(frame, text=team_name)
 
-        # Resolve ID → player info
-        player_list = [players_db[str(pid)] for pid in player_ids if str(pid) in players_db]
-
         _team_tabs[team_name] = frame
-        _populate_team_tab_with_tree(frame, team_name, player_list)
+        _populate_team_tab_with_tree(frame, team_name, [])
 
 
 # ---------------------------------------------
@@ -113,7 +98,6 @@ def _create_team_window(team_dict):
 def _update_tabs(team_dict):
     global _team_window, _team_tabs
 
-    players_db = load_players()
     notebook = _team_window.children.get("notebook")
     if not notebook:
         return
@@ -128,8 +112,7 @@ def _update_tabs(team_dict):
     for team_name, player_ids in team_dict.items():
         frame = ttk.Frame(notebook, padding=10)
         notebook.add(frame, text=team_name)
-
-        player_list = [players_db.get(str(pid)) for pid in player_ids if str(pid) in players_db]
+        player_list = get_many(player_ids)
 
         _team_tabs[team_name] = frame
         _populate_team_tab_with_tree(frame, team_name, player_list)

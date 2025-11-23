@@ -1,9 +1,7 @@
-import json
 import tkinter as tk
 from tkinter import ttk
 from UI.ui_core import get_root
-
-JSON_PATH = "generated/generated_players_data.json"   # <-- change if needed
+from Manager.player_manager import get_player
 
 _player_window = None
 _player_labels = {}
@@ -41,10 +39,7 @@ def _update_player_window(player_data):
 def show_player_info_in_window(player_id):
     global _player_window
 
-    with open(JSON_PATH, "r") as f:
-        data = json.load(f)
-
-    player_data = data.get(str(player_id))
+    player_data = get_player(str(player_id))
     if not player_data:
         print("Player not found.")
         return

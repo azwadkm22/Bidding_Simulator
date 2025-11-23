@@ -21,7 +21,6 @@ print_summary_of_generation(current_player_generation)
 # input()
 count_ratio(current_player_generation)
 
-
 # input()
 for p in current_player_generation.players_above_90:
      p.printInLine()
@@ -30,7 +29,7 @@ for p in current_player_generation.players_above_90:
 # input()
 
 # Generate Teams
-NUM_OF_TEAMS = 4
+NUM_OF_TEAMS = 11
 
 team_list = generate_teams(NUM_OF_TEAMS)
 
