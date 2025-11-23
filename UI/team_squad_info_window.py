@@ -7,24 +7,12 @@ from Manager.player_manager import get_many
 
 _team_window = None
 _team_tabs = {}
-_players_db = None   # cache player.json
 
-# ---------------------------------------------
-# Build TreeView inside each tab
-# ---------------------------------------------
-def _populate_team_tab_with_tree(frame, team_name, players):
+def _populate_team_tab_with_tree(frame, team_name, players, bought_for):
     # Title
     title_label = ttk.Label(frame, text=f"{team_name} Squad",
                             font=("Arial", 18, "bold"))
     title_label.pack(anchor="w", pady=(0, 8))
-
-    # Subtitle
-    # header_label = ttk.Label(
-    #     frame,
-    #     text="name, position, batting, bowling, bought at",
-    #     font=("Arial", 10, "italic")
-    # )
-    # header_label.pack(anchor="w", pady=(0, 6))
 
     container = ttk.Frame(frame)
     container.pack(fill="both", expand=True)
@@ -33,7 +21,6 @@ def _populate_team_tab_with_tree(frame, team_name, players):
     tree = ttk.Treeview(container, columns=columns, show="headings", selectmode="browse")
     tree.pack(side="left", fill="both", expand=True)
 
-    # Column setup
     col_settings = {
         "name":      ("Name", 300, "w"),
         "position":  ("Position", 150, "w"),
@@ -55,28 +42,25 @@ def _populate_team_tab_with_tree(frame, team_name, players):
     ttk.Separator(frame, orient="horizontal").pack(fill="x", pady=8)
 
     # Insert row data
-    for p in players:
+    for i in range(len(players)):
         tree.insert("", "end", values=(
-            p.get("name", ""),
-            p.get("position", ""),
-            p.get("batting", ""),
-            p.get("bowling", ""),
-            p.get("selling_price", "")
+            players[i].get("name", ""),
+            players[i].get("position", ""),
+            players[i].get("batting", ""),
+            players[i].get("bowling", ""),
+            bought_for[i],
         ))
 
     frame._team_tree = tree
 
 
-# ---------------------------------------------
-# Create Window
-# ---------------------------------------------
 def _create_team_window(team_dict):
     global _team_window, _team_tabs
 
     root = get_root()
     
     _team_window = tk.Toplevel(root)
-    _team_window.title("Team Information")
+    _team_window.title("Team Squad Information")
     _team_window.geometry("900x600+100+150")
 
     notebook = ttk.Notebook(_team_window, name="notebook")
@@ -89,13 +73,10 @@ def _create_team_window(team_dict):
         notebook.add(frame, text=team_name)
 
         _team_tabs[team_name] = frame
-        _populate_team_tab_with_tree(frame, team_name, [])
+        _populate_team_tab_with_tree(frame, team_name, [], [])
 
 
-# ---------------------------------------------
-# Update existing window
-# ---------------------------------------------
-def _update_tabs(team_dict):
+def _update_tabs(team_dict, player_sold_dict):
     global _team_window, _team_tabs
 
     notebook = _team_window.children.get("notebook")
@@ -113,15 +94,15 @@ def _update_tabs(team_dict):
         frame = ttk.Frame(notebook, padding=10)
         notebook.add(frame, text=team_name)
         player_list = get_many(player_ids)
+        bought_for = []
+        for p_id in player_ids:
+            bought_for.append(player_sold_dict[p_id])
 
         _team_tabs[team_name] = frame
-        _populate_team_tab_with_tree(frame, team_name, player_list)
+        _populate_team_tab_with_tree(frame, team_name, player_list, bought_for)
 
 
-# ---------------------------------------------
-# Public API
-# ---------------------------------------------
-def show_team_info_window(team_dict):
+def show_team_info_window(team_dict, player_sold_dict):
     """
     team_dict format:
     {
@@ -139,4 +120,4 @@ def show_team_info_window(team_dict):
     if _team_window is None or not _team_window.winfo_exists():
         _create_team_window(team_dict)
     else:
-        _update_tabs(team_dict)
+        _update_tabs(team_dict, player_sold_dict)

@@ -113,11 +113,23 @@ lineup_data["fielding"] = startEleven.evaluate_fielding()
 lineup_data["bench"] = startEleven.print_bench()
 team_lineups[bd.team.name] = lineup_data 
 
-with open(f"./generated/team_data.json", 'w') as f:
-        json.dump(team_data, f, indent=4)
+def create_JSON_files(team_data, team_lineups, team_squad_data, player_sold_data):
+    with open(f"./generated/team_data.json", 'w') as f:
+            json.dump(team_data, f, indent=4)
 
-with open(f"./generated/team_lineups.json", 'w') as f:
-        json.dump(team_lineups, f, indent=4)
+    with open(f"./generated/team_lineups.json", 'w') as f:
+            json.dump(team_lineups, f, indent=4)
+
+    with open(f"./generated/team_squad_data.json", 'w') as f:
+            json.dump(team_squad_data, f, indent=4)
+
+    with open(f"./generated/player_sold_data.json", 'w') as f:
+            json.dump(player_sold_data, f, indent=4)
+
+player_sold_data = simulation.get_player_sold_data()
+team_squad_data = simulation.get_team_squad_data()
+
+create_JSON_files(team_data, team_lineups, team_squad_data, player_sold_data)
     
 print()
 for t in team_lineup_ratings:

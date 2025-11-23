@@ -6,7 +6,7 @@ from Team.team_generation_stats import TeamGenStat
 from Bidders.user_bidder import UserBidder
 from UI.market_window import show_market_status_window
 from UI.player_window import show_player_info_in_window
-from UI.team_info_window import show_team_info_window
+from UI.team_squad_info_window import show_team_info_window
 
 class BiddingSimulation:
     def __init__(self, user_bidder: UserBidder, bidder_list, player_generation: PlayerGenStat, team_generation: TeamGenStat):
@@ -18,6 +18,7 @@ class BiddingSimulation:
         self.player_count = len(player_generation.list_of_players)
         self.user_bidder = user_bidder
         self.team_squad_data = {}
+        self.player_sold_data = {}
 
         for bd in bidder_list:
             self.team_squad_data[bd.name] = []
@@ -38,8 +39,7 @@ class BiddingSimulation:
             run = 0
             show_player_info_in_window(p.player_id)
             show_market_status_window(auction_number, self.player_count - auction_number, len(unsold_players))
-            show_team_info_window(self.team_squad_data)
-            print(self.team_squad_data)
+            show_team_info_window(self.team_squad_data, self.player_sold_data)
             if p in self.team_generation.rivals_for_players.keys() :
                 print("Teams eyeing him: ", self.team_generation.rivals_for_players[p])
             while(not_sold):
@@ -67,6 +67,7 @@ class BiddingSimulation:
                     print("")
                     print("#SOLD SOLD SOLD#")
                     print(p.name, "sold to", current_bidder.name, "for", running_price, "(", p.estimated_price, ")")
+                    self.player_sold_data[p.player_id] = running_price
                     self.team_squad_data[current_bidder.name].append(p.player_id)
                     print("#SOLD SOLD SOLD#")
                     print("")
@@ -124,3 +125,9 @@ class BiddingSimulation:
                     bid_counter =  bid_counter +1
 
         self.list_of_unsold_players = unsold_players
+
+    def get_team_squad_data(self):
+        return self.team_squad_data
+    
+    def get_player_sold_data(self):
+        return self.player_sold_data
