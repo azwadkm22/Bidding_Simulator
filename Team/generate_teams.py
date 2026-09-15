@@ -12,7 +12,7 @@ def generate_teams(n):
     return team_list
     
 
-def generate_bidders(n, team_gen_stat : TeamGenStat, budget = 2000):
+def generate_bidders(n, team_gen_stat : TeamGenStat, budget = 1200):
     bidder_list = []
     possible_traits = ['Safe', 'Risky', 'Patient', 'Rigid', 'Flexible']
     for i in range(n):

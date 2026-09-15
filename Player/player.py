@@ -173,37 +173,24 @@ class Player():
             return "Low Order"
 
     def getEstimatedPrice(self):
-        batting = (self.batting - 10) / (99 - 10)
-        bowling = (self.bowling - 10) / (99 - 10)
-        fielding = (self.fielding - 30) / (90 - 30)
-        fame = (self.fame - 10) / (90 - 10)
-
-        fameWeight = 0.5
-        fieldingWeight = 0.5
-        battingWeight = 0.5
-        bowlingWeight = 0.5
-        # Batting + Bowling + Fielding = 2
+        # Position-weighted skill rating on a 0-100 scale (weights mirror the
+        # old formula's ratios), then a quadratic curve so genuine stars cost
+        # disproportionately more than merely-good players, instead of a
+        # near-linear spread - closer to how real auctions price a handful of
+        # marquee names far above the rest of the field.
         if self.position == "Batsmen":
-            battingWeight = 1.8
-            fieldingWeight = 0.2
-            bowlingWeight = 0
+            rating = 0.8 * self.batting + 0.2 * self.fielding
         elif self.position == "Bowler":
-            battingWeight = 0
-            bowlingWeight = 1.8
-            fieldingWeight = 0.2
+            rating = 0.8 * self.bowling + 0.2 * self.fielding
         elif self.position == "Wicketkeeper":
-            battingWeight = 1.7
-            fieldingWeight = 0.3
-            bowlingWeight = 0
+            rating = 0.75 * self.batting + 0.25 * self.fielding
         elif self.position == "Allrounder":
-            battingWeight = .9
-            bowlingWeight = .8
-            fieldingWeight = 0.2
-        
-            
-        price = int((batting*battingWeight + bowling*bowlingWeight + fielding*fieldingWeight) * 40) * 2
+            rating = 0.45 * self.batting + 0.4 * self.bowling + 0.15 * self.fielding
+        else:  # Trainee
+            rating = 0.4 * self.batting + 0.4 * self.bowling + 0.2 * self.fielding
 
-        return price
+        price = round(0.022 * rating ** 2)
+        return max(price, 1)
     
     def get_JSON_data(self):
         return {

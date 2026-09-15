@@ -39,7 +39,7 @@ bidder_list = generate_bidders(NUM_OF_TEAMS, current_team_generation)
 
 user_team_name = "Azwads Team"
 user_team = Team(69, user_team_name)
-user_bidder = UserBidder(user_team_name, 20000, user_team)
+user_bidder = UserBidder(user_team_name, 2000, user_team)
 
 printTeamShortLists(current_team_generation)
 printPlayerRivals(current_team_generation)
