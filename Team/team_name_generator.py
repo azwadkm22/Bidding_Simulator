@@ -1,23 +1,23 @@
 import random
 from Utils.probability_utils import get_probabilistic_answer
 
-Regions = [
-    "Dhaka", 
-    "Rajshahi", 
-    "Sylhet", 
-    "Barishal", 
-    "Khulna", 
-    "Cumilla", 
-    "Noakhali", 
-    "Chittagong", 
-    "Dinajpur", 
-    "Jessore", 
-    "Mymensingh", 
+REGIONS = [
+    "Dhaka",
+    "Rajshahi",
+    "Sylhet",
+    "Barishal",
+    "Khulna",
+    "Cumilla",
+    "Noakhali",
+    "Chittagong",
+    "Dinajpur",
+    "Jessore",
+    "Mymensingh",
     "Rangpur",
     "Bogura"
 ]
 
-EndNames= [
+END_NAMES = [
     "Dynamites",
     "Bulls",
     "Titans",
@@ -34,7 +34,7 @@ EndNames= [
     "Dragons"
 ]
 
-StartNames = [
+START_NAMES = [
     "Stellar",
     "Royal",
     "Mighty",
@@ -42,22 +42,37 @@ StartNames = [
 
 ]
 
-def createTeamName():
-    # print(len(Regions), len(StartNames), len(EndNames))
-    reg = random.choice(Regions)
-    Regions.remove(reg)
+def new_name_pool():
+    # Per-call copies so each game session drains its own pool instead of a
+    # shared process-global one (which would run out across concurrent sessions).
+    return {
+        "regions": list(REGIONS),
+        "start_names": list(START_NAMES),
+        "end_names": list(END_NAMES),
+    }
 
-    if len(StartNames) > 0:
+def createTeamName(pool=None):
+    if pool is None:
+        pool = new_name_pool()
+
+    regions = pool["regions"]
+    start_names = pool["start_names"]
+    end_names = pool["end_names"]
+
+    reg = random.choice(regions)
+    regions.remove(reg)
+
+    if len(start_names) > 0:
         if(get_probabilistic_answer(0.2)):
-            start = random.choice(StartNames)
-            StartNames.remove(start)
+            start = random.choice(start_names)
+            start_names.remove(start)
             return start + " " + reg
 
-    end = random.choice(EndNames)
-    EndNames.remove(end)
+    end = random.choice(end_names)
+    end_names.remove(end)
     return reg + " " + end
-        
+
 
 # for i in range(10):
 #     print(createTeamName())
-#     
+#

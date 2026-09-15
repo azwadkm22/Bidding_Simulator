@@ -1,13 +1,14 @@
 from Team.team import Team
-from Team.team_name_generator import createTeamName
+from Team.team_name_generator import createTeamName, new_name_pool
 from Team.team_generation_stats import TeamGenStat
 from Bidders.utility_based_bidder import UtilityBasedBidder
 import random
 
 def generate_teams(n):
     team_list = []
+    pool = new_name_pool()
     for i in range(n):
-        team_list.append(Team(i, createTeamName()))
+        team_list.append(Team(i, createTeamName(pool)))
     return team_list
     
 
