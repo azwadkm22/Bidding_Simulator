@@ -1,7 +1,17 @@
 from fastapi import APIRouter, HTTPException
 
 from app.game import engine, view
-from app.schemas.game import BidderSummary, BidRequest, GameState, RemainingPlayers
+from typing import Optional
+
+from app.schemas.game import (
+    BidderSummary,
+    BidRequest,
+    GameState,
+    GameSummary,
+    NewGameRequest,
+    RemainingPlayers,
+    StartingElevenResponse,
+)
 from app.services import live_clock, session_store
 
 router = APIRouter(prefix="/api/game", tags=["game"])
@@ -21,8 +31,9 @@ def _get_session(session_id: str) -> engine.GameSession:
 
 
 @router.post("/new", response_model=GameState)
-async def new_game():
-    session = engine.create_game()
+async def new_game(body: Optional[NewGameRequest] = None):
+    seed = body.seed if body else None
+    session = engine.create_game(seed=seed)
     session_store.save(session)
     live_clock.start(session)
     return view.serialize(session)
@@ -41,6 +52,21 @@ async def get_team(session_id: str, team_key: str):
     if handle is None:
         raise HTTPException(status_code=404, detail="Team not found.")
     return view.team_detail(handle)
+
+
+@router.get("/{session_id}/teams/{team_key}/starting-eleven", response_model=StartingElevenResponse)
+async def get_starting_eleven(session_id: str, team_key: str):
+    session = _get_session(session_id)
+    handle = session.find_handle(team_key)
+    if handle is None:
+        raise HTTPException(status_code=404, detail="Team not found.")
+    return view.starting_eleven_detail(handle)
+
+
+@router.get("/{session_id}/summary", response_model=GameSummary)
+async def get_summary(session_id: str):
+    session = _get_session(session_id)
+    return view.game_summary(session)
 
 
 @router.get("/{session_id}/players/remaining", response_model=RemainingPlayers)

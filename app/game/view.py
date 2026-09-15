@@ -5,6 +5,7 @@ shape, and no print()/input() is involved anywhere in this path.
 """
 
 from Player.player import Player
+from Team.starting_eleven import StartingEleven
 
 from app.game.engine import (
     ALLOWED_INCREMENTS,
@@ -14,10 +15,13 @@ from app.game.engine import (
     GameSession,
 )
 
+MIN_PLAYERS_FOR_STARTING_ELEVEN = 11
+
 
 def serialize(session: GameSession) -> dict:
     return {
         "session_id": session.session_id,
+        "seed": session.seed,
         "phase": session.phase.value,
         "paused": session.paused,
         "round_number": session.round_number,
@@ -56,11 +60,88 @@ def _player_card(player: Player) -> dict:
         "bowling_style": player.bowling_style,
         "estimated_price": player.estimated_price,
         "selling_price": player.selling_price or None,
+        "deal_grade": getattr(player, "deal_grade", None),
     }
 
 
 def team_detail(handle: BidderHandle) -> dict:
     return _bidder_summary(handle, detailed=True)
+
+
+def starting_eleven_detail(handle: BidderHandle) -> dict:
+    team = handle.team
+    base = {"key": handle.key, "name": handle.display_name}
+
+    if team.number_of_players < MIN_PLAYERS_FOR_STARTING_ELEVEN:
+        return {
+            **base,
+            "available": False,
+            "reason": f"Needs at least {MIN_PLAYERS_FOR_STARTING_ELEVEN} players in the squad "
+            f"(has {team.number_of_players}).",
+            "lineup": [],
+            "bench": [],
+            "batting_rating": None,
+            "bowling_rating": None,
+            "fielding_rating": None,
+        }
+
+    try:
+        builder = StartingEleven()
+        lineup = builder.create_starting_eleven(team)
+        if len(lineup) < MIN_PLAYERS_FOR_STARTING_ELEVEN:
+            raise ValueError("Squad composition can't fill a full lineup yet.")
+        bench_ids = set(builder.print_bench())
+        bench_players = [p for p in team.player_list if p.player_id in bench_ids]
+        return {
+            **base,
+            "available": True,
+            "reason": None,
+            "lineup": [_player_card(p) for p in lineup],
+            "bench": [_player_card(p) for p in bench_players],
+            "batting_rating": builder.evaluate_batting(),
+            "bowling_rating": builder.evaluate_bowling(),
+            "fielding_rating": builder.evaluate_fielding(),
+        }
+    except (ZeroDivisionError, IndexError, ValueError):
+        # create_starting_eleven's picking algorithm assumes a reasonably
+        # balanced squad (e.g. at least one bowler-type player); an unusual
+        # squad shape can still fall short of that even past the player-count
+        # floor above, so this is a real (if rare) outcome, not a bug to chase.
+        return {
+            **base,
+            "available": False,
+            "reason": "Squad isn't balanced enough yet to form a full starting XI.",
+            "lineup": [],
+            "bench": [],
+            "batting_rating": None,
+            "bowling_rating": None,
+            "fielding_rating": None,
+        }
+
+
+def game_summary(session: GameSession) -> dict:
+    sold_players = []
+    for handle in session.all_handles():
+        for player in handle.team.player_list:
+            entry = _player_card(player)
+            entry["buyer"] = handle.display_name
+            entry["buyer_key"] = handle.key
+            entry["is_user"] = handle.is_user
+            sold_players.append(entry)
+    sold_players.sort(key=lambda p: p["selling_price"] or 0, reverse=True)
+
+    teams = []
+    for handle in session.all_handles():
+        team_entry = _bidder_summary(handle, detailed=False)
+        team_entry["is_user"] = handle.is_user
+        team_entry["starting_eleven"] = starting_eleven_detail(handle)
+        teams.append(team_entry)
+
+    return {
+        "sold_players": sold_players,
+        "unsold_count": len(session.unsold_this_round),
+        "teams": teams,
+    }
 
 
 def remaining_players(session: GameSession) -> dict:

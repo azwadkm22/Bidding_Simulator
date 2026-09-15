@@ -75,10 +75,6 @@ header {
   gap: 8px;
 }
 
-.pass-button {
-  background: #eee;
-}
-
 .skip-button {
   background: #eee;
   margin-left: auto;
@@ -88,10 +84,65 @@ header {
   font-weight: bold;
 }
 
+.grade-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: bold;
+  color: white;
+}
+
+.grade-A {
+  background: #2e7d32;
+}
+
+.grade-B {
+  background: #558b2f;
+}
+
+.grade-C {
+  background: #ef6c00;
+}
+
+.grade-D {
+  background: #c62828;
+}
+
+.game-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.game-summary h2 {
+  margin: 0;
+}
+
+.game-summary section {
+  overflow-x: auto;
+}
+
+tr.your-purchase {
+  background: #fff9e0;
+  font-weight: 600;
+}
+
 .live-note {
   margin: 4px 0 0;
   color: #555;
   font-size: 0.9em;
+}
+
+.seed-note {
+  margin: 2px 0 0;
+  color: #777;
+  font-size: 0.85em;
+}
+
+.seed-input {
+  width: 130px;
 }
 
 .error-banner {
@@ -114,6 +165,34 @@ td {
   padding: 4px 6px;
   border-bottom: 1px solid #eee;
   font-size: 0.9em;
+}
+
+.sort-header {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.player-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+}
+
+.stat-filter-input {
+  width: 70px;
+}
+
+.filter-count {
+  color: #666;
+  font-size: 0.85em;
+  margin-left: auto;
 }
 
 .activity-feed ul {

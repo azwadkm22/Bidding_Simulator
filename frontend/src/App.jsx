@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as api from "./api";
 import "./App.css";
 
@@ -43,13 +43,18 @@ function AuctionStatus({ state, onShowRemainingPlayers }) {
           {state.last_result.type === "sold"
             ? `SOLD: ${state.last_result.player_name} -> ${state.last_result.winner} for ${state.last_result.price}`
             : `UNSOLD: ${state.last_result.player_name}`}
+          {state.last_result.type === "sold" && state.last_result.deal_grade && (
+            <span className={`grade-badge grade-${state.last_result.deal_grade}`}>
+              Grade {state.last_result.deal_grade}
+            </span>
+          )}
         </p>
       )}
     </div>
   );
 }
 
-function Controls({ state, onBid, onPass, onSkip, onAdvance, busy }) {
+function Controls({ state, onBid, onSkip, onAdvance, busy }) {
   const [customAmount, setCustomAmount] = useState("");
 
   if (state.phase === "game_over") {
@@ -95,9 +100,6 @@ function Controls({ state, onBid, onPass, onSkip, onAdvance, busy }) {
         </button>
       </div>
       <div className="secondary-actions">
-        <button disabled={busy} onClick={onPass} className="pass-button">
-          Pass
-        </button>
         <button disabled={busy} onClick={onSkip} className="skip-button" title="Resolve this player instantly, without watching the live clock">
           Skip &raquo;
         </button>
@@ -159,7 +161,156 @@ function RivalsPanel({ rivals, onSelectTeam }) {
   );
 }
 
-function SquadModal({ team, loading, error, onClose }) {
+const BASE_PLAYER_COLUMNS = [
+  { key: "name", label: "Name" },
+  { key: "position", label: "Position" },
+  { key: "batting", label: "Batting" },
+  { key: "bowling", label: "Bowling" },
+  { key: "fielding", label: "Fielding" },
+];
+
+const GRADE_RANK = { A: 4, B: 3, C: 2, D: 1 };
+
+function sortableValue(player, key) {
+  const v = player[key];
+  if (key === "deal_grade") return GRADE_RANK[v] ?? 0;
+  return v ?? 0;
+}
+
+// Shared by the squad viewer and the remaining-players list: a position
+// filter plus click-to-sort columns. `extraColumns` are appended after the
+// base stat columns (e.g. estimated value for the remaining-players list, or
+// price paid + deal grade for a squad).
+function PlayerTable({ players, extraColumns, emptyMessage, rowClassName }) {
+  const [positionFilter, setPositionFilter] = useState("All");
+  const [sortKey, setSortKey] = useState(extraColumns[0].key);
+  const [sortDir, setSortDir] = useState("desc");
+  const [statKey, setStatKey] = useState("batting");
+  const [statMin, setStatMin] = useState("");
+
+  const columns = [...BASE_PLAYER_COLUMNS, ...extraColumns];
+  // Only numeric columns make sense for a ">=" threshold filter - name/
+  // position/grade/buyer are all strings, so exclude by actual value type
+  // rather than hardcoding every string-valued column key.
+  const statColumns = columns.filter(
+    (c) =>
+      c.key !== "name" &&
+      c.key !== "position" &&
+      c.key !== "deal_grade" &&
+      !players.some((p) => typeof p[c.key] === "string"),
+  );
+
+  const positions = useMemo(
+    () => ["All", ...new Set(players.map((p) => p.position))].sort(),
+    [players],
+  );
+
+  const visiblePlayers = useMemo(() => {
+    let filtered =
+      positionFilter === "All" ? players : players.filter((p) => p.position === positionFilter);
+    const threshold = statMin === "" ? null : Number(statMin);
+    if (threshold !== null && !Number.isNaN(threshold)) {
+      filtered = filtered.filter((p) => (p[statKey] ?? 0) >= threshold);
+    }
+    return [...filtered].sort((a, b) => {
+      const va = sortableValue(a, sortKey);
+      const vb = sortableValue(b, sortKey);
+      const cmp = typeof va === "string" ? va.localeCompare(vb) : va - vb;
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [players, positionFilter, statKey, statMin, sortKey, sortDir]);
+
+  function toggleSort(key) {
+    if (key === sortKey) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "name" || key === "position" ? "asc" : "desc");
+    }
+  }
+
+  return (
+    <>
+      <div className="player-filters">
+        <select value={positionFilter} onChange={(e) => setPositionFilter(e.target.value)}>
+          {positions.map((pos) => (
+            <option key={pos} value={pos}>
+              {pos}
+            </option>
+          ))}
+        </select>
+        <select value={statKey} onChange={(e) => setStatKey(e.target.value)}>
+          {statColumns.map((col) => (
+            <option key={col.key} value={col.key}>
+              {col.label}
+            </option>
+          ))}
+        </select>
+        <span>&ge;</span>
+        <input
+          type="number"
+          placeholder="min"
+          value={statMin}
+          onChange={(e) => setStatMin(e.target.value)}
+          className="stat-filter-input"
+        />
+        {statMin !== "" && (
+          <button className="link-button" onClick={() => setStatMin("")}>
+            Clear
+          </button>
+        )}
+        <span className="filter-count">
+          Showing {visiblePlayers.length} of {players.length}
+        </span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <th key={col.key}>
+                <button className="sort-header" onClick={() => toggleSort(col.key)}>
+                  {col.label}
+                  {sortKey === col.key ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+                </button>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {visiblePlayers.map((p) => (
+            <tr key={p.player_id} className={rowClassName ? rowClassName(p) : undefined}>
+              <td>{p.name}</td>
+              <td>{p.position}</td>
+              <td>{p.batting}</td>
+              <td>{p.bowling}</td>
+              <td>{p.fielding}</td>
+              {extraColumns.map((col) => (
+                <td key={col.key}>
+                  {col.key === "deal_grade" ? (
+                    p.deal_grade ? (
+                      <span className={`grade-badge grade-${p.deal_grade}`}>{p.deal_grade}</span>
+                    ) : (
+                      "-"
+                    )
+                  ) : (
+                    (p[col.key] ?? "-")
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+          {visiblePlayers.length === 0 && (
+            <tr>
+              <td colSpan={columns.length}>{emptyMessage}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </>
+  );
+}
+
+function SquadModal({ team, loading, error, onClose, onViewStartingEleven }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -172,7 +323,10 @@ function SquadModal({ team, loading, error, onClose }) {
         {team && (
           <>
             <p>
-              Budget: {team.budget} · Squad size: {team.squad_size}
+              Budget: {team.budget} · Squad size: {team.squad_size}{" "}
+              <button className="link-button" onClick={() => onViewStartingEleven(team.key)}>
+                [View Starting XI]
+              </button>
             </p>
             {team.composition && (
               <p>
@@ -181,35 +335,14 @@ function SquadModal({ team, loading, error, onClose }) {
                 {team.composition.wicketkeepers}
               </p>
             )}
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Position</th>
-                  <th>Batting</th>
-                  <th>Bowling</th>
-                  <th>Fielding</th>
-                  <th>Price Paid</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(team.squad || []).map((p) => (
-                  <tr key={p.player_id}>
-                    <td>{p.name}</td>
-                    <td>{p.position}</td>
-                    <td>{p.batting}</td>
-                    <td>{p.bowling}</td>
-                    <td>{p.fielding}</td>
-                    <td>{p.selling_price ?? "-"}</td>
-                  </tr>
-                ))}
-                {team.squad && team.squad.length === 0 && (
-                  <tr>
-                    <td colSpan="6">No players bought yet.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <PlayerTable
+              players={team.squad || []}
+              extraColumns={[
+                { key: "selling_price", label: "Price Paid" },
+                { key: "deal_grade", label: "Grade" },
+              ]}
+              emptyMessage="No players bought yet."
+            />
           </>
         )}
       </div>
@@ -228,32 +361,153 @@ function PlayerListModal({ data, loading, error, onClose }) {
         {loading && <p>Loading players...</p>}
         {error && <p className="error-banner">{error}</p>}
         {data && (
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Batting</th>
-                <th>Bowling</th>
-                <th>Fielding</th>
-                <th>Est. Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.players.map((p) => (
-                <tr key={p.player_id}>
-                  <td>{p.name}</td>
-                  <td>{p.position}</td>
-                  <td>{p.batting}</td>
-                  <td>{p.bowling}</td>
-                  <td>{p.fielding}</td>
-                  <td>{p.estimated_price}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <PlayerTable
+            players={data.players}
+            extraColumns={[{ key: "estimated_price", label: "Est. Value" }]}
+            emptyMessage="No players match this filter."
+          />
         )}
       </div>
+    </div>
+  );
+}
+
+function StartingElevenModal({ data, loading, error, onClose }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{data ? `${data.name} - Starting XI` : "Starting XI"}</h2>
+          <button onClick={onClose}>Close</button>
+        </div>
+        {loading && <p>Building lineup...</p>}
+        {error && <p className="error-banner">{error}</p>}
+        {data && !data.available && <p>{data.reason}</p>}
+        {data && data.available && (
+          <>
+            <p>
+              Batting: {data.batting_rating} · Bowling: {data.bowling_rating} · Fielding:{" "}
+              {data.fielding_rating}
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Position</th>
+                  <th>Batting Order</th>
+                  <th>Batting</th>
+                  <th>Bowling</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.lineup.map((p, i) => (
+                  <tr key={p.player_id}>
+                    <td>{i + 1}</td>
+                    <td>{p.name}</td>
+                    <td>{p.position}</td>
+                    <td>{p.batting_order}</td>
+                    <td>{p.batting}</td>
+                    <td>{p.bowling}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <h3>Bench</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Position</th>
+                  <th>Batting</th>
+                  <th>Bowling</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.bench.map((p) => (
+                  <tr key={p.player_id}>
+                    <td>{p.name}</td>
+                    <td>{p.position}</td>
+                    <td>{p.batting}</td>
+                    <td>{p.bowling}</td>
+                  </tr>
+                ))}
+                {data.bench.length === 0 && (
+                  <tr>
+                    <td colSpan="4">No bench players.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GameSummary({ data, loading, error }) {
+  if (loading) return <div className="panel">Building summary...</div>;
+  if (error) return <div className="panel error-banner">{error}</div>;
+  if (!data) return null;
+
+  return (
+    <div className="game-summary">
+      <h2>Auction Complete</h2>
+
+      <section className="panel">
+        <h3>Sold Players ({data.sold_players.length})</h3>
+        <p className="filter-count">{data.unsold_count} player(s) went unsold.</p>
+        <PlayerTable
+          players={data.sold_players}
+          extraColumns={[
+            { key: "selling_price", label: "Price Paid" },
+            { key: "buyer", label: "Buyer" },
+            { key: "deal_grade", label: "Grade" },
+          ]}
+          emptyMessage="No players were sold."
+          rowClassName={(p) => (p.is_user ? "your-purchase" : undefined)}
+        />
+      </section>
+
+      <section className="panel">
+        <h3>Team Starting XIs</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>Squad</th>
+              <th>Budget Left</th>
+              <th>Batting</th>
+              <th>Bowling</th>
+              <th>Fielding</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.teams.map((t) => (
+              <tr key={t.key} className={t.is_user ? "your-purchase" : undefined}>
+                <td>
+                  {t.name}
+                  {t.is_user ? " (You)" : ""}
+                </td>
+                <td>{t.squad_size}</td>
+                <td>{t.budget}</td>
+                {t.starting_eleven.available ? (
+                  <>
+                    <td>{t.starting_eleven.batting_rating}</td>
+                    <td>{t.starting_eleven.bowling_rating}</td>
+                    <td>{t.starting_eleven.fielding_rating}</td>
+                  </>
+                ) : (
+                  <td colSpan="3" title={t.starting_eleven.reason}>
+                    Not available - {t.starting_eleven.reason}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
     </div>
   );
 }
@@ -277,6 +531,7 @@ export default function App() {
   const [sessionId, setSessionId] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [seedInput, setSeedInput] = useState("");
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [teamLoading, setTeamLoading] = useState(false);
   const [teamError, setTeamError] = useState(null);
@@ -284,6 +539,14 @@ export default function App() {
   const [remainingPlayersOpen, setRemainingPlayersOpen] = useState(false);
   const [remainingLoading, setRemainingLoading] = useState(false);
   const [remainingError, setRemainingError] = useState(null);
+  const [startingEleven, setStartingEleven] = useState(null);
+  const [startingElevenOpen, setStartingElevenOpen] = useState(false);
+  const [startingElevenLoading, setStartingElevenLoading] = useState(false);
+  const [startingElevenError, setStartingElevenError] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState(null);
+  const [view, setView] = useState("auction"); // "auction" | "summary"
 
   // The auction now runs on its own clock server-side (see live_clock.py) -
   // it doesn't wait for a bid/pass click. Poll so the UI reflects bot bids
@@ -310,6 +573,20 @@ export default function App() {
     return () => clearInterval(interval);
   }, [sessionId]);
 
+  async function showSummary() {
+    setSummaryError(null);
+    setSummaryLoading(true);
+    setView("summary");
+    try {
+      const data = await api.getSummary(sessionId);
+      setSummary(data);
+    } catch (err) {
+      setSummaryError(err.message);
+    } finally {
+      setSummaryLoading(false);
+    }
+  }
+
   async function run(action) {
     setBusy(true);
     setError(null);
@@ -324,9 +601,12 @@ export default function App() {
     }
   }
 
-  const startGame = () => run(() => api.newGame());
+  const startGame = () => {
+    setView("auction");
+    setSummary(null);
+    run(() => api.newGame(seedInput));
+  };
   const doBid = (amount) => run(() => api.bid(sessionId, amount));
-  const doPass = () => run(() => api.pass(sessionId));
   const doSkip = () => run(() => api.skip(sessionId));
   const doAdvance = () => run(() => api.advance(sessionId));
   const doTogglePause = () =>
@@ -349,6 +629,20 @@ export default function App() {
       setRemainingError(err.message);
     } finally {
       setRemainingLoading(false);
+    }
+  }
+
+  async function showStartingEleven(teamKey) {
+    setStartingElevenError(null);
+    setStartingElevenOpen(true);
+    setStartingElevenLoading(true);
+    try {
+      const data = await api.getStartingEleven(sessionId, teamKey);
+      setStartingEleven(data);
+    } catch (err) {
+      setStartingElevenError(err.message);
+    } finally {
+      setStartingElevenLoading(false);
     }
   }
 
@@ -378,13 +672,31 @@ export default function App() {
           <h1>Cricket Auction Simulator</h1>
           {state && (
             <p className="live-note">
-              {state.paused
-                ? "Auction paused - bid, pass, and skip still work."
-                : "Live auction - bid or pass anytime, or just watch."}
+              {state.phase === "game_over"
+                ? "Auction complete."
+                : state.paused
+                  ? "Auction paused - bid, pass, and skip still work."
+                  : "Live auction - bid or pass anytime, or just watch."}
+            </p>
+          )}
+          {state && (
+            <p className="seed-note">
+              Seed: {state.seed}{" "}
+              <button className="link-button" onClick={() => setSeedInput(String(state.seed))}>
+                [Reuse this seed]
+              </button>
             </p>
           )}
         </div>
         <div className="header-buttons">
+          <input
+            type="number"
+            placeholder="Seed (optional)"
+            value={seedInput}
+            onChange={(e) => setSeedInput(e.target.value)}
+            className="seed-input"
+            title="Same seed reproduces the same 250 players and teams"
+          />
           <button onClick={startGame} disabled={busy}>
             {state ? "Restart Game" : "Start New Game"}
           </button>
@@ -398,12 +710,24 @@ export default function App() {
               Complete Simulation
             </button>
           )}
+          {state && (
+            <button onClick={view === "auction" ? showSummary : () => setView("auction")}>
+              {view === "auction" ? "View Summary" : "Back to Auction"}
+            </button>
+          )}
         </div>
       </header>
 
       {error && <div className="error-banner">{error}</div>}
 
-      {state && (
+      {state && view === "summary" && (
+        <>
+          <GameSummary data={summary} loading={summaryLoading} error={summaryError} />
+          <ActivityFeed events={state.event_log} />
+        </>
+      )}
+
+      {state && view === "auction" && (
         <div className="layout">
           <div className="column main-column">
             <PlayerCard player={state.current_player} />
@@ -411,7 +735,6 @@ export default function App() {
             <Controls
               state={state}
               onBid={doBid}
-              onPass={doPass}
               onSkip={doSkip}
               onAdvance={doAdvance}
               busy={busy}
@@ -433,6 +756,7 @@ export default function App() {
           loading={teamLoading}
           error={teamError}
           onClose={() => setSelectedTeam(null)}
+          onViewStartingEleven={showStartingEleven}
         />
       )}
 
@@ -444,6 +768,18 @@ export default function App() {
           onClose={() => {
             setRemainingPlayersOpen(false);
             setRemainingPlayers(null);
+          }}
+        />
+      )}
+
+      {startingElevenOpen && (
+        <StartingElevenModal
+          data={startingEleven}
+          loading={startingElevenLoading}
+          error={startingElevenError}
+          onClose={() => {
+            setStartingElevenOpen(false);
+            setStartingEleven(null);
           }}
         />
       )}

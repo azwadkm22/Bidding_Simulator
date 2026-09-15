@@ -26,6 +26,16 @@ def test_new_game_returns_playable_state():
     assert state["current_price"] == 10
     assert state["available_actions"] == ["bid", "pass", "skip"]
     assert len(state["rivals"]) == 12
+    assert isinstance(state["seed"], int)
+
+
+def test_new_game_with_explicit_seed_reproduces_the_same_pool():
+    state_a = client.post("/api/game/new", json={"seed": 999}).json()
+    state_b = client.post("/api/game/new", json={"seed": 999}).json()
+
+    assert state_a["seed"] == state_b["seed"] == 999
+    assert state_a["current_player"]["name"] == state_b["current_player"]["name"]
+    assert [r["name"] for r in state_a["rivals"]] == [r["name"] for r in state_b["rivals"]]
 
 
 def test_get_game_returns_same_state():
@@ -70,6 +80,43 @@ def test_team_detail_unknown_key_returns_404():
     assert response.status_code == 404
 
 
+def test_starting_eleven_unavailable_for_empty_squad():
+    session_id = client.post("/api/game/new").json()["session_id"]
+    response = client.get(f"/api/game/{session_id}/teams/user/starting-eleven")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["key"] == "user"
+    assert data["available"] is False
+    assert data["reason"]
+    assert data["lineup"] == []
+
+
+def test_starting_eleven_unknown_team_returns_404():
+    session_id = client.post("/api/game/new").json()["session_id"]
+    response = client.get(f"/api/game/{session_id}/teams/does-not-exist/starting-eleven")
+    assert response.status_code == 404
+
+
+def test_starting_eleven_available_after_full_squad():
+    state = client.post("/api/game/new").json()
+    session_id = state["session_id"]
+    state = client.post(f"/api/game/{session_id}/complete-simulation").json()
+
+    big_team = next((r for r in state["rivals"] if r["squad_size"] >= 11), None)
+    assert big_team is not None, "expected at least one 11+ player squad after a full simulation"
+
+    response = client.get(f"/api/game/{session_id}/teams/{big_team['key']}/starting-eleven")
+    assert response.status_code == 200
+    data = response.json()
+    if data["available"]:
+        assert len(data["lineup"]) == 11
+        assert data["batting_rating"] is not None
+        assert data["bowling_rating"] is not None
+        assert data["fielding_rating"] is not None
+    else:
+        assert data["reason"]
+
+
 def test_remaining_players_matches_players_remaining_count():
     state = client.post("/api/game/new").json()
     session_id = state["session_id"]
@@ -93,6 +140,32 @@ def test_complete_simulation_finishes_the_whole_game():
     assert state["phase"] == "game_over"
     assert state["current_player"] is None
     assert state["available_actions"] == []
+
+
+def test_summary_after_complete_simulation():
+    session_id = client.post("/api/game/new").json()["session_id"]
+    state = client.post(f"/api/game/{session_id}/complete-simulation").json()
+
+    response = client.get(f"/api/game/{session_id}/summary")
+    assert response.status_code == 200
+    summary = response.json()
+
+    total_sold = sum(t["squad_size"] for t in summary["teams"])
+    assert len(summary["sold_players"]) == total_sold
+    assert total_sold + summary["unsold_count"] == 250
+
+    # sold_players sorted by price paid, most expensive first
+    prices = [p["selling_price"] for p in summary["sold_players"]]
+    assert prices == sorted(prices, reverse=True)
+
+    assert len(summary["teams"]) == 13  # user + 12 rivals
+    user_team = next(t for t in summary["teams"] if t["key"] == "user")
+    assert user_team["is_user"] is True
+    assert "starting_eleven" in user_team
+
+    # every sold player entry identifies its buyer
+    for entry in summary["sold_players"]:
+        assert entry["buyer_key"] in [t["key"] for t in summary["teams"]]
 
 
 def test_pause_and_resume_toggle_paused_flag():

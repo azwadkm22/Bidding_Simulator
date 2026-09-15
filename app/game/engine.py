@@ -37,24 +37,58 @@ ALLOWED_INCREMENTS = [5, 10, 25, 50]
 SILENT_ROUNDS_TO_UNSOLD = 3
 SILENT_ROUNDS_TO_SOLD = 2
 
-# Bot bid increments scale with the current price itself (below threshold,
-# increment choices): early jockeying over any player starts small, but once
-# a real bidding war pushes the price up, jumps get bigger fast instead of
-# crawling up by the same tiny step every round regardless of how contested
-# the player is.
+# Bot bid increments scale with how far price sits relative to the player's
+# estimated value (below ratio threshold, increment choices) - not a hump,
+# a "ramp then cool off": tentative while still a bargain, biggest jumps while
+# a real bidding war pushes price up toward and just past fair value, then
+# smaller cautious steps once the price is already well above what the player
+# is worth. Mirrors how real bidders get bolder approaching value and more
+# hesitant once they're clearly overpaying, instead of a flat step size or one
+# that keeps growing no matter how inflated the price already is.
 BOT_INCREMENT_TIERS = [
-    (30, [3, 5, 8]),
-    (80, [8, 12, 18]),
-    (150, [15, 25, 35]),
-    (float("inf"), [30, 50, 75]),
+    (0.5, [3, 5, 8]),
+    (1.0, [8, 15, 25]),
+    (1.5, [15, 25, 40]),
+    (float("inf"), [5, 10, 15]),
 ]
 
 
-def _bot_increment_choices(current_price: int) -> list:
+def _bot_increment_choices(current_price: int, estimated_price: int) -> list:
+    ratio = current_price / max(estimated_price, 1)
     for threshold, choices in BOT_INCREMENT_TIERS:
-        if current_price < threshold:
+        if ratio < threshold:
             return choices
     return BOT_INCREMENT_TIERS[-1][1]
+
+
+# Deal-grade thresholds: `bargain` is (estimated - paid) / estimated, so
+# positive means a discount and negative means an overpay. `fit` is how badly
+# the buying team needed this player (Team.find_new_player_priority,
+# normalized), evaluated before the player joins the squad. A grade can only
+# reach A when the price was a genuine bargain AND it filled a real gap -
+# either alone caps out at B, matching "cheap but also adds value to the
+# squad" rather than treating either factor as sufficient on its own.
+DEAL_GRADE_BARGAIN_GREAT = 0.25
+DEAL_GRADE_BARGAIN_FAIR = -0.05
+DEAL_GRADE_BARGAIN_POOR = -0.30
+DEAL_GRADE_FIT_THRESHOLD = 0.35
+DEAL_GRADE_FIT_MAX_PRIORITY = 8.0
+
+
+def _grade_deal(handle: "BidderHandle", player: Player, price: int) -> str:
+    estimated = max(player.estimated_price, 1)
+    bargain = (estimated - price) / estimated
+    priority = handle.team.find_new_player_priority(player)
+    fit = max(0.0, min(1.0, priority / DEAL_GRADE_FIT_MAX_PRIORITY))
+    needed = fit >= DEAL_GRADE_FIT_THRESHOLD
+
+    if bargain >= DEAL_GRADE_BARGAIN_GREAT:
+        return "A" if needed else "B"
+    if bargain >= DEAL_GRADE_BARGAIN_FAIR:
+        return "B" if needed else "C"
+    if bargain >= DEAL_GRADE_BARGAIN_POOR:
+        return "C"
+    return "D"
 
 
 class AuctionPhase(str, Enum):
@@ -102,6 +136,7 @@ class GameSession:
     event_log: list = field(default_factory=list)
     last_result: Optional[dict] = None
     paused: bool = False
+    seed: int = 0
 
     def all_handles(self):
         return [self.user_handle] + self.bot_handles
@@ -117,7 +152,30 @@ def _log(session: GameSession, message: str) -> None:
     session.event_log.append(message)
 
 
-def create_game() -> GameSession:
+SEED_MAX = 2**31 - 1
+
+
+def create_game(seed: Optional[int] = None) -> GameSession:
+    """Reseeds the process-wide random module before generating players,
+    teams, and bidders, so a given seed reliably reproduces the same 250
+    player pool, team names, and bot traits. Gameplay after that (who bids
+    when) still draws from the same continuing stream, so it isn't pinned to
+    the seed the same way - it depends on timing and on what the human does,
+    which is normally what you'd want anyway.
+
+    This reseeds the *global* random module, since none of the domain code
+    (Player/Team generation, bidder decisions) accepts an injectable RNG -
+    it all calls the bare `random` module directly. That means starting a new
+    seeded game while another session's live clock is still ticking in the
+    background will perturb that other session's randomness too. Fine for
+    the one-game-at-a-time way this app is meant to be used; would need every
+    domain call site threaded with its own random.Random instance to be safe
+    with multiple concurrent sessions.
+    """
+    if seed is None:
+        seed = random.randint(0, SEED_MAX)
+    random.seed(seed)
+
     players = get_list_of_players(PLAYER_POOL_SIZE)
     players = sorted(players, key=lambda p: p.estimated_price, reverse=True)
     player_generation = PlayerGenStat(players)
@@ -154,8 +212,9 @@ def create_game() -> GameSession:
         user_handle=user_handle,
         bot_handles=bot_handles,
         queue=deque(player_generation.list_of_players),
+        seed=seed,
     )
-    _log(session, "Auction started: 250 players, 12 rival teams. Good luck!")
+    _log(session, f"Auction started (seed {seed}): 250 players, 12 rival teams. Good luck!")
     _load_next_player(session)
     return session
 
@@ -275,6 +334,54 @@ def resume(session: GameSession) -> GameSession:
     return session
 
 
+def _core_skill(player: Player) -> float:
+    if player.position == "Bowler":
+        return player.bowling
+    if player.position == "Allrounder":
+        return (player.batting + player.bowling) / 2
+    return player.batting  # Batsmen, Wicketkeeper, Trainee
+
+
+def _skill_factor(player: Player) -> float:
+    # 0.1 floor at/below skill 40, ramps to 1.0 (no damping) at skill 80+.
+    return max(0.1, min(1.0, (_core_skill(player) - 40) / 40))
+
+
+def _bot_wants_to_bid(handle: BidderHandle, player: Player, candidate_price: int) -> bool:
+    """Whether a bot accepts a candidate price, using the domain bidder's own
+    calculate_utility score but damping it for players whose own skill is
+    weak.
+
+    UtilityBasedBidder.calculate_utility mixes a player's own quality with
+    "does this team need bodies right now" (open roster slots, affordable
+    price relative to remaining budget) - both of which give every bot the
+    same flat bonus no matter how weak the specific player is. Early in an
+    auction, when every team has open slots, that desperation signal can
+    swamp the actual skill signal, so mediocre players get bid up almost as
+    hard as stars purely because slots are open. This doesn't touch
+    calculate_utility itself (a large, delicately-tuned function); it only
+    scales its positive output down for weak players before the accept/reject
+    roll, leaving placeBid's own probabilistic decision path for anything
+    that isn't a UtilityBasedBidder.
+    """
+    bidder = handle.bidder
+    if not hasattr(bidder, "calculate_utility"):
+        return bidder.placeBid(player, candidate_price) == 1
+
+    if handle.team.number_of_players > MAX_SQUAD_SIZE - 1:
+        return False
+
+    utility = bidder.calculate_utility(player, candidate_price)
+    if utility > 0:
+        utility *= _skill_factor(player)
+
+    if utility < 0:
+        return False
+    if utility > 1:
+        return True
+    return random.random() < utility
+
+
 def _run_bot_sweep(session: GameSession) -> bool:
     """One round of bot bidding, modeled as simultaneous rather than sequential.
 
@@ -287,14 +394,14 @@ def _run_bot_sweep(session: GameSession) -> bool:
     _apply_bid.
     """
     base_price = session.current_price
-    increment_choices = _bot_increment_choices(base_price)
+    increment_choices = _bot_increment_choices(base_price, session.current_player.estimated_price)
     contenders = []
     for handle in session.bot_handles:
         if session.current_leader is handle:
             continue
         candidate_increment = random.choice(increment_choices)
         candidate_price = base_price + candidate_increment
-        if handle.bidder.placeBid(session.current_player, candidate_price) == 1:
+        if _bot_wants_to_bid(handle, session.current_player, candidate_price):
             contenders.append((handle, candidate_increment, candidate_price))
 
     if not contenders:
@@ -342,8 +449,13 @@ def _settle_sale(session: GameSession) -> None:
     leader = session.current_leader
     price = session.current_price
 
+    # Grade before adding to the team, since it needs to be based on how much
+    # this fills a gap in the *pre-purchase* squad, not the post-purchase one.
+    grade = _grade_deal(leader, player, price)
+
     leader.bidder.subtractPrice(price)
     player.setSellingPrice(price)
+    player.deal_grade = grade
     leader.bidder.addPlayerToTeam(player)
 
     session.phase = AuctionPhase.SOLD
@@ -354,8 +466,9 @@ def _settle_sale(session: GameSession) -> None:
         "price": price,
         "winner": leader.display_name,
         "is_user": leader.is_user,
+        "deal_grade": grade,
     }
-    _log(session, f"SOLD! {player.name} goes to {leader.display_name} for {price}.")
+    _log(session, f"SOLD! {player.name} goes to {leader.display_name} for {price} (Grade {grade}).")
 
 
 def _mark_unsold(session: GameSession) -> None:

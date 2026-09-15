@@ -8,8 +8,13 @@ async function handle(response) {
   return data;
 }
 
-export function newGame() {
-  return fetch(`${API_BASE}/new`, { method: "POST" }).then(handle);
+export function newGame(seed) {
+  const hasSeed = seed !== undefined && seed !== null && seed !== "";
+  return fetch(`${API_BASE}/new`, {
+    method: "POST",
+    headers: hasSeed ? { "Content-Type": "application/json" } : undefined,
+    body: hasSeed ? JSON.stringify({ seed: Number(seed) }) : undefined,
+  }).then(handle);
 }
 
 export function getGame(sessionId) {
@@ -22,10 +27,6 @@ export function bid(sessionId, increment) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ increment }),
   }).then(handle);
-}
-
-export function pass(sessionId) {
-  return fetch(`${API_BASE}/${sessionId}/pass`, { method: "POST" }).then(handle);
 }
 
 export function skip(sessionId) {
@@ -46,6 +47,14 @@ export function resume(sessionId) {
 
 export function getTeam(sessionId, teamKey) {
   return fetch(`${API_BASE}/${sessionId}/teams/${teamKey}`).then(handle);
+}
+
+export function getStartingEleven(sessionId, teamKey) {
+  return fetch(`${API_BASE}/${sessionId}/teams/${teamKey}/starting-eleven`).then(handle);
+}
+
+export function getSummary(sessionId) {
+  return fetch(`${API_BASE}/${sessionId}/summary`).then(handle);
 }
 
 export function getRemainingPlayers(sessionId) {

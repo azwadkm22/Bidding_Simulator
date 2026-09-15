@@ -76,7 +76,7 @@ def test_bot_round_is_simultaneous_not_cascading():
     bots = [make_handle(f"bot-{i}", budget=10000, place_bid_result=always_accept) for i in range(5)]
     session = make_session(bot_handles=bots)
     base_price = session.current_price
-    expected_choices = engine._bot_increment_choices(base_price)
+    expected_choices = engine._bot_increment_choices(base_price, session.current_player.estimated_price)
 
     engine.process_pass(session)
 
@@ -204,6 +204,105 @@ def test_skip_to_outcome_rejects_when_not_open():
         engine.skip_to_outcome(session)
 
 
+def test_deal_grade_a_for_cheap_and_needed_player():
+    winner = make_handle("bot-winner", budget=1000)  # empty squad -> genuinely needs a keeper
+    wk_player = make_player(player_id=5, name="WK Star", estimated_price=100, position="Wicketkeeper")
+    session = make_session(player=wk_player, bot_handles=[winner])
+    session.current_leader = winner
+    session.current_price = 20  # well below estimated value -> a clear bargain
+
+    for _ in range(engine.SILENT_ROUNDS_TO_SOLD):
+        engine.process_pass(session)
+
+    assert session.phase == AuctionPhase.SOLD
+    assert wk_player.deal_grade == "A"
+    assert session.last_result["deal_grade"] == "A"
+
+
+def test_deal_grade_d_for_bad_overpay():
+    winner = make_handle("bot-winner", budget=100000)
+    player = make_player(player_id=6, name="Overpriced Guy", estimated_price=100, position="Batsmen")
+    session = make_session(player=player, bot_handles=[winner])
+    session.current_leader = winner
+    session.current_price = 500  # far above estimated value regardless of squad need
+
+    for _ in range(engine.SILENT_ROUNDS_TO_SOLD):
+        engine.process_pass(session)
+
+    assert player.deal_grade == "D"
+
+
+def test_weak_player_desperation_bid_is_damped_but_strong_player_is_not():
+    """UtilityBasedBidder.calculate_utility gives every bot a flat "need
+    bodies" bonus (slot_left_ut/remaining_ut) whenever its squad has open
+    slots, regardless of the specific player's own quality. Without damping
+    this makes even a weak player attract bids from almost every empty-squad
+    bot, driving the price up no matter how low the player's attributes are.
+    _bot_wants_to_bid should suppress that for weak players while leaving a
+    strong player's acceptance rate essentially unchanged.
+    """
+    from Bidders.utility_based_bidder import UtilityBasedBidder
+    from Team.generate_teams import generate_teams
+
+    weak = make_player(player_id=90, name="Weak", estimated_price=40, position="Batsmen")
+    weak.batting = 35
+    strong = make_player(player_id=91, name="Strong", estimated_price=180, position="Batsmen")
+    strong.batting = 92
+
+    def empty_squad_handle():
+        team = generate_teams(1)[0]
+        shortlist = type("ShortList", (), {"players": set()})()
+        bidder = UtilityBasedBidder("Test Team", "Safe", 2000, team, [], shortlist, [])
+        handle = make_handle("bot", budget=2000)
+        handle.team = team
+        handle.bidder = bidder
+        bidder.team = team
+        return handle
+
+    trials = 3000
+    weak_handle = empty_squad_handle()
+    weak_rate = sum(engine._bot_wants_to_bid(weak_handle, weak, 40) for _ in range(trials)) / trials
+
+    strong_handle = empty_squad_handle()
+    strong_rate = sum(engine._bot_wants_to_bid(strong_handle, strong, 100) for _ in range(trials)) / trials
+
+    assert weak_rate < 0.05
+    assert strong_rate > 0.10
+
+
+def test_same_seed_reproduces_the_same_player_pool_and_teams():
+    session_a = engine.create_game(seed=12345)
+    session_b = engine.create_game(seed=12345)
+
+    assert session_a.seed == session_b.seed == 12345
+    names_a = [p.name for p in session_a.player_generation.list_of_players]
+    names_b = [p.name for p in session_b.player_generation.list_of_players]
+    assert names_a == names_b
+    prices_a = [p.estimated_price for p in session_a.player_generation.list_of_players]
+    prices_b = [p.estimated_price for p in session_b.player_generation.list_of_players]
+    assert prices_a == prices_b
+    assert [h.display_name for h in session_a.bot_handles] == [h.display_name for h in session_b.bot_handles]
+
+
+def test_different_seeds_produce_different_pools():
+    session_a = engine.create_game(seed=1)
+    session_b = engine.create_game(seed=2)
+
+    names_a = [p.name for p in session_a.player_generation.list_of_players]
+    names_b = [p.name for p in session_b.player_generation.list_of_players]
+    assert names_a != names_b
+
+
+def test_no_seed_still_reports_a_usable_seed():
+    session = engine.create_game()
+    assert isinstance(session.seed, int)
+
+    replay = engine.create_game(seed=session.seed)
+    names_original = [p.name for p in session.player_generation.list_of_players]
+    names_replay = [p.name for p in replay.player_generation.list_of_players]
+    assert names_original == names_replay
+
+
 def test_repeat_sessions_are_isolated():
     random.seed(42)
     session_a = engine.create_game()
@@ -243,7 +342,7 @@ def test_full_game_completes_with_no_duplicate_player_assignment():
     session = engine.create_game()
 
     steps = 0
-    while session.phase != AuctionPhase.GAME_OVER and steps < 20000:
+    while session.phase != AuctionPhase.GAME_OVER and steps < 10000:
         steps += 1
         if session.phase in (AuctionPhase.SOLD, AuctionPhase.UNSOLD):
             engine.advance(session)
