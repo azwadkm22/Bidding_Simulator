@@ -12,20 +12,20 @@ class Player():
         if json_data == None:
             self.player_id = player_id
             self.name = getPlayerName()
-            self.batting = get_random_normal_distribution_number_biased(20, 96)
+            self.batting = get_random_normal_distribution_number_biased(20, 94)
             bowlSkillStart = 20
             if self.batting > 75:
-                bowlSkillStart = 10
+                bowlSkillStart = 15
             elif self.batting < 50:
-                bowlSkillStart = 30
-            self.bowling = get_random_normal_distribution_number_biased(bowlSkillStart, 96)
-            self.fielding = get_random_normal_distribution_number_biased(50, 85, 15)
+                bowlSkillStart = 35
+            self.bowling = get_random_normal_distribution_number_biased(bowlSkillStart, 94)
+            self.fielding = get_random_normal_distribution_number_biased(50, 90, 15)
             self.position = self.getPosition()
             if self.position == "Trainee":
                 self.fielding = 45
             fameLowbound = max(self.batting-10, self.bowling-10, self.fielding-30, 10)
             fameHighbound = max(self.batting-5, self.bowling-5, self.fielding-20, 70)
-            self.fame = 50#get_random_normal_distribution_number_biased(fameLowbound, fameHighbound)
+            self.fame = 50 #get_random_normal_distribution_number_biased(fameLowbound, fameHighbound)
 
             self.estimated_price = self.getEstimatedPrice()
             
@@ -178,14 +178,15 @@ class Player():
         # disproportionately more than merely-good players, instead of a
         # near-linear spread - closer to how real auctions price a handful of
         # marquee names far above the rest of the field.
+        rating = 0.0
         if self.position == "Batsmen":
-            rating = 0.8 * self.batting + 0.2 * self.fielding
+            rating = 0.9 * self.batting + 0.05 * self.fielding
         elif self.position == "Bowler":
-            rating = 0.8 * self.bowling + 0.2 * self.fielding
+            rating = 0.9 * self.bowling + 0.05 * self.fielding
         elif self.position == "Wicketkeeper":
-            rating = 0.75 * self.batting + 0.25 * self.fielding
+            rating = 0.85 * self.batting + 0.15 * self.fielding
         elif self.position == "Allrounder":
-            rating = 0.45 * self.batting + 0.4 * self.bowling + 0.15 * self.fielding
+            rating = 0.45 * self.batting + 0.45 * self.bowling + 0.1 * self.fielding
         else:  # Trainee
             rating = 0.4 * self.batting + 0.4 * self.bowling + 0.2 * self.fielding
 
