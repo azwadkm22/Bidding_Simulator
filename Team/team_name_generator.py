@@ -7,14 +7,27 @@ REGIONS = [
     "Sylhet",
     "Barishal",
     "Khulna",
+    "Chittagong",
+    "Rangpur",
+    "Cox's Bazar",
     "Cumilla",
     "Noakhali",
-    "Chittagong",
     "Dinajpur",
     "Jessore",
     "Mymensingh",
-    "Rangpur",
-    "Bogura"
+    "Bogura",
+    "Brahmanbaria",
+    "Tangail",
+    "Gazipur",
+    "Chandpur",
+    "Rangamati",
+    "Bandarban",
+    "Padma",
+    "Meghna",
+    "Jamuna",
+    "Surma",
+    "Teesta",
+    "Rupsha"
 ]
 
 END_NAMES = [
@@ -31,15 +44,30 @@ END_NAMES = [
     "Kings",
     "Rajahs",
     "Vipers",
-    "Dragons"
+    "Dragons",
+    "Warriors",
+    "Royals",
+    "Knights",
+    "Eagles",
+    "Cobras",
+    "Rhinos",
+    "Sharks",
+    "Strikers",
+    "Chargers",
+    "Challengers",
+    "Blazers",
+    "Storm",
 ]
 
 START_NAMES = [
     "Stellar",
     "Royal",
     "Mighty",
-    "Ferocious"
-
+    "Ferocious",
+    "Blazing",
+    "Fearless",
+    "Rising",
+    "United",
 ]
 
 def new_name_pool():
