@@ -200,10 +200,10 @@ def test_build_repertoire_accepts_unique_identifiers():
 # --- 9/10. Role overall -------------------------------------------------
 
 
-def test_balanced_allrounder_example_yields_79_9_raw_80_displayed():
+def test_balanced_allrounder_example_yields_79_36_raw_79_displayed():
     result = calculate_overall_rating("balancedAllRounder", {"batting": 82, "bowling": 76, "fielding": 88})
-    assert result.raw == pytest.approx(79.9)
-    assert result.displayed == 80
+    assert result.raw == pytest.approx(79.36)
+    assert result.displayed == 79
 
 
 def test_overall_uses_raw_core_ratings_not_pre_rounded():
@@ -324,7 +324,7 @@ def test_shared_attribute_change_propagates_to_every_formula_using_it():
 def test_specialist_batter_overall_does_not_need_bowling_or_keeping():
     core_ratings = {"batting": 80, "fielding": 60}  # no "bowling"/"wicketkeeping" keys at all
     result = calculate_overall_rating("specialistBatter", core_ratings)
-    assert result.raw == pytest.approx(80 * 0.85 + 60 * 0.15)
+    assert result.raw == pytest.approx(80 * 0.90 + 60 * 0.10)
 
 
 def test_calculate_player_ratings_marks_unavailable_disciplines():

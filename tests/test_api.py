@@ -124,7 +124,7 @@ def test_weight_tables_returns_every_table_and_batting_vs_blend():
     }
     assert sum(weight for _, weight in data["tables"]["batting"]) == 100
     assert set(data["batting_vs_blend"].keys()) == {"base", "vsSpin", "vsPace"}
-    assert data["role_overall"]["specialistBatter"]["batting"] == 85
+    assert data["role_overall"]["specialistBatter"]["batting"] == 90
 
 
 def test_preview_computes_ratings_with_breakdown_and_no_side_effects():
@@ -231,6 +231,31 @@ def test_start_game_from_a_pregenerated_pool():
     assert detail.json()["player_id"] == player_id
 
 
+def test_pool_shortlist_toggle_and_carry_over_into_a_game():
+    summary = client.post("/api/players/generate", json={"seed": 5, "count": 20}).json()
+    pool_id = summary["pool_id"]
+    players = client.get(f"/api/players/{pool_id}/players").json()["players"]
+    target_id = players[7]["player_id"]
+    assert players[7]["shortlisted"] is False
+
+    response = client.post(f"/api/players/{pool_id}/shortlist/{target_id}")
+    assert response.status_code == 200
+
+    players = client.get(f"/api/players/{pool_id}/players").json()["players"]
+    shortlisted_ids = [p["player_id"] for p in players if p["shortlisted"]]
+    assert shortlisted_ids == [target_id]
+
+    # Toggling again removes it.
+    client.post(f"/api/players/{pool_id}/shortlist/{target_id}")
+    players = client.get(f"/api/players/{pool_id}/players").json()["players"]
+    assert all(not p["shortlisted"] for p in players)
+
+    # Re-add, then confirm it carries over once an auction starts from this pool.
+    client.post(f"/api/players/{pool_id}/shortlist/{target_id}")
+    state = client.post("/api/game/new", json={"pool_id": pool_id}).json()
+    assert [p["player_id"] for p in state["user"]["shortlist"]] == [target_id]
+
+
 def test_ad_hoc_seed_only_game_has_no_pool_id():
     state = client.post("/api/game/new", json={"seed": 123}).json()
     assert state["pool_id"] is None
@@ -271,10 +296,19 @@ def test_team_detail_returns_full_squad_for_valid_key():
     assert detail["key"] == rival_key
     assert "squad" in detail
     assert "composition" in detail
+    assert detail["trait"] in ("Safe", "Risky", "Patient", "Rigid", "Flexible")
+    assert isinstance(detail["shortlist"], list)
+    # sorted by estimated_price, most valuable first
+    prices = [p["estimated_price"] for p in detail["shortlist"]]
+    assert prices == sorted(prices, reverse=True)
 
     user_response = client.get(f"/api/game/{session_id}/teams/user")
     assert user_response.status_code == 200
     assert user_response.json()["key"] == "user"
+    assert user_response.json()["trait"] is None
+    # unlike trait (never applicable to the human-controlled user), the user
+    # can build their own shortlist (see toggle_shortlist) - starts empty.
+    assert user_response.json()["shortlist"] == []
 
 
 def test_team_detail_unknown_key_returns_404():
@@ -390,6 +424,81 @@ def test_skip_resolves_the_player_instantly():
     state = response.json()
     assert state["phase"] in ("sold", "unsold")
     assert state["available_actions"] == ["advance"]
+
+
+def test_skip_players_resolves_the_requested_count():
+    state = client.post("/api/game/new").json()
+    session_id = state["session_id"]
+    before = state["players_remaining"]
+
+    response = client.post(f"/api/game/{session_id}/skip-players?count=5")
+    assert response.status_code == 200
+    state = response.json()
+    assert before - state["players_remaining"] == 5
+
+
+def test_skip_players_stops_early_if_the_game_ends():
+    session_id = client.post("/api/game/new").json()["session_id"]
+    # Way more than the pool size, so this must stop at game over instead of
+    # raising once there's nothing left to resolve.
+    response = client.post(f"/api/game/{session_id}/skip-players?count=100000")
+    assert response.status_code == 200
+    assert response.json()["phase"] == "game_over"
+
+
+def test_complete_round_stops_at_the_round_2_boundary():
+    session_id = client.post("/api/game/new").json()["session_id"]
+
+    response = client.post(f"/api/game/{session_id}/complete-round")
+    assert response.status_code == 200
+    state = response.json()
+    assert state["round_number"] in (1, 2)
+    if state["round_number"] == 1:
+        assert state["phase"] == "game_over"
+
+
+def test_toggle_shortlist_flips_membership_and_shows_up_on_user_shortlist():
+    state = client.post("/api/game/new").json()
+    session_id = state["session_id"]
+    player_id = state["current_player"]["player_id"]
+    assert state["current_player"]["shortlisted"] is False
+
+    response = client.post(f"/api/game/{session_id}/shortlist/{player_id}")
+    assert response.status_code == 200
+    state = response.json()
+    assert state["current_player"]["shortlisted"] is True
+    assert [p["player_id"] for p in state["user"]["shortlist"]] == [player_id]
+
+    response = client.post(f"/api/game/{session_id}/shortlist/{player_id}")
+    state = response.json()
+    assert state["current_player"]["shortlisted"] is False
+    assert state["user"]["shortlist"] == []
+
+
+def test_complete_simulation_stops_on_shortlisted_player():
+    session_id = client.post("/api/game/new").json()["session_id"]
+    remaining = client.get(f"/api/game/{session_id}/players/remaining").json()["players"]
+    target_id = remaining[15]["player_id"]
+    client.post(f"/api/game/{session_id}/shortlist/{target_id}")
+
+    response = client.post(f"/api/game/{session_id}/complete-simulation?stop_on_shortlisted=true")
+    assert response.status_code == 200
+    state = response.json()
+    assert state["phase"] == "on_block"
+    assert state["current_player"]["player_id"] == target_id
+    assert state["current_player"]["shortlisted"] is True
+
+
+def test_skip_players_stops_on_shortlisted_player():
+    session_id = client.post("/api/game/new").json()["session_id"]
+    remaining = client.get(f"/api/game/{session_id}/players/remaining").json()["players"]
+    target_id = remaining[3]["player_id"]
+    client.post(f"/api/game/{session_id}/shortlist/{target_id}")
+
+    response = client.post(f"/api/game/{session_id}/skip-players?count=10&stop_on_shortlisted=true")
+    assert response.status_code == 200
+    state = response.json()
+    assert state["current_player"]["player_id"] == target_id
 
 
 def test_pass_then_bid_progress_the_auction():

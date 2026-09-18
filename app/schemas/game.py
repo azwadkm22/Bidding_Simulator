@@ -23,6 +23,7 @@ class PlayerCard(BaseModel):
     estimated_price: int
     selling_price: Optional[int] = None
     deal_grade: Optional[str] = None
+    shortlisted: bool = False
 
 
 class TeamComposition(BaseModel):
@@ -37,8 +38,10 @@ class BidderSummary(BaseModel):
     name: str
     budget: float
     squad_size: int
+    trait: Optional[str] = None
     squad: Optional[list[PlayerCard]] = None
     composition: Optional[TeamComposition] = None
+    shortlist: Optional[list[PlayerCard]] = None
 
 
 class RemainingPlayers(BaseModel):

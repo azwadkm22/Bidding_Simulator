@@ -145,6 +145,12 @@ class GameSession:
     # /api/players/{pool_id}/players/{player_id}/detail endpoint the
     # generation screen uses. None for the legacy ad-hoc seed-only path.
     pool_id: Optional[str] = None
+    # The human user's own shortlist (player_ids) - unlike an AI bidder's
+    # ShortList (Team/shortlister.py, generated once pre-auction and never
+    # editable), this is user-curated at any point during the game: toggled
+    # on/off freely, and it's fine for a shortlisted player to already be
+    # sold (to anyone) - see toggle_shortlist/view.py's _bidder_summary.
+    user_shortlist: set = field(default_factory=set)
 
     def all_handles(self):
         return [self.user_handle] + self.bot_handles
@@ -229,6 +235,11 @@ def create_game(seed: Optional[int] = None, player_pool: Optional[PlayerPool] = 
         queue=deque(player_generation.list_of_players),
         seed=seed,
         pool_id=player_pool.pool_id if player_pool is not None else None,
+        # Carry over whatever the user shortlisted while browsing the pool
+        # before starting this auction (player_ids, so identical across the
+        # fresh Player objects instantiate_players() just built) - editable
+        # independently from here on, see toggle_shortlist.
+        user_shortlist=set(player_pool.user_shortlist) if player_pool is not None else set(),
     )
     _log(session, f"Auction started (seed {seed}): {len(players)} players, 12 rival teams. Good luck!")
     _load_next_player(session)
@@ -317,16 +328,71 @@ def auto_tick(session: GameSession) -> GameSession:
 MAX_SIMULATION_STEPS = 100_000
 
 
-def complete_simulation(session: GameSession) -> GameSession:
+def complete_simulation(session: GameSession, stop_on_shortlisted: bool = False) -> GameSession:
     """Fast-forward the entire rest of the auction instantly - every
     remaining player, not just the one on the block. Same building blocks as
     auto_tick/skip_to_outcome, just repeated with no pacing and no human
     involvement until the game is over.
+
+    If `stop_on_shortlisted`, also stops the moment a player on the user's
+    own shortlist (session.user_shortlist - see toggle_shortlist) is loaded
+    onto the block, before any bidding happens on them, so the user gets a
+    real chance to bid manually instead of the bots silently resolving it.
     """
     steps = 0
     while session.phase != AuctionPhase.GAME_OVER and steps < MAX_SIMULATION_STEPS:
+        if stop_on_shortlisted and _current_player_is_shortlisted(session):
+            break
         auto_tick(session)
         steps += 1
+    return session
+
+
+def complete_round(session: GameSession, stop_on_shortlisted: bool = False) -> GameSession:
+    """Fast-forward only the rest of the *current* round - round_number goes
+    1 (initial pass through every player) then 2 (unsold players go back up
+    for re-auction; see _load_next_player), never higher. Stops as soon as
+    round_number changes (round 1 finished, unsold players re-queued) or the
+    game ends outright (every player sold in round 1, so there's no round 2
+    at all). Calling this during round 2 is equivalent to complete_simulation,
+    since there's no round 3 boundary to stop at.
+
+    `stop_on_shortlisted` behaves the same as in complete_simulation.
+    """
+    steps = 0
+    starting_round = session.round_number
+    while (
+        session.round_number == starting_round
+        and session.phase != AuctionPhase.GAME_OVER
+        and steps < MAX_SIMULATION_STEPS
+    ):
+        if stop_on_shortlisted and _current_player_is_shortlisted(session):
+            break
+        auto_tick(session)
+        steps += 1
+    return session
+
+
+def skip_players(session: GameSession, count: int, stop_on_shortlisted: bool = False) -> GameSession:
+    """Instantly resolves up to `count` players in sequence - skip_to_outcome
+    on whichever one is currently on the block, then advance to load the
+    next - stopping early if the game ends before reaching `count`. Unlike
+    skip_to_outcome (which stops at sold/unsold and leaves the reveal for the
+    live clock or a manual advance), this also advances past each reveal so
+    the auction is actually `count` players further along when it returns.
+
+    `stop_on_shortlisted` behaves the same as in complete_simulation, checked
+    before resolving each player in the loop.
+    """
+    for _ in range(count):
+        if session.phase == AuctionPhase.GAME_OVER:
+            break
+        if stop_on_shortlisted and _current_player_is_shortlisted(session):
+            break
+        if session.phase in OPEN_PHASES:
+            skip_to_outcome(session)
+        if session.phase in DECIDED_PHASES:
+            advance(session)
     return session
 
 
@@ -507,6 +573,27 @@ def advance(session: GameSession) -> GameSession:
     session.last_result = None
     _load_next_player(session)
     return session
+
+
+def toggle_shortlist(session: GameSession, player_id: int) -> bool:
+    """Adds/removes a player from the user's own shortlist. Freely editable
+    at any point (unlike an AI bidder's fixed pre-auction ShortList) and
+    valid for any player_id regardless of sold state - returns the new
+    membership state (True = now shortlisted).
+    """
+    if player_id in session.user_shortlist:
+        session.user_shortlist.discard(player_id)
+        return False
+    session.user_shortlist.add(player_id)
+    return True
+
+
+def _current_player_is_shortlisted(session: GameSession) -> bool:
+    return (
+        session.phase in OPEN_PHASES
+        and session.current_player is not None
+        and session.current_player.player_id in session.user_shortlist
+    )
 
 
 def _load_next_player(session: GameSession) -> None:

@@ -13,12 +13,37 @@ header {
 
 .header-buttons {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
 .pause-button {
   background: #fff3cd;
   border-color: #ffe69c;
+}
+
+.stop-on-shortlisted-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.shortlist-button {
+  white-space: nowrap;
+  padding: 3px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.shortlist-button-active {
+  background: #fff3b0;
+  border-color: #e6c94a;
 }
 
 .layout {
@@ -450,6 +475,17 @@ button:disabled {
 .breakdown-details {
   margin-bottom: 6px;
   font-size: 0.85em;
+}
+
+.shortlist-details {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.shortlist-details summary {
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .breakdown-table {

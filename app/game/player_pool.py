@@ -38,6 +38,24 @@ class PlayerPool:
     # but the detailed breakdown behind each player_id stays the same no
     # matter how many auctions this pool is reused for.
     detailed: dict = field(default_factory=dict)
+    # The human user's own pre-auction shortlist (player_ids) - built while
+    # browsing the pool, before any GameSession exists. Copied into
+    # GameSession.user_shortlist when an auction starts from this pool (see
+    # engine.create_game), then freely editable there independently - editing
+    # it mid-auction does not write back to the pool.
+    user_shortlist: set = field(default_factory=set)
+
+
+def toggle_shortlist(pool: PlayerPool, player_id: int) -> bool:
+    """Adds/removes a player from the pool's pre-auction shortlist. Returns
+    the new membership state (True = now shortlisted). Mirrors
+    engine.toggle_shortlist's semantics for the in-auction version.
+    """
+    if player_id in pool.user_shortlist:
+        pool.user_shortlist.discard(player_id)
+        return False
+    pool.user_shortlist.add(player_id)
+    return True
 
 
 def create_pool(seed: Optional[int] = None, count: int = DEFAULT_POOL_SIZE) -> PlayerPool:

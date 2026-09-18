@@ -54,6 +54,10 @@ export function createCustomPlayer(poolId, body) {
   }).then(handle);
 }
 
+export function togglePoolShortlist(poolId, playerId) {
+  return fetch(`${PLAYERS_BASE}/${poolId}/shortlist/${playerId}`, { method: "POST" }).then(handle);
+}
+
 export function newGame(poolId) {
   return fetch(`${API_BASE}/new`, {
     method: "POST",
@@ -106,6 +110,24 @@ export function getRemainingPlayers(sessionId) {
   return fetch(`${API_BASE}/${sessionId}/players/remaining`).then(handle);
 }
 
-export function completeSimulation(sessionId) {
-  return fetch(`${API_BASE}/${sessionId}/complete-simulation`, { method: "POST" }).then(handle);
+export function completeSimulation(sessionId, stopOnShortlisted = false) {
+  return fetch(`${API_BASE}/${sessionId}/complete-simulation?stop_on_shortlisted=${stopOnShortlisted}`, {
+    method: "POST",
+  }).then(handle);
+}
+
+export function completeRound(sessionId, stopOnShortlisted = false) {
+  return fetch(`${API_BASE}/${sessionId}/complete-round?stop_on_shortlisted=${stopOnShortlisted}`, {
+    method: "POST",
+  }).then(handle);
+}
+
+export function skipPlayers(sessionId, count = 10, stopOnShortlisted = false) {
+  return fetch(`${API_BASE}/${sessionId}/skip-players?count=${count}&stop_on_shortlisted=${stopOnShortlisted}`, {
+    method: "POST",
+  }).then(handle);
+}
+
+export function toggleShortlist(sessionId, playerId) {
+  return fetch(`${API_BASE}/${sessionId}/shortlist/${playerId}`, { method: "POST" }).then(handle);
 }

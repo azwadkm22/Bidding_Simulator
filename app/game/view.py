@@ -4,6 +4,8 @@ Kept separate from engine.py so the engine has no knowledge of the API/response
 shape, and no print()/input() is involved anywhere in this path.
 """
 
+from typing import Optional
+
 from Player.player import Player
 from Player.ratings import MissingAttributeError, calculate_overall_rating
 from Player.ratings.generation import infer_role
@@ -31,13 +33,15 @@ def serialize(session: GameSession) -> dict:
         "paused": session.paused,
         "round_number": session.round_number,
         "players_remaining": len(session.queue) + len(session.unsold_this_round),
-        "current_player": _player_card(session.current_player) if session.current_player else None,
+        "current_player": (
+            _player_card(session.current_player, session.user_shortlist) if session.current_player else None
+        ),
         "current_price": session.current_price,
         "current_leader": session.current_leader.display_name if session.current_leader else None,
         "available_actions": _available_actions(session),
         "last_result": session.last_result,
         "allowed_increments": ALLOWED_INCREMENTS,
-        "user": _bidder_summary(session.user_handle, detailed=True),
+        "user": _bidder_summary(session.user_handle, detailed=True, session=session),
         "rivals": [_bidder_summary(h) for h in session.bot_handles],
         "event_log": session.event_log,
     }
@@ -80,7 +84,7 @@ def _overall_from_core_stats(role: str, player: Player) -> "int | None":
         return None
 
 
-def _player_card(player: Player) -> dict:
+def _player_card(player: Player, shortlisted_ids: Optional[set] = None) -> dict:
     role, _ = infer_role(player)
     return {
         "player_id": player.player_id,
@@ -98,11 +102,16 @@ def _player_card(player: Player) -> dict:
         "estimated_price": player.estimated_price,
         "selling_price": player.selling_price or None,
         "deal_grade": getattr(player, "deal_grade", None),
+        # Only meaningful where the caller actually has the user's own
+        # session.user_shortlist to check against (current player on the
+        # block, remaining players) - False everywhere else (squads, pool
+        # views, post-game summary) rather than a wrong guess.
+        "shortlisted": shortlisted_ids is not None and player.player_id in shortlisted_ids,
     }
 
 
-def team_detail(handle: BidderHandle) -> dict:
-    return _bidder_summary(handle, detailed=True)
+def team_detail(handle: BidderHandle, session: GameSession) -> dict:
+    return _bidder_summary(handle, detailed=True, session=session)
 
 
 def starting_eleven_detail(handle: BidderHandle) -> dict:
@@ -191,6 +200,7 @@ def pool_summary(pool: PlayerPool) -> dict:
         if player.position in ("Bowler", "Allrounder"):
             bowling_type_counts[player.bowling_type] = bowling_type_counts.get(player.bowling_type, 0) + 1
 
+    shortlist = pool.user_shortlist
     return {
         "pool_id": pool.pool_id,
         "seed": pool.seed,
@@ -199,20 +209,20 @@ def pool_summary(pool: PlayerPool) -> dict:
         "bowling_type_counts": bowling_type_counts,
         "players_above_80": len(gen.players_above_80),
         "players_above_90": len(gen.players_above_90),
-        "top_batsmen": [_player_card(p) for p in gen.top_ten_batsmen],
-        "top_bowlers": [_player_card(p) for p in gen.top_ten_bowlers],
-        "top_allrounders": [_player_card(p) for p in gen.top_ten_allrounders],
-        "top_wicketkeepers": [_player_card(p) for p in gen.top_eight_wicketkeepers],
-        "top_openers": [_player_card(p) for p in gen.top_ten_openers],
-        "top_pacers": [_player_card(p) for p in gen.top_ten_pacers],
-        "top_spinners": [_player_card(p) for p in gen.top_ten_spinners],
-        "most_expensive": [_player_card(p) for p in gen.top_ten_most_expensive],
+        "top_batsmen": [_player_card(p, shortlist) for p in gen.top_ten_batsmen],
+        "top_bowlers": [_player_card(p, shortlist) for p in gen.top_ten_bowlers],
+        "top_allrounders": [_player_card(p, shortlist) for p in gen.top_ten_allrounders],
+        "top_wicketkeepers": [_player_card(p, shortlist) for p in gen.top_eight_wicketkeepers],
+        "top_openers": [_player_card(p, shortlist) for p in gen.top_ten_openers],
+        "top_pacers": [_player_card(p, shortlist) for p in gen.top_ten_pacers],
+        "top_spinners": [_player_card(p, shortlist) for p in gen.top_ten_spinners],
+        "most_expensive": [_player_card(p, shortlist) for p in gen.top_ten_most_expensive],
     }
 
 
 def pool_players(pool: PlayerPool) -> dict:
     players = pool.generation.list_of_players
-    return {"count": len(players), "players": [_player_card(p) for p in players]}
+    return {"count": len(players), "players": [_player_card(p, pool.user_shortlist) for p in players]}
 
 
 def remaining_players(session: GameSession) -> dict:
@@ -220,17 +230,28 @@ def remaining_players(session: GameSession) -> dict:
     players.sort(key=lambda p: p.estimated_price, reverse=True)
     return {
         "count": len(players),
-        "players": [_player_card(p) for p in players],
+        "players": [_player_card(p, session.user_shortlist) for p in players],
     }
 
 
-def _bidder_summary(handle: BidderHandle, detailed: bool = False) -> dict:
+def _sorted_shortlist_cards(players) -> list:
+    return sorted(
+        (_player_card(p) for p in players),
+        key=lambda card: card["estimated_price"],
+        reverse=True,
+    )
+
+
+def _bidder_summary(handle: BidderHandle, detailed: bool = False, session: Optional[GameSession] = None) -> dict:
     team = handle.team
     summary = {
         "key": handle.key,
         "name": handle.display_name,
         "budget": handle.bidder.budget,
         "squad_size": team.number_of_players,
+        # None for the human-controlled user (UserBidder has no personality
+        # trait) - only the AI UtilityBasedBidder rivals have one.
+        "trait": getattr(handle.bidder, "trait", None),
     }
     if detailed:
         summary["squad"] = [_player_card(p) for p in team.player_list]
@@ -240,4 +261,22 @@ def _bidder_summary(handle: BidderHandle, detailed: bool = False) -> dict:
             "allrounders": team.number_of_allrounders,
             "wicketkeepers": team.number_of_wicketkeepers,
         }
+        # Fixed for the whole game (AI ShortList) or freely user-curated
+        # (user_shortlist - see toggle_shortlist), not pruned as players
+        # sell, so an already-sold player can still show up here - that's
+        # shown via the card's own selling_price/deal_grade, not filtered
+        # out, since "someone else already got who I wanted" is exactly the
+        # kind of insight this view exists to surface.
+        if handle.is_user:
+            if session is None:
+                summary["shortlist"] = None
+            else:
+                all_players = {p.player_id: p for p in session.player_generation.list_of_players}
+                shortlisted = [all_players[pid] for pid in session.user_shortlist if pid in all_players]
+                summary["shortlist"] = _sorted_shortlist_cards(shortlisted)
+        else:
+            ai_shortlist = getattr(handle.bidder, "shortlist", None)
+            summary["shortlist"] = (
+                _sorted_shortlist_cards(ai_shortlist.getShortlistedPlayers()) if ai_shortlist is not None else None
+            )
     return summary

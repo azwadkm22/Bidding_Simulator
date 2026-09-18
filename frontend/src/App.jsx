@@ -4,14 +4,18 @@ import "./App.css";
 
 const POLL_MS = 1000;
 
-function PlayerCard({ player, onViewPlayer }) {
+function PlayerCard({ player, onViewPlayer, onToggleShortlist }) {
   if (!player) return <div className="panel">No player on the block.</div>;
   return (
     <div className="panel">
       <h2>
+        {player.shortlisted && "★ "}
         {player.name}{" "}
         <button className="link-button" onClick={() => onViewPlayer(player.player_id)}>
           [View Stats]
+        </button>{" "}
+        <button className="link-button" onClick={() => onToggleShortlist(player.player_id)}>
+          [{player.shortlisted ? "Remove from" : "Add to"} Shortlist]
         </button>
       </h2>
       <p>
@@ -216,7 +220,7 @@ function sortableValue(player, key) {
 // filter plus click-to-sort columns. `extraColumns` are appended after the
 // base stat columns (e.g. estimated value for the remaining-players list, or
 // price paid + deal grade for a squad).
-function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onViewPlayer }) {
+function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onViewPlayer, onToggleShortlist }) {
   const [positionFilter, setPositionFilter] = useState("All");
   const [sortKey, setSortKey] = useState(extraColumns[0].key);
   const [sortDir, setSortDir] = useState("desc");
@@ -309,6 +313,7 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
                 </button>
               </th>
             ))}
+            {onToggleShortlist && <th>Shortlist</th>}
           </tr>
         </thead>
         <tbody>
@@ -342,11 +347,21 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
                   )}
                 </td>
               ))}
+              {onToggleShortlist && (
+                <td>
+                  <button
+                    className={`shortlist-button${p.shortlisted ? " shortlist-button-active" : ""}`}
+                    onClick={() => onToggleShortlist(p.player_id)}
+                  >
+                    {p.shortlisted ? "★ Shortlisted" : "☆ Add to Shortlist"}
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
           {visiblePlayers.length === 0 && (
             <tr>
-              <td colSpan={columns.length}>{emptyMessage}</td>
+              <td colSpan={onToggleShortlist ? columns.length + 1 : columns.length}>{emptyMessage}</td>
             </tr>
           )}
         </tbody>
@@ -368,7 +383,8 @@ function SquadModal({ team, loading, error, onClose, onViewStartingEleven, onVie
         {team && (
           <>
             <p>
-              Budget: {team.budget} · Squad size: {team.squad_size}{" "}
+              Budget: {team.budget} · Squad size: {team.squad_size}
+              {team.trait && ` · Bidder trait: ${team.trait}`}{" "}
               <button className="link-button" onClick={() => onViewStartingEleven(team.key)}>
                 [View Starting XI]
               </button>
@@ -389,6 +405,24 @@ function SquadModal({ team, loading, error, onClose, onViewStartingEleven, onVie
               emptyMessage="No players bought yet."
               onViewPlayer={onViewPlayer}
             />
+            {team.shortlist && (
+              <details className="shortlist-details">
+                <summary>Bidder Shortlist ({team.shortlist.length})</summary>
+                <p className="live-note">
+                  Players this bidder targeted before the auction started - fixed for the whole
+                  game, so one already sold (to anyone) just shows a price paid below.
+                </p>
+                <PlayerTable
+                  players={team.shortlist}
+                  extraColumns={[
+                    { key: "selling_price", label: "Price Paid" },
+                    { key: "deal_grade", label: "Grade" },
+                  ]}
+                  emptyMessage="Nothing shortlisted."
+                  onViewPlayer={onViewPlayer}
+                />
+              </details>
+            )}
           </>
         )}
       </div>
@@ -396,7 +430,7 @@ function SquadModal({ team, loading, error, onClose, onViewStartingEleven, onVie
   );
 }
 
-function PlayerListModal({ data, loading, error, onClose, onViewPlayer }) {
+function PlayerListModal({ data, loading, error, onClose, onViewPlayer, onToggleShortlist }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -412,6 +446,7 @@ function PlayerListModal({ data, loading, error, onClose, onViewPlayer }) {
             extraColumns={[{ key: "estimated_price", label: "Est. Value" }]}
             emptyMessage="No players match this filter."
             onViewPlayer={onViewPlayer}
+            onToggleShortlist={onToggleShortlist}
           />
         )}
       </div>
@@ -592,7 +627,7 @@ const POOL_CATEGORIES = [
   { key: "top_spinners", label: "Top Spinners" },
 ];
 
-function PoolCategoryPicker({ pool, onViewPlayer }) {
+function PoolCategoryPicker({ pool, onViewPlayer, onToggleShortlist }) {
   const [category, setCategory] = useState(ALL_PLAYERS_KEY);
   const [allPlayers, setAllPlayers] = useState(null);
   const [allPlayersLoading, setAllPlayersLoading] = useState(false);
@@ -613,6 +648,17 @@ function PoolCategoryPicker({ pool, onViewPlayer }) {
   }, [category, pool.pool_id, pool.count]);
 
   const players = category === ALL_PLAYERS_KEY ? allPlayers || [] : pool[category];
+
+  // Toggling refreshes the parent's `pool` (so category lists like
+  // top_batsmen pick up the change), but the "All Players" list is fetched
+  // and cached separately here - flip it locally too instead of a second
+  // round trip, so the star updates immediately either way.
+  async function handleToggleShortlist(playerId) {
+    await onToggleShortlist(playerId);
+    setAllPlayers((prev) =>
+      prev ? prev.map((p) => (p.player_id === playerId ? { ...p, shortlisted: !p.shortlisted } : p)) : prev,
+    );
+  }
 
   return (
     <div className="panel">
@@ -636,6 +682,7 @@ function PoolCategoryPicker({ pool, onViewPlayer }) {
           extraColumns={[{ key: "estimated_price", label: "Est. Value" }]}
           emptyMessage="None."
           onViewPlayer={onViewPlayer}
+          onToggleShortlist={handleToggleShortlist}
         />
       )}
     </div>
@@ -654,6 +701,7 @@ function PoolScreen({
   onStartAuction,
   onViewPlayer,
   onOpenCreatePlayer,
+  onToggleShortlist,
   busy,
 }) {
   return (
@@ -714,7 +762,7 @@ function PoolScreen({
             </button>
           </div>
 
-          <PoolCategoryPicker pool={pool} onViewPlayer={onViewPlayer} />
+          <PoolCategoryPicker pool={pool} onViewPlayer={onViewPlayer} onToggleShortlist={onToggleShortlist} />
         </>
       )}
     </div>
@@ -1306,6 +1354,7 @@ export default function App() {
   const [summaryError, setSummaryError] = useState(null);
   const [view, setView] = useState("auction"); // "auction" | "summary"
   const [createPlayerOpen, setCreatePlayerOpen] = useState(false);
+  const [stopOnShortlisted, setStopOnShortlisted] = useState(false);
 
   // The auction now runs on its own clock server-side (see live_clock.py) -
   // it doesn't wait for a bid/pass click. Poll so the UI reflects bot bids
@@ -1387,6 +1436,15 @@ export default function App() {
     }
   }
 
+  async function doTogglePoolShortlist(playerId) {
+    try {
+      const data = await api.togglePoolShortlist(pool.pool_id, playerId);
+      setPool(data);
+    } catch (err) {
+      setPoolError(err.message);
+    }
+  }
+
   async function showPlayerDetail(playerId) {
     // In an active game, use that game's own pool (mid-auction viewing);
     // otherwise fall back to whatever pool is loaded on the generation screen.
@@ -1432,7 +1490,28 @@ export default function App() {
     if (!window.confirm("Fast-forward the rest of the auction to the end? You won't be able to bid on remaining players.")) {
       return;
     }
-    run(() => api.completeSimulation(sessionId));
+    run(() => api.completeSimulation(sessionId, stopOnShortlisted));
+  };
+  const doCompleteRound = () => {
+    if (
+      !window.confirm(
+        `Fast-forward the rest of Round ${state.round_number} (unsold players still come back up next round)?`,
+      )
+    ) {
+      return;
+    }
+    run(() => api.completeRound(sessionId, stopOnShortlisted));
+  };
+  const doSkipPlayers = () => run(() => api.skipPlayers(sessionId, 10, stopOnShortlisted));
+  const doToggleShortlist = async (playerId) => {
+    await run(() => api.toggleShortlist(sessionId, playerId));
+    // The Remaining Players modal fetches its own list separately from the
+    // main game state, so a toggle made from there needs an explicit
+    // refresh - otherwise its star/checkbox would stay stale until reopened.
+    if (remainingPlayersOpen) {
+      const data = await api.getRemainingPlayers(sessionId);
+      setRemainingPlayers(data);
+    }
   };
 
   async function showRemainingPlayers() {
@@ -1519,6 +1598,26 @@ export default function App() {
               Complete Simulation
             </button>
           )}
+          {state && state.phase !== "game_over" && (
+            <button onClick={doCompleteRound} disabled={busy}>
+              Complete Round {state.round_number}
+            </button>
+          )}
+          {state && state.phase !== "game_over" && (
+            <button onClick={doSkipPlayers} disabled={busy}>
+              Skip Next 10 Players
+            </button>
+          )}
+          {state && state.phase !== "game_over" && (
+            <label className="stop-on-shortlisted-toggle" title="Applies to Complete Simulation, Complete Round, and Skip Next 10 Players">
+              <input
+                type="checkbox"
+                checked={stopOnShortlisted}
+                onChange={(e) => setStopOnShortlisted(e.target.checked)}
+              />
+              Stop at Shortlisted Player
+            </label>
+          )}
           {state && (
             <button onClick={view === "auction" ? showSummary : () => setView("auction")}>
               {view === "auction" ? "View Summary" : "Back to Auction"}
@@ -1542,6 +1641,7 @@ export default function App() {
           onStartAuction={startAuctionFromPool}
           onViewPlayer={showPlayerDetail}
           onOpenCreatePlayer={() => setCreatePlayerOpen(true)}
+          onToggleShortlist={doTogglePoolShortlist}
           busy={busy}
         />
       )}
@@ -1561,7 +1661,11 @@ export default function App() {
       {state && view === "auction" && (
         <div className="layout">
           <div className="column main-column">
-            <PlayerCard player={state.current_player} onViewPlayer={showPlayerDetail} />
+            <PlayerCard
+              player={state.current_player}
+              onViewPlayer={showPlayerDetail}
+              onToggleShortlist={doToggleShortlist}
+            />
             <AuctionStatus state={state} onShowRemainingPlayers={showRemainingPlayers} />
             <Controls
               state={state}
@@ -1602,6 +1706,7 @@ export default function App() {
             setRemainingPlayers(null);
           }}
           onViewPlayer={showPlayerDetail}
+          onToggleShortlist={doToggleShortlist}
         />
       )}
 

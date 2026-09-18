@@ -60,7 +60,7 @@ async def get_team(session_id: str, team_key: str):
     handle = session.find_handle(team_key)
     if handle is None:
         raise HTTPException(status_code=404, detail="Team not found.")
-    return view.team_detail(handle)
+    return view.team_detail(handle, session)
 
 
 @router.get("/{session_id}/teams/{team_key}/starting-eleven", response_model=StartingElevenResponse)
@@ -115,9 +115,33 @@ async def skip(session_id: str):
 
 
 @router.post("/{session_id}/complete-simulation", response_model=GameState)
-async def complete_simulation(session_id: str):
+async def complete_simulation(session_id: str, stop_on_shortlisted: bool = False):
     session = _get_session(session_id)
-    engine.complete_simulation(session)
+    engine.complete_simulation(session, stop_on_shortlisted)
+    return view.serialize(session)
+
+
+@router.post("/{session_id}/complete-round", response_model=GameState)
+async def complete_round(session_id: str, stop_on_shortlisted: bool = False):
+    session = _get_session(session_id)
+    engine.complete_round(session, stop_on_shortlisted)
+    return view.serialize(session)
+
+
+@router.post("/{session_id}/skip-players", response_model=GameState)
+async def skip_players(session_id: str, count: int = 10, stop_on_shortlisted: bool = False):
+    session = _get_session(session_id)
+    try:
+        engine.skip_players(session, count, stop_on_shortlisted)
+    except engine.InvalidBidError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return view.serialize(session)
+
+
+@router.post("/{session_id}/shortlist/{player_id}", response_model=GameState)
+async def toggle_shortlist(session_id: str, player_id: int):
+    session = _get_session(session_id)
+    engine.toggle_shortlist(session, player_id)
     return view.serialize(session)
 
 

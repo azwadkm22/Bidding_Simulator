@@ -93,6 +93,13 @@ async def get_player_detail(pool_id: str, player_id: int):
     return ratings_view.player_detail(player, detail)
 
 
+@router.post("/{pool_id}/shortlist/{player_id}", response_model=PoolSummary)
+async def toggle_pool_shortlist(pool_id: str, player_id: int):
+    pool = _get_pool(pool_id)
+    player_pool.toggle_shortlist(pool, player_id)
+    return view.pool_summary(pool)
+
+
 @router.post("/{pool_id}/custom", response_model=PlayerDetailResponse)
 async def create_custom_player(pool_id: str, body: CustomPlayerCreateRequest):
     pool = _get_pool(pool_id)
