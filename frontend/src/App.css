@@ -181,6 +181,15 @@ tr.your-purchase {
   font-weight: bold;
 }
 
+.rating-badge-hoverable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.rating-badge-hoverable:hover {
+  background: #cfe3ff;
+}
+
 .attribute-section {
   margin-bottom: 14px;
 }
@@ -210,6 +219,13 @@ tr.your-purchase {
 
 .attribute-value {
   font-weight: 600;
+}
+
+.attribute-cell-highlighted {
+  background: #fff3b0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: -1px -6px;
 }
 
 .live-note {
@@ -315,6 +331,12 @@ button:disabled {
   font-weight: bold;
 }
 
+.breakdown-toggle {
+  align-self: center;
+  font-size: 0.85em;
+  margin-left: 4px;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -340,4 +362,105 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.create-player-modal {
+  max-width: 1100px;
+}
+
+.create-player-basics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.create-player-basics input,
+.create-player-basics select {
+  padding: 5px 7px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.create-player-attribute-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.create-player-attribute-groups .attribute-section {
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 0;
+  background: #fafafa;
+}
+
+.create-player-attribute-groups .attribute-section h4 {
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.create-player-attribute-groups .attribute-grid {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px 12px;
+}
+
+.attribute-cell-editable {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  border-bottom: none;
+  padding: 0;
+}
+
+.attribute-cell-editable .attribute-label {
+  font-size: 0.78em;
+  line-height: 1.25;
+}
+
+.attribute-weight-badge {
+  margin-left: 4px;
+  color: #888;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.attribute-value-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.create-player-actions {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.create-player-breakdowns {
+  margin: 8px 0 16px;
+}
+
+.breakdown-details {
+  margin-bottom: 6px;
+  font-size: 0.85em;
+}
+
+.breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+
+.breakdown-table th,
+.breakdown-table td {
+  text-align: left;
+  padding: 2px 6px;
+  border-bottom: 1px solid #f0f0f0;
 }

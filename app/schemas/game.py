@@ -11,6 +11,7 @@ class PlayerCard(BaseModel):
     player_id: int
     name: str
     position: str
+    role: str
     batting: int
     bowling: int
     fielding: int

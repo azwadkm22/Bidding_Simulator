@@ -85,7 +85,9 @@ def test_player_detail_returns_ratings_and_attributes():
 
     assert detail["player_id"] == player_id
     assert detail["core"]["batting"] >= 0
-    assert detail["ratings"]["batting"]["displayed"] == detail["core"]["batting"]
+    # batting can undershoot (never exceed) the core stat - see
+    # test_batting_rating_never_exceeds_core_rating in test_ratings_generation.py.
+    assert detail["ratings"]["batting"]["displayed"] <= detail["core"]["batting"]
     assert detail["role"] in (
         "specialistBatter", "specialistBowler", "battingAllRounder",
         "bowlingAllRounder", "balancedAllRounder", "wicketkeeperBatter",
@@ -108,6 +110,103 @@ def test_player_detail_unknown_player_returns_404():
 
 def test_player_detail_unknown_pool_returns_404():
     response = client.get("/api/players/does-not-exist/players/0/detail")
+    assert response.status_code == 404
+
+
+def test_weight_tables_returns_every_table_and_batting_vs_blend():
+    response = client.get("/api/players/weight-tables")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert set(data["tables"].keys()) == {
+        "batting", "paceBowling", "spinBowling", "fielding",
+        "wicketkeeping", "mentalitySummary", "physicalSummary",
+    }
+    assert sum(weight for _, weight in data["tables"]["batting"]) == 100
+    assert set(data["batting_vs_blend"].keys()) == {"base", "vsSpin", "vsPace"}
+    assert data["role_overall"]["specialistBatter"]["batting"] == 85
+
+
+def test_preview_computes_ratings_with_breakdown_and_no_side_effects():
+    body = {
+        "role": "specialistBatter",
+        "primary_bowling_style": "none",
+        "attributes": {
+            "batting": {
+                "timing": 80, "shotSelection": 75, "defensiveTechnique": 70,
+                "attackingTechnique": 72, "placement": 68, "offside": 65,
+                "legside": 66, "straight": 67, "vsSpin": 7, "vsPace": 8,
+            },
+            "physical": {
+                "strength": 60, "footwork": 65, "runningSpeed": 70,
+                "agility": 68, "stamina": 62, "balance": 63,
+            },
+            "mentality": {"composure": 75, "concentration": 70, "decisionMaking": 66, "discipline": 64},
+        },
+    }
+    response = client.post("/api/players/preview", json=body)
+    assert response.status_code == 200
+    data = response.json()
+
+    batting = data["ratings"]["batting"]
+    assert batting["unavailable"] is False
+    assert batting["breakdown"] is not None
+    breakdown_paths = {entry["path"] for entry in batting["breakdown"]}
+    assert "batting.timing" in breakdown_paths
+    assert "physical.strength" in breakdown_paths
+
+    # fielding attributes were never supplied, so it comes back unavailable
+    # rather than erroring the whole request.
+    assert data["ratings"]["fielding"]["unavailable"] is True
+    assert "fielding.catching" in data["ratings"]["fielding"]["missing"]
+
+
+def test_create_custom_player_adds_to_pool_and_uses_computed_core_stats():
+    summary = client.post("/api/players/generate", json={"seed": 1, "count": 10}).json()
+    pool_id = summary["pool_id"]
+
+    body = {
+        "role": "specialistBatter",
+        "primary_bowling_style": "none",
+        "name": "Test Custom Batter",
+        "position": "Batsmen",
+        "batting_hand": "Right",
+        "bowling_type": "Pacer",
+        "batting_order": "Opener",
+        "fame": 50,
+        "attributes": {
+            "batting": {
+                "timing": 90, "shotSelection": 88, "defensiveTechnique": 85,
+                "attackingTechnique": 87, "placement": 84, "offside": 82,
+                "legside": 83, "straight": 86, "vsSpin": 9, "vsPace": 9,
+            },
+            "physical": {"strength": 80, "footwork": 82, "runningSpeed": 78, "agility": 79, "stamina": 77, "balance": 81},
+            "mentality": {"composure": 85, "concentration": 84, "decisionMaking": 83, "discipline": 82},
+        },
+    }
+    response = client.post(f"/api/players/{pool_id}/custom", json=body)
+    assert response.status_code == 200
+    created = response.json()
+
+    assert created["name"] == "Test Custom Batter"
+    assert created["core"]["batting"] > 0
+    assert created["ratings"]["batting"]["displayed"] == created["core"]["batting"]
+
+    players = client.get(f"/api/players/{pool_id}/players").json()
+    assert players["count"] == 11
+    assert any(p["player_id"] == created["player_id"] for p in players["players"])
+
+    detail = client.get(f"/api/players/{pool_id}/players/{created['player_id']}/detail").json()
+    assert detail["name"] == "Test Custom Batter"
+
+
+def test_create_custom_player_unknown_pool_returns_404():
+    body = {
+        "role": "specialistBatter",
+        "position": "Batsmen",
+        "attributes": {"batting": {"timing": 50}},
+    }
+    response = client.post("/api/players/does-not-exist/custom", json=body)
     assert response.status_code == 404
 
 

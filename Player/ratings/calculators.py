@@ -9,10 +9,12 @@ import math
 from Player.ratings.errors import MissingAttributeError, ValidationError
 from Player.ratings.model import RatingResult, UnavailableRating
 from Player.ratings.weights import (
+    BATTING_VS_BLEND,
     BATTING_WEIGHTS,
     FIELDING_WEIGHTS,
     MENTALITY_SUMMARY_WEIGHTS,
     PACE_BOWLING_WEIGHTS,
+    PHYSICAL_SUMMARY_WEIGHTS,
     ROLE_OVERALL_WEIGHTS,
     SPIN_BOWLING_WEIGHTS,
     WICKETKEEPING_WEIGHTS,
@@ -122,8 +124,28 @@ def _calculate_weighted_rating(player, weight_table, breakdown: bool = False) ->
     return RatingResult(raw=raw_total, displayed=displayed_rating(raw_total), breakdown=contributions or None)
 
 
+# vsPace/vsSpin (batting.vsPace, batting.vsSpin) are a 1-10 matchup rating,
+# not part of BATTING_WEIGHTS - applied here afterwards as a blend on top of
+# the base weighted rating instead, per BATTING_VS_BLEND (weights.py).
+# generate_detailed_attributes solves the base batting attributes against a
+# pre-blend target specifically chosen so this blend lands back on
+# player.batting exactly (see generation.py) - it imports the same constant,
+# so the two sides can never drift out of sync.
 def calculate_batting_rating(player, breakdown: bool = False) -> RatingResult:
-    return _calculate_weighted_rating(player, BATTING_WEIGHTS, breakdown)
+    base = _calculate_weighted_rating(player, BATTING_WEIGHTS, breakdown)
+
+    vs_pace = player.get("batting.vsPace")
+    vs_spin = player.get("batting.vsSpin")
+    if vs_pace is None or vs_spin is None:
+        return base
+
+    blend = (
+        BATTING_VS_BLEND["base"]
+        + BATTING_VS_BLEND["vsSpin"] * (vs_spin / 10)
+        + BATTING_VS_BLEND["vsPace"] * (vs_pace / 10)
+    )
+    raw = clamp(base.raw * blend, 0, 99)
+    return RatingResult(raw=raw, displayed=displayed_rating(raw), breakdown=base.breakdown)
 
 
 def calculate_pace_bowling_rating(player, breakdown: bool = False) -> RatingResult:
@@ -144,6 +166,10 @@ def calculate_wicketkeeping_rating(player, breakdown: bool = False) -> RatingRes
 
 def calculate_mentality_rating(player, breakdown: bool = False) -> RatingResult:
     return _calculate_weighted_rating(player, MENTALITY_SUMMARY_WEIGHTS, breakdown)
+
+
+def calculate_physical_rating(player, breakdown: bool = False) -> RatingResult:
+    return _calculate_weighted_rating(player, PHYSICAL_SUMMARY_WEIGHTS, breakdown)
 
 
 def calculate_overall_rating(role: str, core_ratings: dict, breakdown: bool = False) -> RatingResult:
@@ -206,6 +232,7 @@ def calculate_player_ratings(player, breakdown: bool = False) -> dict:
     if player.wicketkeeping:
         _try("wicketkeeping", lambda: calculate_wicketkeeping_rating(player, breakdown))
     _try("mentality", lambda: calculate_mentality_rating(player, breakdown))
+    _try("physical", lambda: calculate_physical_rating(player, breakdown))
 
     bowling_raw = None
     bowling_key = {"pace": "paceBowling", "spin": "spinBowling"}.get(player.primary_bowling_style)

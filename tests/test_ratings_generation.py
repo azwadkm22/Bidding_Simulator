@@ -1,6 +1,7 @@
 """Tests for Phase 2: reverse-engineering detailed attributes for an
 already-generated Player, such that recomputing the relevant rating from
-them reproduces exactly the same core batting/bowling/fielding numbers.
+them reproduces exactly the same core bowling/fielding numbers. Batting is
+the one exception - see test_batting_rating_never_exceeds_core_rating below.
 """
 
 import random
@@ -22,25 +23,51 @@ def _bowling_rating(player, detail):
     return calculate_spin_bowling_rating(detail)
 
 
-def test_generated_details_reproduce_all_three_core_ratings():
+def test_generated_details_reproduce_bowling_and_fielding_core_ratings():
     random.seed(2026)
     mismatches = []
     for i in range(500):
         player = Player(i)
         detail = generate_detailed_attributes(player)
 
-        batting = calculate_batting_rating(detail)
         bowling = _bowling_rating(player, detail)
         fielding = calculate_fielding_rating(detail)
 
-        if batting.displayed != player.batting:
-            mismatches.append(("batting", player.batting, batting.displayed))
         if bowling.displayed != player.bowling:
             mismatches.append(("bowling", player.bowling, bowling.displayed))
         if fielding.displayed != player.fielding:
             mismatches.append(("fielding", player.fielding, fielding.displayed))
 
     assert mismatches == []
+
+
+def test_batting_rating_never_exceeds_core_rating():
+    """batting.vsPace/vsSpin (a 1-10 matchup rating - see generation.py) blend
+    into calculate_batting_rating per BATTING_VS_BLEND (weights.py): base +
+    vsSpin*(vsSpin/10) + vsPace*(vsPace/10) weight shares. That blend factor
+    maxes out at exactly 1.0 only when vsPace == vsSpin == 10, so it can only
+    ever shrink the base rating, never restore it above it - generation.py
+    solves the base batting attributes against player.batting/blend so the
+    result still lands exactly on player.batting whenever that's achievable
+    within the 0-99 attribute ceiling, but not guaranteed for every player the
+    smaller BATTING_VS_BLEND's vsSpin/vsPace shares are, the closer this gets
+    to 100% (accepted trade-off, not a bug - see conversation history). This
+    locks in the two invariants that must always hold regardless of whatever
+    BATTING_VS_BLEND is currently set to: batting never displays above the
+    Phase 1 core value, and the undershoot rate doesn't silently worsen.
+    """
+    random.seed(2026)
+    mismatches = 0
+    for i in range(2000):
+        player = Player(i)
+        detail = generate_detailed_attributes(player)
+        batting = calculate_batting_rating(detail)
+
+        assert batting.displayed <= player.batting
+        if batting.displayed != player.batting:
+            mismatches += 1
+
+    assert mismatches <= 25  # ~7/2000 at this seed today; regression guard, not a target
 
 
 def test_every_player_gets_exactly_one_bowling_style_detail():

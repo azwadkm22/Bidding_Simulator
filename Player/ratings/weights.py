@@ -14,20 +14,31 @@ they stay easy to retune later without touching the calculation engine.
 from Player.ratings.errors import ValidationError
 
 BATTING_WEIGHTS = [
-    ("batting.timing", 15),
+    ("batting.timing", 12),
     ("batting.shotSelection", 12),
-    ("batting.footwork", 10),
-    ("batting.defensiveTechnique", 10),
-    ("batting.attackingTechnique", 10),
+    ("batting.defensiveTechnique", 8),
+    ("batting.attackingTechnique",   8),
     ("batting.placement", 8),
-    ("batting.power", 8),
     ("batting.offside", 5),
     ("batting.legside", 5),
     ("batting.straight", 5),
     ("mentality.composure", 5),
     ("mentality.concentration", 5),
-    ("batting.runningBetweenWickets", 2),
+    ("mentality.decisionMaking", 2),
+    ("mentality.discipline", 2),
+    ("physical.footwork", 10),
+    ("physical.strength", 8),
+    ("physical.balance", 2),
+    ("physical.agility", 1),
+    ("physical.runningSpeed", 1),
+    ("physical.stamina", 1),
 ]
+# batting.vsSpin/vsPace are NOT weighted in here - calculate_batting_rating
+# (calculators.py) applies them afterwards as a blend on top of this weighted
+# rating instead (BATTING_VS_BLEND below), and generate_detailed_attributes
+# inverts that same blend so the result still reproduces player.batting. Both
+# sides import this one constant instead of hardcoding the split twice.
+BATTING_VS_BLEND = {"base": 0.8, "vsSpin": 0.10, "vsPace": 0.10}
 
 PACE_BOWLING_WEIGHTS = [
     ("paceBowling.pace", 10),
@@ -71,8 +82,7 @@ FIELDING_WEIGHTS = [
     ("fielding.throwAccuracy", 10),
     ("fielding.throwPower", 6),
     ("fielding.pickupAndRelease", 5),
-    ("physical.runningSpeed", 6),
-    ("physical.acceleration", 4),
+    ("physical.runningSpeed", 10),  # was 6, +4 folded in from the removed physical.acceleration
     ("physical.agility", 5),
     ("fielding.diving", 3),
     ("fielding.boundaryAwareness", 2),
@@ -80,7 +90,7 @@ FIELDING_WEIGHTS = [
 
 WICKETKEEPING_WEIGHTS = [
     ("wicketkeeping.glovework", 20),
-    ("wicketkeeping.footwork", 12),
+    ("physical.footwork", 12),  # shared with batting
     ("physical.reflexes", 12),
     ("mentality.anticipation", 8),
     ("wicketkeeping.standingUp", 10),
@@ -104,6 +114,17 @@ MENTALITY_SUMMARY_WEIGHTS = [
     ("mentality.gameReading", 5),
 ]
 
+PHYSICAL_SUMMARY_WEIGHTS = [
+    ("physical.strength", 15),
+    ("physical.stamina", 15),
+    ("physical.runningSpeed", 15),
+    ("physical.agility", 15),
+    ("physical.reflexes", 15),
+    ("physical.footwork", 10),
+    ("physical.balance", 10),
+    ("physical.recovery", 5),
+]
+
 # Role -> {core rating name: weight percent}. Every row totals 100 (section 12).
 ROLE_OVERALL_WEIGHTS = {
     "specialistBatter": {"batting": 85, "bowling": 0, "fielding": 15, "wicketkeeping": 0},
@@ -121,6 +142,7 @@ CORE_WEIGHT_TABLES = {
     "fielding": FIELDING_WEIGHTS,
     "wicketkeeping": WICKETKEEPING_WEIGHTS,
     "mentalitySummary": MENTALITY_SUMMARY_WEIGHTS,
+    "physicalSummary": PHYSICAL_SUMMARY_WEIGHTS,
 }
 
 
@@ -137,10 +159,17 @@ def validate_role_weights_total_100(tolerance=1e-6):
             raise ValidationError(f"Role overall weights for '{role}' total {total}, not 100")
 
 
+def _validate_batting_vs_blend_totals_1(tolerance=1e-9):
+    total = sum(BATTING_VS_BLEND.values())
+    if abs(total - 1.0) > tolerance:
+        raise ValidationError(f"BATTING_VS_BLEND totals {total}, not 1.0")
+
+
 def _self_check():
     for name, table in CORE_WEIGHT_TABLES.items():
         validate_weight_table_totals_100(name, table)
     validate_role_weights_total_100()
+    _validate_batting_vs_blend_totals_1()
 
 
 _self_check()

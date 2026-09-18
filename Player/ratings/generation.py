@@ -21,6 +21,7 @@ from Player.player import Player
 from Player.ratings.calculators import calculate_variation_quality, clamp
 from Player.ratings.model import DetailedPlayerAttributes
 from Player.ratings.weights import (
+    BATTING_VS_BLEND,
     BATTING_WEIGHTS,
     FIELDING_WEIGHTS,
     PACE_BOWLING_WEIGHTS,
@@ -45,19 +46,27 @@ SHARED_ATTRIBUTE_ANCHORS = {
     "physical.stamina": "bowling",
     "physical.reflexes": "fielding",
     "physical.runningSpeed": "fielding",
-    "physical.acceleration": "fielding",
     "physical.agility": "fielding",
+    "physical.strength": "batting",
+    "physical.footwork": "batting",
+    "physical.balance": "batting",
     "mentality.composure": "batting",
     "mentality.concentration": "batting",
+    "mentality.decisionMaking": "batting",
+    "mentality.discipline": "batting",
     "mentality.tacticalAwareness": "bowling",
     "mentality.anticipation": "fielding",
 }
 
 # Shared attributes that exist per player_gen.txt section 3 but aren't
 # referenced by any weight table here - generated for a complete profile,
-# with no target to satisfy.
-UNCONSTRAINED_PHYSICAL_ATTRS = ["strength", "balance", "recovery"]
-UNCONSTRAINED_MENTALITY_ATTRS = ["decisionMaking", "adaptability", "discipline", "resilience", "gameReading", "leadership"]
+# with no target to satisfy. (physical.acceleration was removed entirely -
+# no longer generated at all, not even unconstrained.)
+UNCONSTRAINED_PHYSICAL_ATTRS = ["recovery"]
+UNCONSTRAINED_MENTALITY_ATTRS = [
+    "adaptability", "resilience", "gameReading", "leadership",
+    "aggressiveness",  # moved here from traits - see generate_detailed_attributes
+]
 
 def infer_role(player: Player) -> tuple:
     """Maps the existing position/bowling_type onto player_gen.txt's role and
@@ -195,7 +204,27 @@ def generate_detailed_attributes(player: Player) -> DetailedPlayerAttributes:
         mentality=mentality,
     )
 
-    detail.batting, _ = _solve_discipline(BATTING_WEIGHTS, player.batting, fixed)
+    # vsPace/vsSpin are a 1-10 matchup rating, generated before the batting
+    # weight table is solved, then calculate_batting_rating (calculators.py)
+    # blends them on top of the weighted rating below per BATTING_VS_BLEND
+    # (weights.py - imported here too, so this can never drift out of sync
+    # with calculators.py). To still land on player.batting exactly, solve
+    # BATTING_WEIGHTS for whatever pre-blend value survives that blend to
+    # produce the real target, rather than solving for the target itself.
+    vs_center = 1 + (player.batting / 99) * 9
+    vs_spread = max(0.0, min(2.5, vs_center - 1, 10 - vs_center))
+    vs_pace = int(clamp(round(random.gauss(vs_center, vs_spread)), 1, 10)) if vs_spread > 0 else int(round(vs_center))
+    vs_spin = int(clamp(round(random.gauss(vs_center, vs_spread)), 1, 10)) if vs_spread > 0 else int(round(vs_center))
+    blend = (
+        BATTING_VS_BLEND["base"]
+        + BATTING_VS_BLEND["vsSpin"] * (vs_spin / 10)
+        + BATTING_VS_BLEND["vsPace"] * (vs_pace / 10)
+    )
+    pre_blend_target = player.batting / blend if blend > 0 else player.batting
+
+    detail.batting, _ = _solve_discipline(BATTING_WEIGHTS, pre_blend_target, fixed)
+    detail.batting["vsPace"] = vs_pace
+    detail.batting["vsSpin"] = vs_spin
 
     if player.bowling_type == "Pacer":
         detail.paceBowling, pace_repertoire = _solve_discipline(
@@ -221,12 +250,9 @@ def generate_detailed_attributes(player: Player) -> DetailedPlayerAttributes:
                 continue
             detail.wicketkeeping[attribute] = _natural_value(keeping_level, 10)
 
-    detail.traits = {"aggressiveness": _natural_value(overall_level, 20)}
-    detail.state = {
-        "confidence": _natural_value(65, 15),
-        "form": _natural_value(65, 15),
-        "fatigue": _natural_value(20, 15),
-        "fitness": _natural_value(80, 10),
-    }
+    # Every state value starts flat at 50 rather than randomized - these are
+    # meant to change during play (not implemented yet), not vary at
+    # generation time.
+    detail.state = {"confidence": 50, "form": 50, "morale": 50, "fitness": 50}
 
     return detail

@@ -174,6 +174,35 @@ const BASE_PLAYER_COLUMNS = [
   { key: "fielding", label: "Fielding" },
 ];
 
+// UI-only translations of the ratings-package role taxonomy (Player/ratings/
+// generation.py's infer_role) - display labels only, never used for any
+// internal lookup, filtering key, or game logic.
+const ROLE_LABELS = {
+  specialistBatter: { full: "Batsman", abbr: "BAT" },
+  specialistBowler: { full: (isPace) => (isPace ? "Pacer" : "Spinner"), abbr: (isPace) => (isPace ? "PAC" : "SPN") },
+  battingAllRounder: { full: "Allrounder Batsman", abbr: "ABT" },
+  bowlingAllRounder: {
+    full: (isPace) => (isPace ? "Allrounder Pacer" : "Allrounder Spinner"),
+    abbr: (isPace) => (isPace ? "APC" : "ASP"),
+  },
+  balancedAllRounder: { full: "Allrounder", abbr: "ALL" },
+  wicketkeeperBatter: { full: "Wicketkeeper", abbr: "WK" },
+};
+
+function roleLabel(role, isPace, form) {
+  const entry = ROLE_LABELS[role];
+  if (!entry) return role;
+  const value = entry[form];
+  return typeof value === "function" ? value(isPace) : value;
+}
+
+// "attackingTechnique" -> "Attacking Technique" - used wherever a raw camelCase
+// attribute key would otherwise be shown to the user as-is.
+function humanizeAttrName(attr) {
+  const spaced = attr.replace(/([a-z])([A-Z])/g, "$1 $2");
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
 const GRADE_RANK = { A: 4, B: 3, C: 2, D: 1 };
 
 function sortableValue(player, key) {
@@ -291,7 +320,8 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
                   </button>
                 ) : (
                   p.name
-                )}
+                )}{" "}
+                ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
               </td>
               <td>{p.position}</td>
               <td>{p.batting}</td>
@@ -419,7 +449,9 @@ function StartingElevenModal({ data, loading, error, onClose }) {
                 {data.lineup.map((p, i) => (
                   <tr key={p.player_id}>
                     <td>{i + 1}</td>
-                    <td>{p.name}</td>
+                    <td>
+                      {p.name} ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
+                    </td>
                     <td>{p.position}</td>
                     <td>{p.batting_order}</td>
                     <td>{p.batting}</td>
@@ -441,7 +473,9 @@ function StartingElevenModal({ data, loading, error, onClose }) {
               <tbody>
                 {data.bench.map((p) => (
                   <tr key={p.player_id}>
-                    <td>{p.name}</td>
+                    <td>
+                      {p.name} ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
+                    </td>
                     <td>{p.position}</td>
                     <td>{p.batting}</td>
                     <td>{p.bowling}</td>
@@ -563,7 +597,7 @@ function PoolCategoryPicker({ pool, onViewPlayer }) {
   const [allPlayersError, setAllPlayersError] = useState(null);
 
   useEffect(() => {
-    if (category !== ALL_PLAYERS_KEY || allPlayers) return;
+    if (category !== ALL_PLAYERS_KEY) return;
     setAllPlayersError(null);
     setAllPlayersLoading(true);
     api
@@ -571,7 +605,10 @@ function PoolCategoryPicker({ pool, onViewPlayer }) {
       .then((data) => setAllPlayers(data.players))
       .catch((err) => setAllPlayersError(err.message))
       .finally(() => setAllPlayersLoading(false));
-  }, [category, pool.pool_id, allPlayers]);
+    // pool.count (not just pool.pool_id) is a dependency so a custom player
+    // added via Create Player - which bumps count without changing pool_id -
+    // invalidates this cache instead of leaving it stale until a full reload.
+  }, [category, pool.pool_id, pool.count]);
 
   const players = category === ALL_PLAYERS_KEY ? allPlayers || [] : pool[category];
 
@@ -614,6 +651,7 @@ function PoolScreen({
   onGenerate,
   onStartAuction,
   onViewPlayer,
+  onOpenCreatePlayer,
   busy,
 }) {
   return (
@@ -643,6 +681,7 @@ function PoolScreen({
           <button onClick={onGenerate} disabled={loading}>
             {pool ? "Generate Different Pool" : "Generate Players"}
           </button>
+          <button onClick={onOpenCreatePlayer}>Create Player</button>
         </div>
         {error && <p className="error-banner">{error}</p>}
       </div>
@@ -680,28 +719,459 @@ function PoolScreen({
   );
 }
 
-function AttributeGrid({ title, attributes }) {
+const CUSTOM_PLAYER_ROLES = [
+  "specialistBatter", "specialistBowler", "battingAllRounder",
+  "bowlingAllRounder", "balancedAllRounder", "wicketkeeperBatter",
+];
+
+const CUSTOM_PLAYER_CATEGORY_TITLES = {
+  batting: "Batting",
+  paceBowling: "Pace Bowling",
+  spinBowling: "Spin Bowling",
+  fielding: "Fielding",
+  wicketkeeping: "Wicketkeeping",
+  physical: "Physical",
+  mentality: "Mentality",
+};
+
+// Maps a calculate_player_ratings() key onto the skill label SKILL_ATTRIBUTE_PATHS
+// (below) understands, so hovering a rating badge here can reuse the exact same
+// highlight lookup as the read-only Player Detail view.
+const RATING_KEY_TO_SKILL_LABEL = {
+  batting: "Batting",
+  paceBowling: "Bowling",
+  spinBowling: "Bowling",
+  fielding: "Fielding",
+  wicketkeeping: "Keeping",
+  mentality: "Mentality",
+  physical: "Physical",
+};
+
+// Every editable attribute is derived from the weight tables themselves
+// (plus vsSpin/vsPace, which aren't in a weight table - see BATTING_VS_BLEND)
+// rather than hardcoded here, so the form never drifts out of sync with
+// Player/ratings/weights.py.
+function buildCustomPlayerAttributeGroups(weightTables) {
+  const groups = {};
+  for (const table of Object.values(weightTables.tables)) {
+    for (const [path] of table) {
+      if (path.startsWith("DERIVED.")) continue;
+      const [category, attr] = path.split(".");
+      if (!groups[category]) groups[category] = new Set();
+      groups[category].add(attr);
+    }
+  }
+  groups.batting = groups.batting || new Set();
+  groups.batting.add("vsSpin");
+  groups.batting.add("vsPace");
+  return groups;
+}
+
+function initialCustomPlayerValues(groups) {
+  const values = {};
+  for (const [category, attrs] of Object.entries(groups)) {
+    values[category] = {};
+    for (const attr of attrs) {
+      values[category][attr] = attr === "vsSpin" || attr === "vsPace" ? 5 : 50;
+    }
+  }
+  return values;
+}
+
+function CreatePlayerScreen({ poolId, onClose, onPlayerAdded }) {
+  const [weightTables, setWeightTables] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [groups, setGroups] = useState(null);
+  const [values, setValues] = useState(null);
+  const [form, setForm] = useState({
+    name: "Custom Player",
+    position: "Batsmen",
+    role: "specialistBatter",
+    batting_hand: "Right",
+    bowling_type: "Pacer",
+    batting_order: "Middle Order",
+    fame: 50,
+  });
+  // Mirrors infer_role() (Player/ratings/generation.py) exactly: a role's
+  // bowling style is never an independent choice in the real generator -
+  // it's "none" for the two non-bowling roles, otherwise whatever bowling_type
+  // says. Deriving it here (instead of a separate dropdown) is what fixed
+  // Overall silently only ever using the specialistBatter weights - a
+  // forgotten "none" selection was starving every bowling-inclusive role of
+  // its bowling rating, which calculate_overall_rating then reported as
+  // missing rather than computing.
+  const primaryBowlingStyle =
+    form.role === "specialistBatter" || form.role === "wicketkeeperBatter"
+      ? "none"
+      : form.bowling_type === "Pacer"
+        ? "pace"
+        : "spin";
+  const [preview, setPreview] = useState(null);
+  const [previewError, setPreviewError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState(null);
+  const [saveError, setSaveError] = useState(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [hoveredSkill, setHoveredSkill] = useState(null);
+
+  useEffect(() => {
+    api
+      .getWeightTables()
+      .then((data) => {
+        setWeightTables(data);
+        const g = buildCustomPlayerAttributeGroups(data);
+        setGroups(g);
+        setValues(initialCustomPlayerValues(g));
+      })
+      .catch((err) => setLoadError(err.message));
+  }, []);
+
+  useEffect(() => {
+    if (!values) return undefined;
+    const timeout = setTimeout(() => {
+      api
+        .previewCustomPlayer({
+          role: form.role,
+          primary_bowling_style: primaryBowlingStyle,
+          attributes: values,
+        })
+        .then((data) => {
+          setPreview(data);
+          setPreviewError(null);
+        })
+        .catch((err) => setPreviewError(err.message));
+    }, 250);
+    return () => clearTimeout(timeout);
+  }, [values, form.role, primaryBowlingStyle]);
+
+  function updateForm(key, value) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateValue(category, attr, raw) {
+    const isVsAttr = category === "batting" && (attr === "vsSpin" || attr === "vsPace");
+    const [min, max] = isVsAttr ? [1, 10] : [0, 99];
+    const num = Number(raw);
+    const clamped = Number.isNaN(num) ? min : Math.min(max, Math.max(min, num));
+    setValues((prev) => ({
+      ...prev,
+      [category]: { ...prev[category], [attr]: clamped },
+    }));
+  }
+
+  function weightFor(category, attr) {
+    if (!weightTables) return null;
+    const tableName =
+      category === "physical" ? "physicalSummary" : category === "mentality" ? "mentalitySummary" : category;
+    const table = weightTables.tables[tableName] || [];
+    const entry = table.find(([path]) => path === `${category}.${attr}`);
+    return entry ? entry[1] : null;
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+    try {
+      const created = await api.createCustomPlayer(poolId, {
+        role: form.role,
+        primary_bowling_style: primaryBowlingStyle,
+        name: form.name,
+        position: form.position,
+        batting_hand: form.batting_hand,
+        bowling_type: form.bowling_type,
+        batting_order: form.batting_order,
+        fame: Number(form.fame),
+        attributes: values,
+      });
+      setSaveMessage(
+        `Added "${created.name}" to the pool - Batting ${created.core.batting}, Bowling ${created.core.bowling}, Fielding ${created.core.fielding}.`,
+      );
+      if (onPlayerAdded) onPlayerAdded();
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loadError) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <p className="error-banner">{loadError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!weightTables || !groups || !values) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <p>Loading attribute definitions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const bowlingCategory = form.bowling_type === "Pacer" ? "paceBowling" : "spinBowling";
+  const categoryOrder = ["batting", bowlingCategory, "fielding", "wicketkeeping", "physical", "mentality"];
+  const hasPace = form.bowling_type === "Pacer";
+  const highlightPaths = hoveredSkill ? new Set(skillPathsFor(hoveredSkill, hasPace)) : null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal create-player-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Create Player</h2>
+          <button onClick={onClose}>Close</button>
+        </div>
+        <p className="live-note">
+          Set detailed attributes below and watch the computed Core Skills update live - a
+          sandbox for tuning weightage, not a randomly generated player.
+        </p>
+
+        <div className="create-player-basics">
+          <input value={form.name} onChange={(e) => updateForm("name", e.target.value)} placeholder="Name" />
+          <select value={form.position} onChange={(e) => updateForm("position", e.target.value)}>
+            {["Batsmen", "Bowler", "Allrounder", "Wicketkeeper", "Trainee"].map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+          <select value={form.role} onChange={(e) => updateForm("role", e.target.value)}>
+            {CUSTOM_PLAYER_ROLES.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          <select value={form.bowling_type} onChange={(e) => updateForm("bowling_type", e.target.value)}>
+            <option value="Pacer">Pacer</option>
+            <option value="Spinner">Spinner</option>
+          </select>
+          <span className="live-note" title="Derived from Role + Bowling Type, same as the real generator - not independently settable">
+            {primaryBowlingStyle === "none" ? "Doesn't bowl" : `Bowls ${primaryBowlingStyle}`}
+          </span>
+          <select value={form.batting_hand} onChange={(e) => updateForm("batting_hand", e.target.value)}>
+            <option value="Right">Right-Handed</option>
+            <option value="Left">Left-Handed</option>
+          </select>
+          <select value={form.batting_order} onChange={(e) => updateForm("batting_order", e.target.value)}>
+            {["Opener", "Top Order", "Middle Order", "Low Order"].map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="rating-badges">
+          {preview &&
+            Object.entries(preview.ratings).map(([key, rating]) => {
+              const skillLabel = RATING_KEY_TO_SKILL_LABEL[key];
+              return (
+                <RatingBadge
+                  key={key}
+                  label={key}
+                  rating={rating}
+                  hoverable={Boolean(skillLabel)}
+                  onHover={() => setHoveredSkill(skillLabel)}
+                  onUnhover={() => setHoveredSkill(null)}
+                />
+              );
+            })}
+          {preview && (
+            <button className="link-button breakdown-toggle" onClick={() => setShowBreakdown((v) => !v)}>
+              {showBreakdown ? "Hide Breakdown" : "Show Breakdown"}
+            </button>
+          )}
+        </div>
+        {previewError && <p className="error-banner">{previewError}</p>}
+
+        {preview && showBreakdown && (
+          <div className="create-player-breakdowns">
+            {Object.entries(preview.ratings)
+              .filter(([, rating]) => rating.breakdown)
+              .map(([key, rating]) => (
+                <details key={key} className="breakdown-details">
+                  <summary>
+                    {key} breakdown ({rating.displayed ?? "-"})
+                  </summary>
+                  <table className="breakdown-table">
+                    <thead>
+                      <tr>
+                        <th>Path</th>
+                        <th>Value</th>
+                        <th>Weight %</th>
+                        <th>Contribution</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rating.breakdown.map((entry) => (
+                        <tr key={entry.path}>
+                          <td>{entry.path}</td>
+                          <td>{entry.value}</td>
+                          <td>{entry.weight}</td>
+                          <td>{entry.contribution}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              ))}
+          </div>
+        )}
+
+        <div className="create-player-attribute-groups">
+          {categoryOrder
+            .filter((category) => groups[category])
+            .map((category) => (
+              <div key={category} className="attribute-section">
+                <h4>{CUSTOM_PLAYER_CATEGORY_TITLES[category] || category}</h4>
+                <div className="attribute-grid">
+                  {Array.from(groups[category])
+                    .sort()
+                    .map((attr) => {
+                      const weight = weightFor(category, attr);
+                      const isVsAttr = category === "batting" && (attr === "vsSpin" || attr === "vsPace");
+                      const highlighted = highlightPaths && highlightPaths.has(`${category}.${attr}`);
+                      return (
+                        <div
+                          key={attr}
+                          className={`attribute-cell attribute-cell-editable${highlighted ? " attribute-cell-highlighted" : ""}`}
+                        >
+                          <span className="attribute-label">
+                            {humanizeAttrName(attr)}
+                            {weight != null && <span className="attribute-weight-badge">{weight}%</span>}
+                          </span>
+                          <input
+                            type="number"
+                            min={isVsAttr ? 1 : 0}
+                            max={isVsAttr ? 10 : 99}
+                            value={values[category][attr]}
+                            onChange={(e) => updateValue(category, attr, e.target.value)}
+                            className="attribute-value-input"
+                          />
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            ))}
+        </div>
+
+        <div className="create-player-actions">
+          {poolId ? (
+            <button onClick={handleSave} disabled={saving}>
+              {saving ? "Adding..." : "Add to Pool"}
+            </button>
+          ) : (
+            <p className="live-note">Generate a pool first to add this player to it.</p>
+          )}
+          {saveMessage && <p className="live-note">{saveMessage}</p>}
+          {saveError && <p className="error-banner">{saveError}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Mirrors the attribute paths (not the weight percentages) in
+// Player/ratings/weights.py, so hovering a core-skill badge can highlight
+// exactly the attributes that feed it. DERIVED.*VariationQuality entries are
+// left out here since they come from the whole repertoire section, not a
+// single attribute - see repertoireStyleForSkill below.
+const SKILL_ATTRIBUTE_PATHS = {
+  Batting: [
+    "batting.timing", "batting.shotSelection", "physical.footwork",
+    "batting.defensiveTechnique", "batting.attackingTechnique", "batting.placement",
+    "physical.strength", "batting.offside", "batting.legside", "batting.straight",
+    "mentality.composure", "mentality.concentration",
+    "physical.runningSpeed", "physical.agility", "physical.stamina",
+  ],
+  paceBowling: [
+    "paceBowling.pace", "paceBowling.lineControl", "paceBowling.lengthControl",
+    "paceBowling.releaseConsistency", "paceBowling.swing", "paceBowling.seam",
+    "paceBowling.bounce", "paceBowling.yorker", "paceBowling.bouncer",
+    "paceBowling.disguise", "mentality.tacticalAwareness", "mentality.composure",
+    "physical.stamina",
+  ],
+  spinBowling: [
+    "spinBowling.turn", "spinBowling.lineControl", "spinBowling.lengthControl",
+    "spinBowling.releaseConsistency", "spinBowling.drift", "spinBowling.dip",
+    "spinBowling.flightControl", "spinBowling.paceVariation", "spinBowling.disguise",
+    "mentality.tacticalAwareness", "mentality.composure", "physical.stamina",
+  ],
+  Fielding: [
+    "fielding.catching", "fielding.groundFielding", "fielding.positioning",
+    "mentality.anticipation", "physical.reflexes", "fielding.throwAccuracy",
+    "fielding.throwPower", "fielding.pickupAndRelease", "physical.runningSpeed",
+    "physical.agility", "fielding.diving", "fielding.boundaryAwareness",
+  ],
+  Keeping: [
+    "wicketkeeping.glovework", "physical.footwork", "physical.reflexes",
+    "mentality.anticipation", "wicketkeeping.standingUp", "wicketkeeping.standingBack",
+    "wicketkeeping.stumping", "wicketkeeping.legSideCollection", "wicketkeeping.divingReach",
+    "wicketkeeping.byesPrevention", "wicketkeeping.throwCollection", "mentality.concentration",
+  ],
+  Mentality: [
+    "mentality.concentration", "mentality.composure", "mentality.decisionMaking",
+    "mentality.tacticalAwareness", "mentality.adaptability", "mentality.discipline",
+    "mentality.resilience", "mentality.gameReading",
+  ],
+  Physical: [
+    "physical.strength", "physical.stamina", "physical.runningSpeed", "physical.agility",
+    "physical.reflexes", "physical.footwork", "physical.balance", "physical.recovery",
+  ],
+};
+
+function skillPathsFor(label, hasPace) {
+  if (label === "Bowling") return SKILL_ATTRIBUTE_PATHS[hasPace ? "paceBowling" : "spinBowling"];
+  return SKILL_ATTRIBUTE_PATHS[label] || [];
+}
+
+function repertoireStyleForSkill(label, hasPace) {
+  return label === "Bowling" ? (hasPace ? "pace" : "spin") : null;
+}
+
+// vsPace/vsSpin are a 1-10 matchup rating (see Player/ratings/generation.py),
+// not a 0-99 attribute, so they render as a filled/unfilled bar instead of a
+// plain number - a different metric deserves a visually different cell.
+const VS_MATCHUP_LABELS = { vsPace: "Against Pace", vsSpin: "Against Spin" };
+
+function vsMatchupBar(rating) {
+  const filled = Math.max(0, Math.min(10, Math.round(rating)));
+  return "▰".repeat(filled) + "▱".repeat(10 - filled);
+}
+
+function AttributeGrid({ title, category, attributes, highlightPaths, highlightAll }) {
   const entries = Object.entries(attributes || {});
   if (entries.length === 0) return null;
   return (
     <div className="attribute-section">
       <h4>{title}</h4>
       <div className="attribute-grid">
-        {entries.map(([key, value]) => (
-          <div key={key} className="attribute-cell">
-            <span className="attribute-label">{key}</span>
-            <span className="attribute-value">{Math.round(value)}</span>
-          </div>
-        ))}
+        {entries.map(([key, value]) => {
+          const path = `${category}.${key}`;
+          const highlighted = highlightAll || (highlightPaths && highlightPaths.has(path));
+          const vsLabel = category === "batting" ? VS_MATCHUP_LABELS[key] : null;
+          return (
+            <div key={key} className={`attribute-cell${highlighted ? " attribute-cell-highlighted" : ""}`}>
+              <span className="attribute-label">{vsLabel || key}</span>
+              <span className="attribute-value">{vsLabel ? vsMatchupBar(value) : Math.round(value)}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function RatingBadge({ label, rating }) {
+function RatingBadge({ label, rating, hoverable, onHover, onUnhover }) {
   if (!rating) return null;
   return (
-    <div className="rating-badge">
+    <div
+      className={`rating-badge${hoverable ? " rating-badge-hoverable" : ""}`}
+      onMouseEnter={hoverable ? onHover : undefined}
+      onMouseLeave={hoverable ? onUnhover : undefined}
+    >
       <span className="rating-badge-label">{label}</span>
       <span className="rating-badge-value">{rating.unavailable ? "-" : rating.displayed}</span>
     </div>
@@ -709,6 +1179,11 @@ function RatingBadge({ label, rating }) {
 }
 
 function PlayerDetailModal({ data, loading, error, onClose }) {
+  const [hoveredSkill, setHoveredSkill] = useState(null);
+  const hasPace = Boolean(data && data.attributes.paceBowling && Object.keys(data.attributes.paceBowling).length > 0);
+  const highlightPaths = hoveredSkill ? new Set(skillPathsFor(hoveredSkill, hasPace)) : null;
+  const highlightRepertoireStyle = hoveredSkill ? repertoireStyleForSkill(hoveredSkill, hasPace) : null;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -721,37 +1196,76 @@ function PlayerDetailModal({ data, loading, error, onClose }) {
         {data && (
           <>
             <p>
-              {data.position} · Role: {data.role}
-              {data.primary_bowling_style !== "none" ? ` (${data.primary_bowling_style})` : ""}
+              {roleLabel(data.role, data.primary_bowling_style === "pace", "full")}
+              {" · "}{data.batting_hand}-Handed · {data.batting_order}
             </p>
             <div className="rating-badges">
               <RatingBadge label="Overall" rating={data.ratings.overall} />
-              <RatingBadge label="Batting" rating={data.ratings.batting} />
-              <RatingBadge label="Bowling" rating={data.ratings.paceBowling || data.ratings.spinBowling} />
-              <RatingBadge label="Fielding" rating={data.ratings.fielding} />
-              <RatingBadge label="Keeping" rating={data.ratings.wicketkeeping} />
-              <RatingBadge label="Mentality" rating={data.ratings.mentality} />
+              <RatingBadge
+                label="Batting"
+                rating={data.ratings.batting}
+                hoverable
+                onHover={() => setHoveredSkill("Batting")}
+                onUnhover={() => setHoveredSkill(null)}
+              />
+              <RatingBadge
+                label="Bowling"
+                rating={data.ratings.paceBowling || data.ratings.spinBowling}
+                hoverable
+                onHover={() => setHoveredSkill("Bowling")}
+                onUnhover={() => setHoveredSkill(null)}
+              />
+              <RatingBadge
+                label="Fielding"
+                rating={data.ratings.fielding}
+                hoverable
+                onHover={() => setHoveredSkill("Fielding")}
+                onUnhover={() => setHoveredSkill(null)}
+              />
+              <RatingBadge
+                label="Keeping"
+                rating={data.ratings.wicketkeeping}
+                hoverable
+                onHover={() => setHoveredSkill("Keeping")}
+                onUnhover={() => setHoveredSkill(null)}
+              />
+              <RatingBadge
+                label="Mentality"
+                rating={data.ratings.mentality}
+                hoverable
+                onHover={() => setHoveredSkill("Mentality")}
+                onUnhover={() => setHoveredSkill(null)}
+              />
+              <RatingBadge
+                label="Physical"
+                rating={data.ratings.physical}
+                hoverable
+                onHover={() => setHoveredSkill("Physical")}
+                onUnhover={() => setHoveredSkill(null)}
+              />
             </div>
 
-            <AttributeGrid title="Batting" attributes={data.attributes.batting} />
-            <AttributeGrid title="Pace Bowling" attributes={data.attributes.paceBowling} />
-            <AttributeGrid title="Spin Bowling" attributes={data.attributes.spinBowling} />
-            <AttributeGrid title="Fielding" attributes={data.attributes.fielding} />
-            <AttributeGrid title="Wicketkeeping" attributes={data.attributes.wicketkeeping} />
-            <AttributeGrid title="Physical" attributes={data.attributes.physical} />
-            <AttributeGrid title="Mentality" attributes={data.attributes.mentality} />
+            <AttributeGrid title="Batting" category="batting" attributes={data.attributes.batting} highlightPaths={highlightPaths} />
+            <AttributeGrid title="Pace Bowling" category="paceBowling" attributes={data.attributes.paceBowling} highlightPaths={highlightPaths} />
+            <AttributeGrid title="Spin Bowling" category="spinBowling" attributes={data.attributes.spinBowling} highlightPaths={highlightPaths} />
+            <AttributeGrid title="Fielding" category="fielding" attributes={data.attributes.fielding} highlightPaths={highlightPaths} />
+            <AttributeGrid title="Wicketkeeping" category="wicketkeeping" attributes={data.attributes.wicketkeeping} highlightPaths={highlightPaths} />
+            <AttributeGrid title="Physical" category="physical" attributes={data.attributes.physical} highlightPaths={highlightPaths} />
+            <AttributeGrid title="Mentality" category="mentality" attributes={data.attributes.mentality} highlightPaths={highlightPaths} />
             {Object.entries(data.attributes.repertoire || {}).map(
               ([style, deliveries]) =>
                 Object.keys(deliveries).length > 0 && (
                   <AttributeGrid
                     key={style}
                     title={`${style === "pace" ? "Pace" : "Spin"} Repertoire`}
+                    category={`repertoire.${style}`}
                     attributes={deliveries}
+                    highlightAll={highlightRepertoireStyle === style}
                   />
                 ),
             )}
-            <AttributeGrid title="Traits" attributes={data.attributes.traits} />
-            <AttributeGrid title="State" attributes={data.attributes.state} />
+            <AttributeGrid title="Traits" category="traits" attributes={data.attributes.traits} highlightPaths={highlightPaths} />
+            <AttributeGrid title="State" category="state" attributes={data.attributes.state} highlightPaths={highlightPaths} />
           </>
         )}
       </div>
@@ -788,6 +1302,7 @@ export default function App() {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState(null);
   const [view, setView] = useState("auction"); // "auction" | "summary"
+  const [createPlayerOpen, setCreatePlayerOpen] = useState(false);
 
   // The auction now runs on its own clock server-side (see live_clock.py) -
   // it doesn't wait for a bid/pass click. Poll so the UI reflects bot bids
@@ -854,6 +1369,18 @@ export default function App() {
       setPoolError(err.message);
     } finally {
       setPoolLoading(false);
+    }
+  }
+
+  async function refreshPoolAfterCustomPlayer() {
+    if (!pool) return;
+    try {
+      const data = await api.getPoolSummary(pool.pool_id);
+      setPool(data);
+    } catch {
+      // Non-fatal: the created player is already saved server-side even if
+      // this refresh fails, so just leave the summary stale rather than
+      // surfacing an error for a purely cosmetic refresh.
     }
   }
 
@@ -1011,6 +1538,7 @@ export default function App() {
           onGenerate={generatePool}
           onStartAuction={startAuctionFromPool}
           onViewPlayer={showPlayerDetail}
+          onOpenCreatePlayer={() => setCreatePlayerOpen(true)}
           busy={busy}
         />
       )}
@@ -1095,6 +1623,14 @@ export default function App() {
             setPlayerDetailOpen(false);
             setPlayerDetail(null);
           }}
+        />
+      )}
+
+      {createPlayerOpen && (
+        <CreatePlayerScreen
+          poolId={pool?.pool_id}
+          onClose={() => setCreatePlayerOpen(false)}
+          onPlayerAdded={refreshPoolAfterCustomPlayer}
         />
       )}
     </div>

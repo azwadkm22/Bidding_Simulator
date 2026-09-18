@@ -17,6 +17,7 @@ from typing import Optional
 from Player.generate_players import get_list_of_players
 from Player.player import Player
 from Player.player_generation_stats import PlayerGenStat
+from Player.ratings import DetailedPlayerAttributes, RatingResult, calculate_player_ratings
 from Player.ratings.generation import generate_detailed_attributes
 
 DEFAULT_POOL_SIZE = 250
@@ -79,3 +80,57 @@ def instantiate_players(pool: PlayerPool) -> list:
     auction even if the pool has already been used by a previous one.
     """
     return [Player(player_id=player_id, json_data=dict(data)) for player_id, data in pool.snapshot]
+
+
+def add_custom_player(
+    pool: PlayerPool,
+    detail: DetailedPlayerAttributes,
+    name: str,
+    position: str,
+    batting_hand: str,
+    bowling_type: str,
+    batting_order: str,
+    fame: int,
+) -> Player:
+    """Hand-built player for the Create Player / weight-tuning tool: batting/
+    bowling/fielding core stats are derived from the detailed attributes
+    (via calculate_player_ratings) instead of Phase 1's random generation, so
+    what you see in the attribute editor is exactly what ends up on the
+    player. Mutates `pool` in place (list_of_players, generation, snapshot,
+    detailed) - the caller is expected to already hold the stored pool
+    instance (see pool_store.get), not a copy.
+    """
+    new_id = max((p.player_id for p in pool.generation.list_of_players), default=0) + 1
+
+    ratings = calculate_player_ratings(detail)
+
+    def _core(key: str, fallback: int = 50) -> int:
+        result = ratings.get(key)
+        return result.displayed if isinstance(result, RatingResult) else fallback
+
+    bowling_key = "paceBowling" if bowling_type == "Pacer" else "spinBowling"
+    json_data = {
+        "name": name,
+        "batting": _core("batting"),
+        "bowling": _core(bowling_key),
+        "fielding": _core("fielding"),
+        "position": position,
+        "fame": fame,
+        "estimated_price": 1,
+        "batting_hand": batting_hand,
+        "bowling_type": bowling_type,
+        "bowling_style": "Medium" if bowling_type == "Pacer" else "Off-Spin",
+        "batting_order": batting_order,
+        "selling_price": 0,
+    }
+    player = Player(player_id=new_id, json_data=json_data)
+    player.estimated_price = player.getEstimatedPrice()
+
+    detail.player_id = new_id
+    pool.generation.list_of_players.append(player)
+    pool.generation = PlayerGenStat(pool.generation.list_of_players)
+    pool.snapshot.append((new_id, player.get_JSON_data()))
+    pool.detailed[new_id] = detail
+    pool.count += 1
+
+    return player

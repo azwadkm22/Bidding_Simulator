@@ -5,6 +5,7 @@ shape, and no print()/input() is involved anywhere in this path.
 """
 
 from Player.player import Player
+from Player.ratings.generation import infer_role
 from Team.starting_eleven import StartingEleven
 
 from app.game.engine import (
@@ -49,10 +50,12 @@ def _available_actions(session: GameSession) -> list:
 
 
 def _player_card(player: Player) -> dict:
+    role, _ = infer_role(player)
     return {
         "player_id": player.player_id,
         "name": player.name,
         "position": player.position,
+        "role": role,
         "batting": player.batting,
         "bowling": player.bowling,
         "fielding": player.fielding,

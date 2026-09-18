@@ -39,19 +39,22 @@ def _full_batter(batting_value, composure=None, concentration=None):
         batting={
             "timing": batting_value,
             "shotSelection": batting_value,
-            "footwork": batting_value,
             "defensiveTechnique": batting_value,
             "attackingTechnique": batting_value,
             "placement": batting_value,
-            "power": batting_value,
             "offside": batting_value,
             "legside": batting_value,
             "straight": batting_value,
-            "runningBetweenWickets": batting_value,
         },
         mentality={
             "composure": composure if composure is not None else batting_value,
             "concentration": concentration if concentration is not None else batting_value,
+            "decisionMaking": batting_value,
+            "discipline": batting_value,
+        },
+        physical={
+            "strength": batting_value, "runningSpeed": batting_value, "agility": batting_value,
+            "stamina": batting_value, "footwork": batting_value, "balance": batting_value,
         },
     )
 
@@ -96,7 +99,7 @@ def _full_fielder(value):
             "boundaryAwareness": value,
         },
         mentality={"anticipation": value},
-        physical={"reflexes": value, "runningSpeed": value, "acceleration": value, "agility": value},
+        physical={"reflexes": value, "runningSpeed": value, "agility": value},
     )
 
 
@@ -291,6 +294,7 @@ def test_secondary_bowling_style_does_not_affect_role_overall():
     pace_player.mentality.update(_full_batter(70).mentality)
     pace_player.mentality.update(_full_fielder(70).mentality)
     pace_player.physical.update(_full_fielder(70).physical)
+    pace_player.physical.update(_full_batter(70).physical)
     ratings_before = calculate_player_ratings(pace_player)
 
     # A pace bowler shouldn't have spin data, but even if some were present
@@ -391,7 +395,6 @@ def test_wicketkeeping_rating_uses_its_own_weight_table():
         primary_bowling_style="none",
         wicketkeeping={
             "glovework": 70,
-            "footwork": 70,
             "standingUp": 70,
             "standingBack": 70,
             "stumping": 70,
@@ -400,7 +403,7 @@ def test_wicketkeeping_rating_uses_its_own_weight_table():
             "byesPrevention": 70,
             "throwCollection": 70,
         },
-        physical={"reflexes": 70},
+        physical={"reflexes": 70, "footwork": 70},
         mentality={"anticipation": 70, "concentration": 70},
     )
     result = calculate_wicketkeeping_rating(player)

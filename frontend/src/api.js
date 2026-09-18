@@ -34,6 +34,26 @@ export function getPlayerDetail(poolId, playerId) {
   return fetch(`${PLAYERS_BASE}/${poolId}/players/${playerId}/detail`).then(handle);
 }
 
+export function getWeightTables() {
+  return fetch(`${PLAYERS_BASE}/weight-tables`).then(handle);
+}
+
+export function previewCustomPlayer(body) {
+  return fetch(`${PLAYERS_BASE}/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).then(handle);
+}
+
+export function createCustomPlayer(poolId, body) {
+  return fetch(`${PLAYERS_BASE}/${poolId}/custom`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).then(handle);
+}
+
 export function newGame(poolId) {
   return fetch(`${API_BASE}/new`, {
     method: "POST",
