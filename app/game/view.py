@@ -14,6 +14,7 @@ from app.game.engine import (
     BidderHandle,
     GameSession,
 )
+from app.game.player_pool import PlayerPool
 
 MIN_PLAYERS_FOR_STARTING_ELEVEN = 11
 
@@ -22,6 +23,7 @@ def serialize(session: GameSession) -> dict:
     return {
         "session_id": session.session_id,
         "seed": session.seed,
+        "pool_id": session.pool_id,
         "phase": session.phase.value,
         "paused": session.paused,
         "round_number": session.round_number,
@@ -142,6 +144,40 @@ def game_summary(session: GameSession) -> dict:
         "unsold_count": len(session.unsold_this_round),
         "teams": teams,
     }
+
+
+def pool_summary(pool: PlayerPool) -> dict:
+    gen = pool.generation
+
+    position_counts: dict = {}
+    bowling_type_counts = {"Pacer": 0, "Spinner": 0}
+    for player in gen.list_of_players:
+        position_counts[player.position] = position_counts.get(player.position, 0) + 1
+        if player.position in ("Bowler", "Allrounder"):
+            bowling_type_counts[player.bowling_type] = bowling_type_counts.get(player.bowling_type, 0) + 1
+
+    return {
+        "pool_id": pool.pool_id,
+        "seed": pool.seed,
+        "count": pool.count,
+        "position_counts": position_counts,
+        "bowling_type_counts": bowling_type_counts,
+        "players_above_80": len(gen.players_above_80),
+        "players_above_90": len(gen.players_above_90),
+        "top_batsmen": [_player_card(p) for p in gen.top_ten_batsmen],
+        "top_bowlers": [_player_card(p) for p in gen.top_ten_bowlers],
+        "top_allrounders": [_player_card(p) for p in gen.top_ten_allrounders],
+        "top_wicketkeepers": [_player_card(p) for p in gen.top_eight_wicketkeepers],
+        "top_openers": [_player_card(p) for p in gen.top_ten_openers],
+        "top_pacers": [_player_card(p) for p in gen.top_ten_pacers],
+        "top_spinners": [_player_card(p) for p in gen.top_ten_spinners],
+        "most_expensive": [_player_card(p) for p in gen.top_ten_most_expensive],
+    }
+
+
+def pool_players(pool: PlayerPool) -> dict:
+    players = pool.generation.list_of_players
+    return {"count": len(players), "players": [_player_card(p) for p in players]}
 
 
 def remaining_players(session: GameSession) -> dict:

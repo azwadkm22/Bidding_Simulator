@@ -4,11 +4,16 @@ import "./App.css";
 
 const POLL_MS = 1000;
 
-function PlayerCard({ player }) {
+function PlayerCard({ player, onViewPlayer }) {
   if (!player) return <div className="panel">No player on the block.</div>;
   return (
     <div className="panel">
-      <h2>{player.name}</h2>
+      <h2>
+        {player.name}{" "}
+        <button className="link-button" onClick={() => onViewPlayer(player.player_id)}>
+          [View Stats]
+        </button>
+      </h2>
       <p>
         {player.position} · Est. value {player.estimated_price}
       </p>
@@ -181,7 +186,7 @@ function sortableValue(player, key) {
 // filter plus click-to-sort columns. `extraColumns` are appended after the
 // base stat columns (e.g. estimated value for the remaining-players list, or
 // price paid + deal grade for a squad).
-function PlayerTable({ players, extraColumns, emptyMessage, rowClassName }) {
+function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onViewPlayer }) {
   const [positionFilter, setPositionFilter] = useState("All");
   const [sortKey, setSortKey] = useState(extraColumns[0].key);
   const [sortDir, setSortDir] = useState("desc");
@@ -279,7 +284,15 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName }) {
         <tbody>
           {visiblePlayers.map((p) => (
             <tr key={p.player_id} className={rowClassName ? rowClassName(p) : undefined}>
-              <td>{p.name}</td>
+              <td>
+                {onViewPlayer ? (
+                  <button className="link-button" onClick={() => onViewPlayer(p.player_id)}>
+                    {p.name}
+                  </button>
+                ) : (
+                  p.name
+                )}
+              </td>
               <td>{p.position}</td>
               <td>{p.batting}</td>
               <td>{p.bowling}</td>
@@ -310,7 +323,7 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName }) {
   );
 }
 
-function SquadModal({ team, loading, error, onClose, onViewStartingEleven }) {
+function SquadModal({ team, loading, error, onClose, onViewStartingEleven, onViewPlayer }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -342,6 +355,7 @@ function SquadModal({ team, loading, error, onClose, onViewStartingEleven }) {
                 { key: "deal_grade", label: "Grade" },
               ]}
               emptyMessage="No players bought yet."
+              onViewPlayer={onViewPlayer}
             />
           </>
         )}
@@ -350,7 +364,7 @@ function SquadModal({ team, loading, error, onClose, onViewStartingEleven }) {
   );
 }
 
-function PlayerListModal({ data, loading, error, onClose }) {
+function PlayerListModal({ data, loading, error, onClose, onViewPlayer }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -365,6 +379,7 @@ function PlayerListModal({ data, loading, error, onClose }) {
             players={data.players}
             extraColumns={[{ key: "estimated_price", label: "Est. Value" }]}
             emptyMessage="No players match this filter."
+            onViewPlayer={onViewPlayer}
           />
         )}
       </div>
@@ -446,7 +461,7 @@ function StartingElevenModal({ data, loading, error, onClose }) {
   );
 }
 
-function GameSummary({ data, loading, error }) {
+function GameSummary({ data, loading, error, onViewPlayer }) {
   if (loading) return <div className="panel">Building summary...</div>;
   if (error) return <div className="panel error-banner">{error}</div>;
   if (!data) return null;
@@ -467,6 +482,7 @@ function GameSummary({ data, loading, error }) {
           ]}
           emptyMessage="No players were sold."
           rowClassName={(p) => (p.is_user ? "your-purchase" : undefined)}
+          onViewPlayer={onViewPlayer}
         />
       </section>
 
@@ -526,12 +542,237 @@ function ActivityFeed({ events }) {
   );
 }
 
+const ALL_PLAYERS_KEY = "all_players";
+
+const POOL_CATEGORIES = [
+  { key: ALL_PLAYERS_KEY, label: "All Players" },
+  { key: "most_expensive", label: "Most Expensive" },
+  { key: "top_batsmen", label: "Top Batsmen" },
+  { key: "top_bowlers", label: "Top Bowlers" },
+  { key: "top_allrounders", label: "Top Allrounders" },
+  { key: "top_wicketkeepers", label: "Top Wicketkeepers" },
+  { key: "top_openers", label: "Top Openers" },
+  { key: "top_pacers", label: "Top Pacers" },
+  { key: "top_spinners", label: "Top Spinners" },
+];
+
+function PoolCategoryPicker({ pool, onViewPlayer }) {
+  const [category, setCategory] = useState(ALL_PLAYERS_KEY);
+  const [allPlayers, setAllPlayers] = useState(null);
+  const [allPlayersLoading, setAllPlayersLoading] = useState(false);
+  const [allPlayersError, setAllPlayersError] = useState(null);
+
+  useEffect(() => {
+    if (category !== ALL_PLAYERS_KEY || allPlayers) return;
+    setAllPlayersError(null);
+    setAllPlayersLoading(true);
+    api
+      .getPoolPlayers(pool.pool_id)
+      .then((data) => setAllPlayers(data.players))
+      .catch((err) => setAllPlayersError(err.message))
+      .finally(() => setAllPlayersLoading(false));
+  }, [category, pool.pool_id, allPlayers]);
+
+  const players = category === ALL_PLAYERS_KEY ? allPlayers || [] : pool[category];
+
+  return (
+    <div className="panel">
+      <div className="pool-category-header">
+        <h4>Player Categories</h4>
+        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+          {POOL_CATEGORIES.map((c) => (
+            <option key={c.key} value={c.key}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      {category === ALL_PLAYERS_KEY && allPlayersLoading && <p>Loading all players...</p>}
+      {category === ALL_PLAYERS_KEY && allPlayersError && (
+        <p className="error-banner">{allPlayersError}</p>
+      )}
+      {!(category === ALL_PLAYERS_KEY && allPlayersLoading) && (
+        <PlayerTable
+          players={players}
+          extraColumns={[{ key: "estimated_price", label: "Est. Value" }]}
+          emptyMessage="None."
+          onViewPlayer={onViewPlayer}
+        />
+      )}
+    </div>
+  );
+}
+
+function PoolScreen({
+  pool,
+  loading,
+  error,
+  genSeed,
+  setGenSeed,
+  genCount,
+  setGenCount,
+  onGenerate,
+  onStartAuction,
+  onViewPlayer,
+  busy,
+}) {
+  return (
+    <div className="pool-screen">
+      <div className="panel">
+        <h2>Generate Players</h2>
+        <p className="live-note">
+          Generate a player pool first, review it, then start an auction using it - the same
+          pool can be reused for more than one auction.
+        </p>
+        <div className="pool-form">
+          <input
+            type="number"
+            placeholder="Seed (optional)"
+            value={genSeed}
+            onChange={(e) => setGenSeed(e.target.value)}
+            className="seed-input"
+            title="Same seed reproduces the same player pool"
+          />
+          <input
+            type="number"
+            placeholder="Count (default 250)"
+            value={genCount}
+            onChange={(e) => setGenCount(e.target.value)}
+            className="seed-input"
+          />
+          <button onClick={onGenerate} disabled={loading}>
+            {pool ? "Generate Different Pool" : "Generate Players"}
+          </button>
+        </div>
+        {error && <p className="error-banner">{error}</p>}
+      </div>
+
+      {loading && <div className="panel">Generating players...</div>}
+
+      {pool && !loading && (
+        <>
+          <div className="panel">
+            <h3>Pool Summary</h3>
+            <p>
+              Seed: {pool.seed} · {pool.count} players
+            </p>
+            <p>
+              {Object.entries(pool.position_counts)
+                .map(([pos, n]) => `${pos}: ${n}`)
+                .join(" · ")}
+            </p>
+            <p>
+              Pacers: {pool.bowling_type_counts.Pacer || 0} · Spinners:{" "}
+              {pool.bowling_type_counts.Spinner || 0}
+            </p>
+            <p>
+              Rated 80+: {pool.players_above_80} · Rated 90+: {pool.players_above_90}
+            </p>
+            <button onClick={onStartAuction} disabled={busy}>
+              Start Auction with this Pool
+            </button>
+          </div>
+
+          <PoolCategoryPicker pool={pool} onViewPlayer={onViewPlayer} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function AttributeGrid({ title, attributes }) {
+  const entries = Object.entries(attributes || {});
+  if (entries.length === 0) return null;
+  return (
+    <div className="attribute-section">
+      <h4>{title}</h4>
+      <div className="attribute-grid">
+        {entries.map(([key, value]) => (
+          <div key={key} className="attribute-cell">
+            <span className="attribute-label">{key}</span>
+            <span className="attribute-value">{Math.round(value)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RatingBadge({ label, rating }) {
+  if (!rating) return null;
+  return (
+    <div className="rating-badge">
+      <span className="rating-badge-label">{label}</span>
+      <span className="rating-badge-value">{rating.unavailable ? "-" : rating.displayed}</span>
+    </div>
+  );
+}
+
+function PlayerDetailModal({ data, loading, error, onClose }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{data ? data.name : "Loading..."}</h2>
+          <button onClick={onClose}>Close</button>
+        </div>
+        {loading && <p>Loading player...</p>}
+        {error && <p className="error-banner">{error}</p>}
+        {data && (
+          <>
+            <p>
+              {data.position} · Role: {data.role}
+              {data.primary_bowling_style !== "none" ? ` (${data.primary_bowling_style})` : ""}
+            </p>
+            <div className="rating-badges">
+              <RatingBadge label="Overall" rating={data.ratings.overall} />
+              <RatingBadge label="Batting" rating={data.ratings.batting} />
+              <RatingBadge label="Bowling" rating={data.ratings.paceBowling || data.ratings.spinBowling} />
+              <RatingBadge label="Fielding" rating={data.ratings.fielding} />
+              <RatingBadge label="Keeping" rating={data.ratings.wicketkeeping} />
+              <RatingBadge label="Mentality" rating={data.ratings.mentality} />
+            </div>
+
+            <AttributeGrid title="Batting" attributes={data.attributes.batting} />
+            <AttributeGrid title="Pace Bowling" attributes={data.attributes.paceBowling} />
+            <AttributeGrid title="Spin Bowling" attributes={data.attributes.spinBowling} />
+            <AttributeGrid title="Fielding" attributes={data.attributes.fielding} />
+            <AttributeGrid title="Wicketkeeping" attributes={data.attributes.wicketkeeping} />
+            <AttributeGrid title="Physical" attributes={data.attributes.physical} />
+            <AttributeGrid title="Mentality" attributes={data.attributes.mentality} />
+            {Object.entries(data.attributes.repertoire || {}).map(
+              ([style, deliveries]) =>
+                Object.keys(deliveries).length > 0 && (
+                  <AttributeGrid
+                    key={style}
+                    title={`${style === "pace" ? "Pace" : "Spin"} Repertoire`}
+                    attributes={deliveries}
+                  />
+                ),
+            )}
+            <AttributeGrid title="Traits" attributes={data.attributes.traits} />
+            <AttributeGrid title="State" attributes={data.attributes.state} />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [state, setState] = useState(null);
   const [sessionId, setSessionId] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [seedInput, setSeedInput] = useState("");
+  const [pool, setPool] = useState(null);
+  const [poolLoading, setPoolLoading] = useState(false);
+  const [poolError, setPoolError] = useState(null);
+  const [genSeed, setGenSeed] = useState("");
+  const [genCount, setGenCount] = useState("");
+  const [playerDetail, setPlayerDetail] = useState(null);
+  const [playerDetailOpen, setPlayerDetailOpen] = useState(false);
+  const [playerDetailLoading, setPlayerDetailLoading] = useState(false);
+  const [playerDetailError, setPlayerDetailError] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [teamLoading, setTeamLoading] = useState(false);
   const [teamError, setTeamError] = useState(null);
@@ -601,11 +842,57 @@ export default function App() {
     }
   }
 
-  const startGame = () => {
+  async function generatePool() {
+    setPoolError(null);
+    setPoolLoading(true);
+    try {
+      const data = await api.generatePool({ seed: genSeed, count: genCount });
+      setPool(data);
+      setState(null);
+      setSessionId(null);
+    } catch (err) {
+      setPoolError(err.message);
+    } finally {
+      setPoolLoading(false);
+    }
+  }
+
+  async function showPlayerDetail(playerId) {
+    // In an active game, use that game's own pool (mid-auction viewing);
+    // otherwise fall back to whatever pool is loaded on the generation screen.
+    const poolId = state ? state.pool_id : pool?.pool_id;
+    if (!poolId) {
+      setPlayerDetailOpen(true);
+      setPlayerDetailError("This game wasn't started from a generated pool, so detailed stats aren't available.");
+      return;
+    }
+    setPlayerDetailError(null);
+    setPlayerDetailOpen(true);
+    setPlayerDetailLoading(true);
+    try {
+      const data = await api.getPlayerDetail(poolId, playerId);
+      setPlayerDetail(data);
+    } catch (err) {
+      setPlayerDetailError(err.message);
+    } finally {
+      setPlayerDetailLoading(false);
+    }
+  }
+
+  const startAuctionFromPool = () => {
     setView("auction");
     setSummary(null);
-    run(() => api.newGame(seedInput));
+    run(() => api.newGame(pool.pool_id));
   };
+
+  const newPlayerPool = () => {
+    setPool(null);
+    setState(null);
+    setSessionId(null);
+    setView("auction");
+    setSummary(null);
+  };
+
   const doBid = (amount) => run(() => api.bid(sessionId, amount));
   const doSkip = () => run(() => api.skip(sessionId));
   const doAdvance = () => run(() => api.advance(sessionId));
@@ -679,27 +966,19 @@ export default function App() {
                   : "Live auction - bid or pass anytime, or just watch."}
             </p>
           )}
-          {state && (
-            <p className="seed-note">
-              Seed: {state.seed}{" "}
-              <button className="link-button" onClick={() => setSeedInput(String(state.seed))}>
-                [Reuse this seed]
-              </button>
-            </p>
-          )}
+          {state && <p className="seed-note">Pool seed: {state.seed}</p>}
         </div>
         <div className="header-buttons">
-          <input
-            type="number"
-            placeholder="Seed (optional)"
-            value={seedInput}
-            onChange={(e) => setSeedInput(e.target.value)}
-            className="seed-input"
-            title="Same seed reproduces the same 250 players and teams"
-          />
-          <button onClick={startGame} disabled={busy}>
-            {state ? "Restart Game" : "Start New Game"}
-          </button>
+          {pool && (
+            <button onClick={startAuctionFromPool} disabled={busy}>
+              {state ? "Restart Game" : "Start Auction"}
+            </button>
+          )}
+          {(pool || state) && (
+            <button onClick={newPlayerPool} disabled={busy}>
+              New Player Pool
+            </button>
+          )}
           {state && state.phase !== "game_over" && (
             <button onClick={doTogglePause} disabled={busy} className="pause-button">
               {state.paused ? "Resume Auction" : "Pause Auction"}
@@ -720,9 +999,30 @@ export default function App() {
 
       {error && <div className="error-banner">{error}</div>}
 
+      {!state && (
+        <PoolScreen
+          pool={pool}
+          loading={poolLoading}
+          error={poolError}
+          genSeed={genSeed}
+          setGenSeed={setGenSeed}
+          genCount={genCount}
+          setGenCount={setGenCount}
+          onGenerate={generatePool}
+          onStartAuction={startAuctionFromPool}
+          onViewPlayer={showPlayerDetail}
+          busy={busy}
+        />
+      )}
+
       {state && view === "summary" && (
         <>
-          <GameSummary data={summary} loading={summaryLoading} error={summaryError} />
+          <GameSummary
+            data={summary}
+            loading={summaryLoading}
+            error={summaryError}
+            onViewPlayer={showPlayerDetail}
+          />
           <ActivityFeed events={state.event_log} />
         </>
       )}
@@ -730,7 +1030,7 @@ export default function App() {
       {state && view === "auction" && (
         <div className="layout">
           <div className="column main-column">
-            <PlayerCard player={state.current_player} />
+            <PlayerCard player={state.current_player} onViewPlayer={showPlayerDetail} />
             <AuctionStatus state={state} onShowRemainingPlayers={showRemainingPlayers} />
             <Controls
               state={state}
@@ -757,6 +1057,7 @@ export default function App() {
           error={teamError}
           onClose={() => setSelectedTeam(null)}
           onViewStartingEleven={showStartingEleven}
+          onViewPlayer={showPlayerDetail}
         />
       )}
 
@@ -769,6 +1070,7 @@ export default function App() {
             setRemainingPlayersOpen(false);
             setRemainingPlayers(null);
           }}
+          onViewPlayer={showPlayerDetail}
         />
       )}
 
@@ -780,6 +1082,18 @@ export default function App() {
           onClose={() => {
             setStartingElevenOpen(false);
             setStartingEleven(null);
+          }}
+        />
+      )}
+
+      {playerDetailOpen && (
+        <PlayerDetailModal
+          data={playerDetail}
+          loading={playerDetailLoading}
+          error={playerDetailError}
+          onClose={() => {
+            setPlayerDetailOpen(false);
+            setPlayerDetail(null);
           }}
         />
       )}

@@ -1,0 +1,117 @@
+"""Tests for Phase 2: reverse-engineering detailed attributes for an
+already-generated Player, such that recomputing the relevant rating from
+them reproduces exactly the same core batting/bowling/fielding numbers.
+"""
+
+import random
+
+from Player.player import Player
+from Player.ratings import (
+    calculate_batting_rating,
+    calculate_fielding_rating,
+    calculate_pace_bowling_rating,
+    calculate_spin_bowling_rating,
+)
+from Player.ratings.generation import infer_role, generate_detailed_attributes
+from app.game.player_pool import create_pool
+
+
+def _bowling_rating(player, detail):
+    if player.bowling_type == "Pacer":
+        return calculate_pace_bowling_rating(detail)
+    return calculate_spin_bowling_rating(detail)
+
+
+def test_generated_details_reproduce_all_three_core_ratings():
+    random.seed(2026)
+    mismatches = []
+    for i in range(500):
+        player = Player(i)
+        detail = generate_detailed_attributes(player)
+
+        batting = calculate_batting_rating(detail)
+        bowling = _bowling_rating(player, detail)
+        fielding = calculate_fielding_rating(detail)
+
+        if batting.displayed != player.batting:
+            mismatches.append(("batting", player.batting, batting.displayed))
+        if bowling.displayed != player.bowling:
+            mismatches.append(("bowling", player.bowling, bowling.displayed))
+        if fielding.displayed != player.fielding:
+            mismatches.append(("fielding", player.fielding, fielding.displayed))
+
+    assert mismatches == []
+
+
+def test_every_player_gets_exactly_one_bowling_style_detail():
+    random.seed(3)
+    for i in range(50):
+        player = Player(i)
+        detail = generate_detailed_attributes(player)
+        if player.bowling_type == "Pacer":
+            assert detail.paceBowling
+            assert not detail.spinBowling
+            assert "pace" in detail.repertoire
+            assert "spin" not in detail.repertoire
+        else:
+            assert detail.spinBowling
+            assert not detail.paceBowling
+            assert "spin" in detail.repertoire
+            assert "pace" not in detail.repertoire
+
+
+def test_only_wicketkeepers_get_wicketkeeping_detail():
+    random.seed(4)
+    saw_keeper = False
+    for i in range(200):
+        player = Player(i)
+        detail = generate_detailed_attributes(player)
+        if player.position == "Wicketkeeper":
+            saw_keeper = True
+            assert detail.wicketkeeping
+        else:
+            assert detail.wicketkeeping == {}
+    assert saw_keeper, "expected at least one wicketkeeper in 200 random players"
+
+
+def test_role_inference_matches_position_and_skill_split():
+    def make(batting, bowling, position, bowling_type="Pacer"):
+        return Player(
+            player_id=1,
+            json_data={
+                "name": "X", "batting": batting, "bowling": bowling, "fielding": 60,
+                "position": position, "fame": 50, "estimated_price": 10,
+                "batting_hand": "Right", "bowling_type": bowling_type, "bowling_style": "Medium",
+                "batting_order": "Top Order", "selling_price": 0,
+            },
+        )
+
+    assert infer_role(make(80, 40, "Batsmen")) == ("specialistBatter", "none")
+    assert infer_role(make(40, 80, "Bowler", "Spinner")) == ("specialistBowler", "spin")
+    assert infer_role(make(85, 30, "Wicketkeeper")) == ("wicketkeeperBatter", "none")
+    assert infer_role(make(80, 60, "Allrounder"))[0] == "battingAllRounder"
+    assert infer_role(make(55, 80, "Allrounder"))[0] == "bowlingAllRounder"
+    assert infer_role(make(68, 65, "Allrounder"))[0] == "balancedAllRounder"
+    assert infer_role(make(45, 30, "Trainee")) == ("specialistBatter", "none")
+    assert infer_role(make(30, 45, "Trainee", "Spinner"))[0] == "specialistBowler"
+
+
+def test_same_seed_gives_the_same_detailed_attributes():
+    pool_a = create_pool(seed=808, count=15)
+    pool_b = create_pool(seed=808, count=15)
+
+    for player_id, detail_a in pool_a.detailed.items():
+        detail_b = pool_b.detailed[player_id]
+        assert detail_a.role == detail_b.role
+        assert detail_a.batting == detail_b.batting
+        assert detail_a.paceBowling == detail_b.paceBowling
+        assert detail_a.spinBowling == detail_b.spinBowling
+        assert detail_a.fielding == detail_b.fielding
+        assert detail_a.physical == detail_b.physical
+        assert detail_a.mentality == detail_b.mentality
+        assert detail_a.repertoire == detail_b.repertoire
+
+
+def test_pool_detail_covers_every_generated_player():
+    pool = create_pool(seed=55, count=40)
+    assert set(pool.detailed.keys()) == {p.player_id for p in pool.generation.list_of_players}

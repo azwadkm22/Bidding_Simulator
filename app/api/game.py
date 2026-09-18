@@ -12,7 +12,7 @@ from app.schemas.game import (
     RemainingPlayers,
     StartingElevenResponse,
 )
-from app.services import live_clock, session_store
+from app.services import live_clock, pool_store, session_store
 
 router = APIRouter(prefix="/api/game", tags=["game"])
 
@@ -32,8 +32,17 @@ def _get_session(session_id: str) -> engine.GameSession:
 
 @router.post("/new", response_model=GameState)
 async def new_game(body: Optional[NewGameRequest] = None):
-    seed = body.seed if body else None
-    session = engine.create_game(seed=seed)
+    pool = None
+    seed = None
+    if body and body.pool_id:
+        try:
+            pool = pool_store.get(body.pool_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="Player pool not found.")
+    elif body:
+        seed = body.seed
+
+    session = engine.create_game(seed=seed, player_pool=pool)
     session_store.save(session)
     live_clock.start(session)
     return view.serialize(session)

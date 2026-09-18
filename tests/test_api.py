@@ -38,6 +38,110 @@ def test_new_game_with_explicit_seed_reproduces_the_same_pool():
     assert [r["name"] for r in state_a["rivals"]] == [r["name"] for r in state_b["rivals"]]
 
 
+def test_generate_pool_returns_summary():
+    response = client.post("/api/players/generate", json={"seed": 321, "count": 30})
+    assert response.status_code == 200
+    summary = response.json()
+
+    assert summary["seed"] == 321
+    assert summary["count"] == 30
+    assert sum(summary["position_counts"].values()) == 30
+    assert len(summary["top_batsmen"]) <= 10
+    assert "pool_id" in summary
+
+
+def test_generate_pool_same_seed_gives_same_summary():
+    summary_a = client.post("/api/players/generate", json={"seed": 111, "count": 25}).json()
+    summary_b = client.post("/api/players/generate", json={"seed": 111, "count": 25}).json()
+
+    assert summary_a["top_batsmen"] == summary_b["top_batsmen"]
+    assert summary_a["position_counts"] == summary_b["position_counts"]
+
+
+def test_get_pool_players_matches_summary_count():
+    summary = client.post("/api/players/generate", json={"seed": 5, "count": 15}).json()
+    pool_id = summary["pool_id"]
+
+    response = client.get(f"/api/players/{pool_id}/players")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 15
+    assert len(data["players"]) == 15
+
+
+def test_unknown_pool_returns_404():
+    response = client.get("/api/players/does-not-exist/summary")
+    assert response.status_code == 404
+
+
+def test_player_detail_returns_ratings_and_attributes():
+    summary = client.post("/api/players/generate", json={"seed": 606, "count": 20}).json()
+    pool_id = summary["pool_id"]
+    player_id = summary["most_expensive"][0]["player_id"]
+
+    response = client.get(f"/api/players/{pool_id}/players/{player_id}/detail")
+    assert response.status_code == 200
+    detail = response.json()
+
+    assert detail["player_id"] == player_id
+    assert detail["core"]["batting"] >= 0
+    assert detail["ratings"]["batting"]["displayed"] == detail["core"]["batting"]
+    assert detail["role"] in (
+        "specialistBatter", "specialistBowler", "battingAllRounder",
+        "bowlingAllRounder", "balancedAllRounder", "wicketkeeperBatter",
+    )
+    # exactly one bowling-style attribute set is populated
+    has_pace = bool(detail["attributes"]["paceBowling"])
+    has_spin = bool(detail["attributes"]["spinBowling"])
+    assert has_pace != has_spin
+    bowling_key = "paceBowling" if has_pace else "spinBowling"
+    assert detail["ratings"][bowling_key]["displayed"] == detail["core"]["bowling"]
+    assert detail["ratings"]["fielding"]["displayed"] == detail["core"]["fielding"]
+
+
+def test_player_detail_unknown_player_returns_404():
+    summary = client.post("/api/players/generate", json={"seed": 7, "count": 10}).json()
+    pool_id = summary["pool_id"]
+    response = client.get(f"/api/players/{pool_id}/players/999999/detail")
+    assert response.status_code == 404
+
+
+def test_player_detail_unknown_pool_returns_404():
+    response = client.get("/api/players/does-not-exist/players/0/detail")
+    assert response.status_code == 404
+
+
+def test_start_game_from_a_pregenerated_pool():
+    summary = client.post("/api/players/generate", json={"seed": 42, "count": 20}).json()
+    pool_id = summary["pool_id"]
+
+    state = client.post("/api/game/new", json={"pool_id": pool_id}).json()
+    assert state["seed"] == 42
+    assert state["pool_id"] == pool_id
+
+    # The auction draws players highest-price-first from the same pool, so
+    # the current player on the block must be the pool's single most
+    # expensive player.
+    assert state["current_player"]["name"] == summary["most_expensive"][0]["name"]
+
+    # The frontend uses this to fetch mid-auction player detail via the same
+    # pool-scoped endpoint the generation screen uses.
+    player_id = state["current_player"]["player_id"]
+    detail = client.get(f"/api/players/{state['pool_id']}/players/{player_id}/detail")
+    assert detail.status_code == 200
+    assert detail.json()["player_id"] == player_id
+
+
+def test_ad_hoc_seed_only_game_has_no_pool_id():
+    state = client.post("/api/game/new", json={"seed": 123}).json()
+    assert state["pool_id"] is None
+
+
+def test_start_game_with_unknown_pool_id_returns_404():
+    response = client.post("/api/game/new", json={"pool_id": "does-not-exist"})
+    assert response.status_code == 404
+
+
 def test_get_game_returns_same_state():
     session_id = client.post("/api/game/new").json()["session_id"]
     response = client.get(f"/api/game/{session_id}")

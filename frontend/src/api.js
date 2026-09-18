@@ -1,4 +1,6 @@
-const API_BASE = "http://127.0.0.1:8000/api/game";
+const ROOT = "http://127.0.0.1:8000/api";
+const API_BASE = `${ROOT}/game`;
+const PLAYERS_BASE = `${ROOT}/players`;
 
 async function handle(response) {
   const data = await response.json();
@@ -8,12 +10,35 @@ async function handle(response) {
   return data;
 }
 
-export function newGame(seed) {
-  const hasSeed = seed !== undefined && seed !== null && seed !== "";
+export function generatePool({ seed, count } = {}) {
+  const body = {};
+  if (seed !== undefined && seed !== null && seed !== "") body.seed = Number(seed);
+  if (count !== undefined && count !== null && count !== "") body.count = Number(count);
+  const hasBody = Object.keys(body).length > 0;
+  return fetch(`${PLAYERS_BASE}/generate`, {
+    method: "POST",
+    headers: hasBody ? { "Content-Type": "application/json" } : undefined,
+    body: hasBody ? JSON.stringify(body) : undefined,
+  }).then(handle);
+}
+
+export function getPoolSummary(poolId) {
+  return fetch(`${PLAYERS_BASE}/${poolId}/summary`).then(handle);
+}
+
+export function getPoolPlayers(poolId) {
+  return fetch(`${PLAYERS_BASE}/${poolId}/players`).then(handle);
+}
+
+export function getPlayerDetail(poolId, playerId) {
+  return fetch(`${PLAYERS_BASE}/${poolId}/players/${playerId}/detail`).then(handle);
+}
+
+export function newGame(poolId) {
   return fetch(`${API_BASE}/new`, {
     method: "POST",
-    headers: hasSeed ? { "Content-Type": "application/json" } : undefined,
-    body: hasSeed ? JSON.stringify({ seed: Number(seed) }) : undefined,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pool_id: poolId }),
   }).then(handle);
 }
 

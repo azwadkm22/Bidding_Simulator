@@ -26,12 +26,14 @@ from Team.generate_teams import generate_teams, generate_bidders
 from Team.team import Team
 from Team.team_generation_stats import TeamGenStat
 
+from app.game.player_pool import DEFAULT_POOL_SIZE, PlayerPool, instantiate_players
+
 NUM_TEAMS = 12
-PLAYER_POOL_SIZE = 250
+PLAYER_POOL_SIZE = DEFAULT_POOL_SIZE
 STARTING_PRICE = 10
 USER_TEAM_ID = -1
 USER_TEAM_NAME = "Your Team"
-USER_STARTING_BUDGET = 20000
+USER_STARTING_BUDGET = 2000
 MAX_SQUAD_SIZE = 21
 ALLOWED_INCREMENTS = [5, 10, 25, 50]
 SILENT_ROUNDS_TO_UNSOLD = 3
@@ -137,6 +139,12 @@ class GameSession:
     last_result: Optional[dict] = None
     paused: bool = False
     seed: int = 0
+    # The PlayerPool this session was started from, if any (see
+    # app/game/player_pool.py) - lets the frontend fetch a player's detailed
+    # attributes (Player/ratings/) mid-auction via the same
+    # /api/players/{pool_id}/players/{player_id}/detail endpoint the
+    # generation screen uses. None for the legacy ad-hoc seed-only path.
+    pool_id: Optional[str] = None
 
     def all_handles(self):
         return [self.user_handle] + self.bot_handles
@@ -155,29 +163,36 @@ def _log(session: GameSession, message: str) -> None:
 SEED_MAX = 2**31 - 1
 
 
-def create_game(seed: Optional[int] = None) -> GameSession:
-    """Reseeds the process-wide random module before generating players,
-    teams, and bidders, so a given seed reliably reproduces the same 250
-    player pool, team names, and bot traits. Gameplay after that (who bids
-    when) still draws from the same continuing stream, so it isn't pinned to
-    the seed the same way - it depends on timing and on what the human does,
-    which is normally what you'd want anyway.
+def create_game(seed: Optional[int] = None, player_pool: Optional[PlayerPool] = None) -> GameSession:
+    """Starts a new auction session.
 
-    This reseeds the *global* random module, since none of the domain code
-    (Player/Team generation, bidder decisions) accepts an injectable RNG -
-    it all calls the bare `random` module directly. That means starting a new
-    seeded game while another session's live clock is still ticking in the
-    background will perturb that other session's randomness too. Fine for
-    the one-game-at-a-time way this app is meant to be used; would need every
-    domain call site threaded with its own random.Random instance to be safe
-    with multiple concurrent sessions.
+    If `player_pool` is given (see app/game/player_pool.py), the auction uses
+    that pool's players - generated as a separate, reviewable step - via
+    fresh Player objects reconstructed from its snapshot, so reusing the same
+    pool for a second auction never carries over selling_price/deal_grade
+    from the first one. `seed` is ignored in that case; session.seed just
+    records the pool's own seed for display.
+
+    Otherwise this falls back to the original ad-hoc path: reseed the
+    process-wide random module and generate a fresh pool inline. Same caveat
+    either way - reseeding is global, since no domain code (Player/Team
+    generation, bidder decisions) accepts an injectable RNG. That means
+    generating/starting something seeded while another session's live clock
+    is still ticking in the background will perturb that other session's
+    randomness too. Fine for the one-game-at-a-time way this app is meant to
+    be used; would need every domain call site threaded with its own
+    random.Random instance to be safe with multiple concurrent sessions.
     """
-    if seed is None:
-        seed = random.randint(0, SEED_MAX)
-    random.seed(seed)
+    if player_pool is not None:
+        players = instantiate_players(player_pool)
+        seed = player_pool.seed
+    else:
+        if seed is None:
+            seed = random.randint(0, SEED_MAX)
+        random.seed(seed)
+        players = get_list_of_players(PLAYER_POOL_SIZE)
+        players = sorted(players, key=lambda p: p.estimated_price, reverse=True)
 
-    players = get_list_of_players(PLAYER_POOL_SIZE)
-    players = sorted(players, key=lambda p: p.estimated_price, reverse=True)
     player_generation = PlayerGenStat(players)
 
     team_list = generate_teams(NUM_TEAMS)
@@ -213,8 +228,9 @@ def create_game(seed: Optional[int] = None) -> GameSession:
         bot_handles=bot_handles,
         queue=deque(player_generation.list_of_players),
         seed=seed,
+        pool_id=player_pool.pool_id if player_pool is not None else None,
     )
-    _log(session, f"Auction started (seed {seed}): 250 players, 12 rival teams. Good luck!")
+    _log(session, f"Auction started (seed {seed}): {len(players)} players, 12 rival teams. Good luck!")
     _load_next_player(session)
     return session
 
