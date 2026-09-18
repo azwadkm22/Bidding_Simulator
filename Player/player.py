@@ -184,9 +184,13 @@ class Player():
         rating = max(rating, 0.9 * self.bowling + 0.1 * self.fielding)
         rating = max(rating, 0.85 * self.batting + 0.15 * self.fielding)
         rating = max(rating, 0.45 * self.batting + 0.45 * self.bowling + 0.1 * self.fielding)
-        
-        price = round(0.022 * rating ** 2)
-        
+
+        peak_skill = max(self.batting, self.bowling)
+        price_multiplier = 0.2 + (peak_skill / 99) ** 3
+        # price_multiplier = 1
+
+        price = round(0.022 * rating ** 2 * price_multiplier)
+
         return max(price, 10)
     
     def get_JSON_data(self):
