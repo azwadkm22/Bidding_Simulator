@@ -24,6 +24,7 @@ from Player.ratings.weights import (
     BATTING_VS_BLEND,
     BATTING_WEIGHTS,
     FIELDING_WEIGHTS,
+    KEEPING_LEVEL_BLEND,
     PACE_BOWLING_WEIGHTS,
     SPIN_BOWLING_WEIGHTS,
     WICKETKEEPING_WEIGHTS,
@@ -241,8 +242,12 @@ def generate_detailed_attributes(player: Player) -> DetailedPlayerAttributes:
 
     if player.position == "Wicketkeeper":
         # No existing core scalar to preserve here - just a natural profile
-        # around the player's batting/fielding level.
-        keeping_level = (player.batting + player.fielding) / 2
+        # around the player's batting/fielding level, weighted per
+        # KEEPING_LEVEL_BLEND (weights.py) - see app/game/view.py for the
+        # other side that must stay in sync with this same formula.
+        keeping_level = (
+            KEEPING_LEVEL_BLEND["batting"] * player.batting + KEEPING_LEVEL_BLEND["fielding"] * player.fielding
+        )
         detail.wicketkeeping = {}
         for path, _weight in WICKETKEEPING_WEIGHTS:
             category, _, attribute = path.partition(".")

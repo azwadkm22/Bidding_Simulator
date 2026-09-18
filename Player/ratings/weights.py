@@ -40,6 +40,14 @@ BATTING_WEIGHTS = [
 # sides import this one constant instead of hardcoding the split twice.
 BATTING_VS_BLEND = {"base": 0.8, "vsSpin": 0.10, "vsPace": 0.10}
 
+# Phase 1 has no "wicketkeeping" core stat of its own, so a keeper's
+# keeping_level is estimated from batting/fielding instead - used both by
+# generate_detailed_attributes (to anchor the real detailed wicketkeeping
+# attributes) and by app/game/view.py's Overall approximation for PlayerCard
+# (which has no detailed-attribute lookup available). One shared constant so
+# those two can't drift apart the way BATTING_VS_BLEND briefly did.
+KEEPING_LEVEL_BLEND = {"batting": 0.3, "fielding": 0.7}
+
 PACE_BOWLING_WEIGHTS = [
     ("paceBowling.pace", 10),
     ("paceBowling.lineControl", 12),
@@ -74,33 +82,36 @@ SPIN_BOWLING_WEIGHTS = [
 ]
 
 FIELDING_WEIGHTS = [
-    ("fielding.catching", 20),
+    ("fielding.catching", 18),
     ("fielding.groundFielding", 15),
     ("fielding.positioning", 8),
-    ("mentality.anticipation", 8),
-    ("physical.reflexes", 8),
     ("fielding.throwAccuracy", 10),
     ("fielding.throwPower", 6),
     ("fielding.pickupAndRelease", 5),
-    ("physical.runningSpeed", 10),  # was 6, +4 folded in from the removed physical.acceleration
-    ("physical.agility", 5),
     ("fielding.diving", 3),
     ("fielding.boundaryAwareness", 2),
+    ("physical.runningSpeed", 10),  
+    ("physical.reflexes", 8),
+    ("physical.balance", 2),
+    ("physical.agility", 5),
+    ("mentality.anticipation", 8),
 ]
 
 WICKETKEEPING_WEIGHTS = [
-    ("wicketkeeping.glovework", 20),
-    ("physical.footwork", 12),  # shared with batting
-    ("physical.reflexes", 12),
-    ("mentality.anticipation", 8),
-    ("wicketkeeping.standingUp", 10),
+    ("wicketkeeping.glovework", 15),
+    ("wicketkeeping.byesPrevention", 5),
+    ("wicketkeeping.standingUp", 8),
     ("wicketkeeping.standingBack", 8),
     ("wicketkeeping.stumping", 10),
     ("wicketkeeping.legSideCollection", 5),
-    ("wicketkeeping.divingReach", 5),
-    ("wicketkeeping.byesPrevention", 5),
-    ("wicketkeeping.throwCollection", 3),
+    ("fielding.diving", 5),  
+    ("fielding.catching", 10), 
     ("mentality.concentration", 2),
+    ("mentality.anticipation", 8),
+    ("mentality.decisionMaking", 3),
+    ("physical.footwork", 5), 
+    ("physical.balance", 2),
+    ("physical.reflexes", 14),
 ]
 
 MENTALITY_SUMMARY_WEIGHTS = [
@@ -127,12 +138,12 @@ PHYSICAL_SUMMARY_WEIGHTS = [
 
 # Role -> {core rating name: weight percent}. Every row totals 100 (section 12).
 ROLE_OVERALL_WEIGHTS = {
-    "specialistBatter": {"batting": 85, "bowling": 0, "fielding": 15, "wicketkeeping": 0},
-    "specialistBowler": {"batting": 10, "bowling": 80, "fielding": 10, "wicketkeeping": 0},
-    "battingAllRounder": {"batting": 60, "bowling": 30, "fielding": 10, "wicketkeeping": 0},
-    "bowlingAllRounder": {"batting": 30, "bowling": 60, "fielding": 10, "wicketkeeping": 0},
-    "balancedAllRounder": {"batting": 45, "bowling": 45, "fielding": 10, "wicketkeeping": 0},
-    "wicketkeeperBatter": {"batting": 55, "bowling": 0, "fielding": 0, "wicketkeeping": 45},
+    "specialistBatter": {"batting": 90, "bowling": 0, "fielding": 10, "wicketkeeping": 0},
+    "specialistBowler": {"batting": 5, "bowling": 90, "fielding": 5, "wicketkeeping": 0},
+    "battingAllRounder": {"batting": 70, "bowling": 25, "fielding": 5, "wicketkeeping": 0},
+    "bowlingAllRounder": {"batting": 25, "bowling": 70, "fielding": 5, "wicketkeeping": 0},
+    "balancedAllRounder": {"batting": 48, "bowling": 48, "fielding": 4, "wicketkeeping": 0},
+    "wicketkeeperBatter": {"batting": 70, "bowling": 0, "fielding": 0, "wicketkeeping": 30},
 }
 
 CORE_WEIGHT_TABLES = {
@@ -165,11 +176,18 @@ def _validate_batting_vs_blend_totals_1(tolerance=1e-9):
         raise ValidationError(f"BATTING_VS_BLEND totals {total}, not 1.0")
 
 
+def _validate_keeping_level_blend_totals_1(tolerance=1e-9):
+    total = sum(KEEPING_LEVEL_BLEND.values())
+    if abs(total - 1.0) > tolerance:
+        raise ValidationError(f"KEEPING_LEVEL_BLEND totals {total}, not 1.0")
+
+
 def _self_check():
     for name, table in CORE_WEIGHT_TABLES.items():
         validate_weight_table_totals_100(name, table)
     validate_role_weights_total_100()
     _validate_batting_vs_blend_totals_1()
+    _validate_keeping_level_blend_totals_1()
 
 
 _self_check()

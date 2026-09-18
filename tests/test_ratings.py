@@ -99,7 +99,7 @@ def _full_fielder(value):
             "boundaryAwareness": value,
         },
         mentality={"anticipation": value},
-        physical={"reflexes": value, "runningSpeed": value, "agility": value},
+        physical={"reflexes": value, "runningSpeed": value, "agility": value, "balance": value},
     )
 
 
@@ -399,12 +399,11 @@ def test_wicketkeeping_rating_uses_its_own_weight_table():
             "standingBack": 70,
             "stumping": 70,
             "legSideCollection": 70,
-            "divingReach": 70,
             "byesPrevention": 70,
-            "throwCollection": 70,
         },
-        physical={"reflexes": 70, "footwork": 70},
-        mentality={"anticipation": 70, "concentration": 70},
+        fielding={"diving": 70, "catching": 70},
+        physical={"reflexes": 70, "footwork": 70, "balance": 70},
+        mentality={"anticipation": 70, "concentration": 70, "decisionMaking": 70},
     )
     result = calculate_wicketkeeping_rating(player)
     assert result.raw == pytest.approx(70)
