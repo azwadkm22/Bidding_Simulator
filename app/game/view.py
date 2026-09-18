@@ -5,7 +5,9 @@ shape, and no print()/input() is involved anywhere in this path.
 """
 
 from Player.player import Player
+from Player.ratings import MissingAttributeError, calculate_overall_rating
 from Player.ratings.generation import infer_role
+from Player.ratings.weights import KEEPING_LEVEL_BLEND
 from Team.starting_eleven import StartingEleven
 
 from app.game.engine import (
@@ -49,6 +51,35 @@ def _available_actions(session: GameSession) -> list:
     return []
 
 
+def _overall_from_core_stats(role: str, player: Player) -> "int | None":
+    """Approximates the role-weighted Overall from Phase 1's core stats alone
+    (no detailed-attribute lookup needed, so this works everywhere a
+    PlayerCard is built - squads, remaining players, pool summaries, etc).
+    Batting/bowling/fielding reproduce those core stats almost exactly (see
+    calculate_batting_rating's known small undershoot), so this is a close
+    approximation, not a lookup of the same "overall" the Player Detail
+    view computes from the full DetailedPlayerAttributes.
+
+    Phase 1 has no "wicketkeeping" scalar at all, so wicketkeeperBatter
+    approximates it the same way generate_detailed_attributes anchors a
+    keeper's detailed attributes in the first place: KEEPING_LEVEL_BLEND
+    (weights.py) - reusing that same shared constant here instead of leaving
+    it None, so this can never drift out of sync with the real generator.
+    """
+    try:
+        core_ratings = {
+            "batting": player.batting,
+            "bowling": player.bowling,
+            "fielding": player.fielding,
+            "wicketkeeping": (
+                KEEPING_LEVEL_BLEND["batting"] * player.batting + KEEPING_LEVEL_BLEND["fielding"] * player.fielding
+            ),
+        }
+        return calculate_overall_rating(role, core_ratings).displayed
+    except MissingAttributeError:
+        return None
+
+
 def _player_card(player: Player) -> dict:
     role, _ = infer_role(player)
     return {
@@ -56,6 +87,7 @@ def _player_card(player: Player) -> dict:
         "name": player.name,
         "position": player.position,
         "role": role,
+        "overall": _overall_from_core_stats(role, player),
         "batting": player.batting,
         "bowling": player.bowling,
         "fielding": player.fielding,

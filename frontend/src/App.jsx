@@ -169,6 +169,7 @@ function RivalsPanel({ rivals, onSelectTeam }) {
 const BASE_PLAYER_COLUMNS = [
   { key: "name", label: "Name" },
   { key: "position", label: "Position" },
+  { key: "overall", label: "Overall" },
   { key: "batting", label: "Batting" },
   { key: "bowling", label: "Bowling" },
   { key: "fielding", label: "Fielding" },
@@ -324,6 +325,7 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
                 ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
               </td>
               <td>{p.position}</td>
+              <td>{p.overall ?? "-"}</td>
               <td>{p.batting}</td>
               <td>{p.bowling}</td>
               <td>{p.fielding}</td>
@@ -1083,8 +1085,8 @@ const SKILL_ATTRIBUTE_PATHS = {
     "batting.timing", "batting.shotSelection", "physical.footwork",
     "batting.defensiveTechnique", "batting.attackingTechnique", "batting.placement",
     "physical.strength", "batting.offside", "batting.legside", "batting.straight",
-    "mentality.composure", "mentality.concentration",
-    "physical.runningSpeed", "physical.agility", "physical.stamina",
+    "mentality.composure", "mentality.concentration", "mentality.decisionMaking", "mentality.discipline",
+    "physical.runningSpeed", "physical.agility", "physical.stamina", "physical.balance",
   ],
   paceBowling: [
     "paceBowling.pace", "paceBowling.lineControl", "paceBowling.lengthControl",
@@ -1103,13 +1105,14 @@ const SKILL_ATTRIBUTE_PATHS = {
     "fielding.catching", "fielding.groundFielding", "fielding.positioning",
     "mentality.anticipation", "physical.reflexes", "fielding.throwAccuracy",
     "fielding.throwPower", "fielding.pickupAndRelease", "physical.runningSpeed",
-    "physical.agility", "fielding.diving", "fielding.boundaryAwareness",
+    "physical.agility", "fielding.diving", "fielding.boundaryAwareness", "physical.balance",
   ],
   Keeping: [
     "wicketkeeping.glovework", "physical.footwork", "physical.reflexes",
     "mentality.anticipation", "wicketkeeping.standingUp", "wicketkeeping.standingBack",
-    "wicketkeeping.stumping", "wicketkeeping.legSideCollection", "wicketkeeping.divingReach",
-    "wicketkeeping.byesPrevention", "wicketkeeping.throwCollection", "mentality.concentration",
+    "wicketkeeping.stumping", "wicketkeeping.legSideCollection", "fielding.diving",
+    "wicketkeeping.byesPrevention", "fielding.catching", "mentality.concentration",
+    "mentality.decisionMaking", "physical.balance",
   ],
   Mentality: [
     "mentality.concentration", "mentality.composure", "mentality.decisionMaking",

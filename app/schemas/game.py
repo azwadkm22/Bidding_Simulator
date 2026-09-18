@@ -12,6 +12,7 @@ class PlayerCard(BaseModel):
     name: str
     position: str
     role: str
+    overall: Optional[int] = None
     batting: int
     bowling: int
     fielding: int
