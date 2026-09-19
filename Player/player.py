@@ -1,17 +1,26 @@
 
-from Player.name_generator.player_name_generator import getPlayerName
+from Player.name_generator.player_name_generator import getDomesticPlayerName, getInternationalPlayerName
 
 from random import randint
 from Utils.probability_utils import get_random_normal_distribution_number_biased
 import random
 
 class Player():
+    # Overridden by DomesticPlayer/InternationalPlayer before they call
+    # super().__init__() - these class-level defaults only apply if Player is
+    # ever instantiated directly (e.g. reconstructing from json_data saved
+    # before this field existed), so get_JSON_data() never crashes.
+    nationality = "Domestic"
+    player_type = "Domestic"
 
     def __init__(self, player_id, json_data = None):
-
         if json_data == None:
             self.player_id = player_id
-            self.name = getPlayerName()
+            # No default name here on purpose - a fresh (no json_data) Player
+            # must come from DomesticPlayer/InternationalPlayer, which set
+            # self.name before calling super().__init__(). A plain Player()
+            # with no json_data and no name is a bug, not a case to paper
+            # over with a placeholder.
             self.batting = get_random_normal_distribution_number_biased(25, 94)
             bowlSkillStart = 20
             if self.batting >= 70:
@@ -24,18 +33,11 @@ class Player():
             self.position = self.getPosition()
             if self.position == "Trainee":
                 self.fielding = 50
-            fameLowbound = max(self.batting-10, self.bowling-10, self.fielding-30, 10)
-            fameHighbound = max(self.batting-5, self.bowling-5, self.fielding-20, 70)
-            self.fame = 50 #get_random_normal_distribution_number_biased(fameLowbound, fameHighbound)
-
+            self.fame = 50 #get_random_normal_distribution_number_biased
             self.estimated_price = self.getEstimatedPrice()
-            
             self.batting_hand = random.choice(["Left", "Right"])
-
             self.bowling_type = random.choice(["Spinner", "Pacer"])
-
             self.bowling_style = self.pickBowlingStyle()
-
             self.batting_order = self.pickBattingOrder()
             
             self.selling_price = 0
@@ -206,41 +208,39 @@ class Player():
             "bowling_type": self.bowling_type,
             "bowling_style": self.bowling_style,
             "batting_order": self.batting_order,
-            "selling_price": self.selling_price
+            "selling_price": self.selling_price,
+            "nationality": self.nationality,
+            "player_type": self.player_type,
         }
-        
+
+class DomesticPlayer(Player):
+    def __init__(self, player_id, json_data = None):
+        self.name = getDomesticPlayerName()
+        self.nationality = "Bangladeshi"
+        self.player_type = "Domestic"
+        super().__init__(player_id, json_data)
 
 
-# lowestEP = 1000000
-# # lowPlayer = 1
-# highPlayer = 1
-
-# ALLSTARS = []
-# for j in range(10):
-
-#     highestEP = -1
-#     for i in range(100):
-#         a = Player()
-#         # if(a.estimated_price < lowestEP):
-#         #     lowestEP  = a.estimated_price
-#         #     lowPlayer = a
-
-#         if(a.estimated_price > highestEP):
-#             highestEP = a.estimated_price
-#             highPlayer = a
-#     # highPlayer.printDetails()
-#     ALLSTARS.append(highPlayer)
+class InternationalPlayer(Player):
+    def __init__(self, player_id, json_data = None):
+        self.name = getInternationalPlayerName()
+        # Placeholder - real per-country nationalities come later; player_type
+        # is the stable field to filter/branch on, since nationality here is
+        # expected to change shape as this gets expanded.
+        self.nationality = "International"
+        self.player_type = "International"
+        super().__init__(player_id, json_data)
 
 
-# for p in ALLSTARS:
-#     p.printDetails()
-#     print()
+PLAYER_TYPE_CLASSES = {"Domestic": DomesticPlayer, "International": InternationalPlayer}
 
 
-# getPerson()
-
-
-
-# for i in first:
-# 	for j in last:
-# 		print(i, j)
+def build_player(player_id, json_data):
+    """Reconstructs a player from saved json_data as the correct subclass
+    (DomesticPlayer/InternationalPlayer), instead of the base Player class,
+    so nationality/player_type survive a pool-snapshot round trip - e.g.
+    instantiate_players() rebuilding fresh Player objects to start an
+    auction. json_data predating this field defaults to Domestic.
+    """
+    cls = PLAYER_TYPE_CLASSES.get(json_data.get("player_type", "Domestic"), DomesticPlayer)
+    return cls(player_id, json_data)
