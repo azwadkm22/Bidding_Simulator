@@ -3,12 +3,13 @@ import random
 import json
 from Utils.probability_utils import get_probabilistic_answer
 
-def getPlayerName():
+def getDomesticPlayerName():
       current_dir = Path(__file__).resolve().parent
       json_file_path = current_dir / 'name_data.json'
       with open(json_file_path, "r") as f:
             data = json.load(f)
       
+      data = data["domestic"]
       first = data["firstNames"]
       islamicLastNames = data["islamicLastNames"]
       hinduLastNames = data["hinduLastNames"]
@@ -46,4 +47,20 @@ def getPlayerName():
       
       if switch == 1:
            return lastName + " " + firstName
+      return firstName + " " + lastName
+
+
+def getInternationalPlayerName():
+      current_dir = Path(__file__).resolve().parent
+      json_file_path = current_dir / 'name_data.json'
+      with open(json_file_path, "r") as f:
+            data = json.load(f)
+      
+      data = data["commonWhiteNames"]
+      first = data["firstNames"]
+      last = data["lastNames"]
+
+      firstName = random.choice(first)
+      lastName = random.choice(last)
+
       return firstName + " " + lastName
