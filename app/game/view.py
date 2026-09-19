@@ -91,6 +91,8 @@ def _player_card(player: Player, shortlisted_ids: Optional[set] = None) -> dict:
         "name": player.name,
         "position": player.position,
         "role": role,
+        "nationality": player.nationality,
+        "player_type": player.player_type,
         "overall": _overall_from_core_stats(role, player),
         "batting": player.batting,
         "bowling": player.bowling,
@@ -195,10 +197,12 @@ def pool_summary(pool: PlayerPool) -> dict:
 
     position_counts: dict = {}
     bowling_type_counts = {"Pacer": 0, "Spinner": 0}
+    player_type_counts = {"Domestic": 0, "International": 0}
     for player in gen.list_of_players:
         position_counts[player.position] = position_counts.get(player.position, 0) + 1
         if player.position in ("Bowler", "Allrounder"):
             bowling_type_counts[player.bowling_type] = bowling_type_counts.get(player.bowling_type, 0) + 1
+        player_type_counts[player.player_type] = player_type_counts.get(player.player_type, 0) + 1
 
     shortlist = pool.user_shortlist
     return {
@@ -207,6 +211,7 @@ def pool_summary(pool: PlayerPool) -> dict:
         "count": pool.count,
         "position_counts": position_counts,
         "bowling_type_counts": bowling_type_counts,
+        "player_type_counts": player_type_counts,
         "players_above_80": len(gen.players_above_80),
         "players_above_90": len(gen.players_above_90),
         "top_batsmen": [_player_card(p, shortlist) for p in gen.top_ten_batsmen],

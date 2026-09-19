@@ -12,6 +12,8 @@ class PlayerCard(BaseModel):
     name: str
     position: str
     role: str
+    nationality: str
+    player_type: str
     overall: Optional[int] = None
     batting: int
     bowling: int
@@ -69,6 +71,7 @@ class NewGameRequest(BaseModel):
 class GeneratePoolRequest(BaseModel):
     seed: Optional[int] = None
     count: Optional[int] = None
+    international_count: Optional[int] = None
 
 
 class PoolSummary(BaseModel):
@@ -77,6 +80,7 @@ class PoolSummary(BaseModel):
     count: int
     position_counts: dict[str, int]
     bowling_type_counts: dict[str, int]
+    player_type_counts: dict[str, int]
     players_above_80: int
     players_above_90: int
     top_batsmen: list[PlayerCard]

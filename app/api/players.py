@@ -64,7 +64,8 @@ async def preview_custom_player(body: CustomPlayerPreviewRequest):
 async def generate_pool(body: Optional[GeneratePoolRequest] = None):
     seed = body.seed if body else None
     count = (body.count if body and body.count else None) or player_pool.DEFAULT_POOL_SIZE
-    pool = player_pool.create_pool(seed=seed, count=count)
+    international_count = (body.international_count if body and body.international_count else None) or 0
+    pool = player_pool.create_pool(seed=seed, count=count, international_count=international_count)
     pool_store.save(pool)
     return view.pool_summary(pool)
 
@@ -113,5 +114,6 @@ async def create_custom_player(pool_id: str, body: CustomPlayerCreateRequest):
         bowling_type=body.bowling_type,
         batting_order=body.batting_order,
         fame=body.fame,
+        player_type=body.player_type,
     )
     return ratings_view.player_detail(player, detail)

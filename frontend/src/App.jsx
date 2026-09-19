@@ -173,6 +173,7 @@ function RivalsPanel({ rivals, onSelectTeam }) {
 const BASE_PLAYER_COLUMNS = [
   { key: "name", label: "Name" },
   { key: "position", label: "Position" },
+  { key: "player_type", label: "Type" },
   { key: "overall", label: "Overall" },
   { key: "batting", label: "Batting" },
   { key: "bowling", label: "Bowling" },
@@ -222,6 +223,7 @@ function sortableValue(player, key) {
 // price paid + deal grade for a squad).
 function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onViewPlayer, onToggleShortlist }) {
   const [positionFilter, setPositionFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
   const [sortKey, setSortKey] = useState(extraColumns[0].key);
   const [sortDir, setSortDir] = useState("desc");
   const [statKey, setStatKey] = useState("batting");
@@ -235,6 +237,7 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
     (c) =>
       c.key !== "name" &&
       c.key !== "position" &&
+      c.key !== "player_type" &&
       c.key !== "deal_grade" &&
       !players.some((p) => typeof p[c.key] === "string"),
   );
@@ -247,6 +250,7 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
   const visiblePlayers = useMemo(() => {
     let filtered =
       positionFilter === "All" ? players : players.filter((p) => p.position === positionFilter);
+    if (typeFilter !== "All") filtered = filtered.filter((p) => p.player_type === typeFilter);
     const threshold = statMin === "" ? null : Number(statMin);
     if (threshold !== null && !Number.isNaN(threshold)) {
       filtered = filtered.filter((p) => (p[statKey] ?? 0) >= threshold);
@@ -257,14 +261,14 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
       const cmp = typeof va === "string" ? va.localeCompare(vb) : va - vb;
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [players, positionFilter, statKey, statMin, sortKey, sortDir]);
+  }, [players, positionFilter, typeFilter, statKey, statMin, sortKey, sortDir]);
 
   function toggleSort(key) {
     if (key === sortKey) {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
       setSortKey(key);
-      setSortDir(key === "name" || key === "position" ? "asc" : "desc");
+      setSortDir(key === "name" || key === "position" || key === "player_type" ? "asc" : "desc");
     }
   }
 
@@ -277,6 +281,11 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
               {pos}
             </option>
           ))}
+        </select>
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} title="Filter by Domestic/International">
+          <option value="All">All Types</option>
+          <option value="Domestic">Domestic</option>
+          <option value="International">International</option>
         </select>
         <select value={statKey} onChange={(e) => setStatKey(e.target.value)}>
           {statColumns.map((col) => (
@@ -330,6 +339,7 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
                 ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
               </td>
               <td>{p.position}</td>
+              <td>{p.player_type}</td>
               <td>{p.overall ?? "-"}</td>
               <td>{p.batting}</td>
               <td>{p.bowling}</td>
@@ -697,6 +707,8 @@ function PoolScreen({
   setGenSeed,
   genCount,
   setGenCount,
+  genInternational,
+  setGenInternational,
   onGenerate,
   onStartAuction,
   onViewPlayer,
@@ -728,6 +740,15 @@ function PoolScreen({
             onChange={(e) => setGenCount(e.target.value)}
             className="seed-input"
           />
+          <input
+            type="number"
+            min="0"
+            placeholder="International players (default 0)"
+            value={genInternational}
+            onChange={(e) => setGenInternational(e.target.value)}
+            className="seed-input"
+            title="How many of the generated players are International; the rest are Domestic"
+          />
           <button onClick={onGenerate} disabled={loading}>
             {pool ? "Generate Different Pool" : "Generate Players"}
           </button>
@@ -749,6 +770,10 @@ function PoolScreen({
               {Object.entries(pool.position_counts)
                 .map(([pos, n]) => `${pos}: ${n}`)
                 .join(" · ")}
+            </p>
+            <p>
+              Domestic: {pool.player_type_counts?.Domestic || 0} · International:{" "}
+              {pool.player_type_counts?.International || 0}
             </p>
             <p>
               Pacers: {pool.bowling_type_counts.Pacer || 0} · Spinners:{" "}
@@ -841,6 +866,7 @@ function CreatePlayerScreen({ poolId, onClose, onPlayerAdded }) {
     bowling_type: "Pacer",
     batting_order: "Middle Order",
     fame: 50,
+    player_type: "Domestic",
   });
   // Mirrors infer_role() (Player/ratings/generation.py) exactly: a role's
   // bowling style is never an independent choice in the real generator -
@@ -932,6 +958,7 @@ function CreatePlayerScreen({ poolId, onClose, onPlayerAdded }) {
         bowling_type: form.bowling_type,
         batting_order: form.batting_order,
         fame: Number(form.fame),
+        player_type: form.player_type,
         attributes: values,
       });
       setSaveMessage(
@@ -1001,6 +1028,10 @@ function CreatePlayerScreen({ poolId, onClose, onPlayerAdded }) {
           <span className="live-note" title="Derived from Role + Bowling Type, same as the real generator - not independently settable">
             {primaryBowlingStyle === "none" ? "Doesn't bowl" : `Bowls ${primaryBowlingStyle}`}
           </span>
+          <select value={form.player_type} onChange={(e) => updateForm("player_type", e.target.value)}>
+            <option value="Domestic">Domestic</option>
+            <option value="International">International</option>
+          </select>
           <select value={form.batting_hand} onChange={(e) => updateForm("batting_hand", e.target.value)}>
             <option value="Right">Right-Handed</option>
             <option value="Left">Left-Handed</option>
@@ -1248,7 +1279,7 @@ function PlayerDetailModal({ data, loading, error, onClose }) {
           <>
             <p>
               {roleLabel(data.role, data.primary_bowling_style === "pace", "full")}
-              {" · "}{data.batting_hand}-Handed · {data.batting_order}
+              {" · "}{data.batting_hand}-Handed · {data.batting_order} · {data.player_type} ({data.nationality})
             </p>
             <div className="rating-badges">
               <RatingBadge label="Overall" rating={data.ratings.overall} />
@@ -1334,6 +1365,7 @@ export default function App() {
   const [poolError, setPoolError] = useState(null);
   const [genSeed, setGenSeed] = useState("");
   const [genCount, setGenCount] = useState("");
+  const [genInternational, setGenInternational] = useState("");
   const [playerDetail, setPlayerDetail] = useState(null);
   const [playerDetailOpen, setPlayerDetailOpen] = useState(false);
   const [playerDetailLoading, setPlayerDetailLoading] = useState(false);
@@ -1413,7 +1445,7 @@ export default function App() {
     setPoolError(null);
     setPoolLoading(true);
     try {
-      const data = await api.generatePool({ seed: genSeed, count: genCount });
+      const data = await api.generatePool({ seed: genSeed, count: genCount, internationalCount: genInternational });
       setPool(data);
       setState(null);
       setSessionId(null);
@@ -1637,6 +1669,8 @@ export default function App() {
           setGenSeed={setGenSeed}
           genCount={genCount}
           setGenCount={setGenCount}
+          genInternational={genInternational}
+          setGenInternational={setGenInternational}
           onGenerate={generatePool}
           onStartAuction={startAuctionFromPool}
           onViewPlayer={showPlayerDetail}

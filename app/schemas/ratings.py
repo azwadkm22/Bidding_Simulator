@@ -26,6 +26,8 @@ class PlayerDetailResponse(BaseModel):
     primary_bowling_style: str
     batting_hand: str
     batting_order: str
+    nationality: str
+    player_type: str
     core: dict[str, float]
     ratings: dict[str, RatingValue]
     attributes: dict
@@ -65,3 +67,4 @@ class CustomPlayerCreateRequest(CustomPlayerPreviewRequest):
     bowling_type: str = "Pacer"
     batting_order: str = "Middle Order"
     fame: int = 50
+    player_type: str = "Domestic"

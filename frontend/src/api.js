@@ -10,10 +10,13 @@ async function handle(response) {
   return data;
 }
 
-export function generatePool({ seed, count } = {}) {
+export function generatePool({ seed, count, internationalCount } = {}) {
   const body = {};
   if (seed !== undefined && seed !== null && seed !== "") body.seed = Number(seed);
   if (count !== undefined && count !== null && count !== "") body.count = Number(count);
+  if (internationalCount !== undefined && internationalCount !== null && internationalCount !== "") {
+    body.international_count = Number(internationalCount);
+  }
   const hasBody = Object.keys(body).length > 0;
   return fetch(`${PLAYERS_BASE}/generate`, {
     method: "POST",

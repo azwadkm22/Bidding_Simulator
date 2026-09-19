@@ -509,3 +509,25 @@ def test_pass_then_bid_progress_the_auction():
     response = client.post(f"/api/game/{session_id}/bid", json={"increment": 10})
     assert response.status_code == 200
     assert response.json()["current_price"] > 10
+
+
+def test_generate_pool_with_international_count_mixes_player_types():
+    summary = client.post("/api/players/generate", json={"seed": 12, "count": 30, "international_count": 7}).json()
+    assert summary["player_type_counts"] == {"Domestic": 23, "International": 7}
+
+    players = client.get(f"/api/players/{summary['pool_id']}/players").json()["players"]
+    assert sum(1 for p in players if p["player_type"] == "International") == 7
+    assert all(p["nationality"] for p in players)
+
+
+def test_international_players_survive_starting_an_auction_from_the_pool():
+    summary = client.post("/api/players/generate", json={"seed": 3, "count": 20, "international_count": 5}).json()
+    state = client.post("/api/game/new", json={"pool_id": summary["pool_id"]}).json()
+    remaining = client.get(f"/api/game/{state['session_id']}/players/remaining").json()["players"]
+    seen = remaining + [state["current_player"]]
+    assert sum(1 for p in seen if p["player_type"] == "International") == 5
+
+
+def test_generate_pool_defaults_to_all_domestic():
+    summary = client.post("/api/players/generate", json={"seed": 1, "count": 10}).json()
+    assert summary["player_type_counts"] == {"Domestic": 10, "International": 0}

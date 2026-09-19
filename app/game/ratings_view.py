@@ -30,6 +30,8 @@ def player_detail(player: Player, detail: DetailedPlayerAttributes) -> dict:
         "primary_bowling_style": detail.primary_bowling_style,
         "batting_hand": player.batting_hand,
         "batting_order": player.batting_order,
+        "nationality": player.nationality,
+        "player_type": player.player_type,
         "core": {
             "batting": player.batting,
             "bowling": player.bowling,

@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from Player.generate_players import get_list_of_players
-from Player.player import Player
+from Player.player import DomesticPlayer, InternationalPlayer, Player, build_player
 from Player.player_generation_stats import PlayerGenStat
 from Player.ratings import DetailedPlayerAttributes, RatingResult, calculate_player_ratings
 from Player.ratings.generation import generate_detailed_attributes
@@ -58,7 +58,7 @@ def toggle_shortlist(pool: PlayerPool, player_id: int) -> bool:
     return True
 
 
-def create_pool(seed: Optional[int] = None, count: int = DEFAULT_POOL_SIZE) -> PlayerPool:
+def create_pool(seed: Optional[int] = None, count: int = DEFAULT_POOL_SIZE, international_count: int = 0) -> PlayerPool:
     """Generates a fresh player pool, reseeding the process-wide random module
     first so a given seed reliably reproduces the same players.
 
@@ -76,7 +76,7 @@ def create_pool(seed: Optional[int] = None, count: int = DEFAULT_POOL_SIZE) -> P
         seed = random.randint(0, SEED_MAX)
     random.seed(seed)
 
-    players = get_list_of_players(count)
+    players = get_list_of_players(count, international_count)
     players = sorted(players, key=lambda p: p.estimated_price, reverse=True)
     generation = PlayerGenStat(players)
     snapshot = [(p.player_id, p.get_JSON_data()) for p in players]
@@ -96,8 +96,10 @@ def instantiate_players(pool: PlayerPool) -> list:
     """Fresh Player objects from the pool's pristine snapshot, in the same
     price-sorted order the pool was generated in - safe to hand to a new
     auction even if the pool has already been used by a previous one.
+    build_player picks DomesticPlayer/InternationalPlayer per the snapshot's
+    saved player_type, so nationality survives this round trip.
     """
-    return [Player(player_id=player_id, json_data=dict(data)) for player_id, data in pool.snapshot]
+    return [build_player(player_id, dict(data)) for player_id, data in pool.snapshot]
 
 
 def add_custom_player(
@@ -109,6 +111,7 @@ def add_custom_player(
     bowling_type: str,
     batting_order: str,
     fame: int,
+    player_type: str = "Domestic",
 ) -> Player:
     """Hand-built player for the Create Player / weight-tuning tool: batting/
     bowling/fielding core stats are derived from the detailed attributes
@@ -141,7 +144,8 @@ def add_custom_player(
         "batting_order": batting_order,
         "selling_price": 0,
     }
-    player = Player(player_id=new_id, json_data=json_data)
+    player_class = InternationalPlayer if player_type == "International" else DomesticPlayer
+    player = player_class(new_id, json_data=json_data)
     player.estimated_price = player.getEstimatedPrice()
 
     detail.player_id = new_id

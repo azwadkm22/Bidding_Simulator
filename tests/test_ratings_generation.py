@@ -6,7 +6,7 @@ the one exception - see test_batting_rating_never_exceeds_core_rating below.
 
 import random
 
-from Player.player import Player
+from Player.player import DomesticPlayer, Player
 from Player.ratings import (
     calculate_batting_rating,
     calculate_fielding_rating,
@@ -27,7 +27,7 @@ def test_generated_details_reproduce_bowling_and_fielding_core_ratings():
     random.seed(2026)
     mismatches = []
     for i in range(500):
-        player = Player(i)
+        player = DomesticPlayer(i)
         detail = generate_detailed_attributes(player)
 
         bowling = _bowling_rating(player, detail)
@@ -59,7 +59,7 @@ def test_batting_rating_never_exceeds_core_rating():
     random.seed(2026)
     mismatches = 0
     for i in range(2000):
-        player = Player(i)
+        player = DomesticPlayer(i)
         detail = generate_detailed_attributes(player)
         batting = calculate_batting_rating(detail)
 
@@ -73,7 +73,7 @@ def test_batting_rating_never_exceeds_core_rating():
 def test_every_player_gets_exactly_one_bowling_style_detail():
     random.seed(3)
     for i in range(50):
-        player = Player(i)
+        player = DomesticPlayer(i)
         detail = generate_detailed_attributes(player)
         if player.bowling_type == "Pacer":
             assert detail.paceBowling
@@ -91,7 +91,7 @@ def test_only_wicketkeepers_get_wicketkeeping_detail():
     random.seed(4)
     saw_keeper = False
     for i in range(200):
-        player = Player(i)
+        player = DomesticPlayer(i)
         detail = generate_detailed_attributes(player)
         if player.position == "Wicketkeeper":
             saw_keeper = True
