@@ -50,7 +50,51 @@ def getDomesticPlayerName():
       return firstName + " " + lastName
 
 
-def getInternationalPlayerName():
+def getInternationalPlayerName(nationality):
+
+      if nationality == "West Indies":
+            current_dir = Path(__file__).resolve().parent
+            json_file_path = current_dir / 'name_data.json'
+            with open(json_file_path, "r") as f:
+                  data = json.load(f)
+            
+            data = data["westIndies"]
+            first = data["firstNames"]
+            last = data["lastNames"]
+
+            firstName = random.choice(first)
+            lastName = random.choice(last)
+
+            return firstName + " " + lastName
+      
+      if nationality == "South Africa" or nationality == "Netherlands":
+            current_dir = Path(__file__).resolve().parent
+            json_file_path = current_dir / 'name_data.json'
+            with open(json_file_path, "r") as f:
+                  data = json.load(f)
+            
+            # choice = random.choice(["van_de", "van_de", "commonWhite"])
+
+            # if choice == "commonWhite":
+            #       return generate_common_white_name()
+            # elif choice == "african":
+            #       data = data["african"]
+            # elif choice == "van_de": 
+                  
+                  
+            # data = data["van_de"]
+                  
+            first = data["van_de"]["firstNames"] + data["commonWhiteNames"]["firstNames"]
+            last = data["van_de"]["lastNames"] + data["commonWhiteNames"]["lastNames"]
+
+            firstName = random.choice(first)
+            lastName = random.choice(last)
+            return firstName + " " + lastName
+      
+      else:
+            return generate_common_white_name()
+      
+def generate_common_white_name():
       current_dir = Path(__file__).resolve().parent
       json_file_path = current_dir / 'name_data.json'
       with open(json_file_path, "r") as f:

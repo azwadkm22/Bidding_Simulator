@@ -6,7 +6,7 @@ the one exception - see test_batting_rating_never_exceeds_core_rating below.
 
 import random
 
-from Player.player import DomesticPlayer, Player
+from Player.player import DomesticPlayer
 from Player.ratings import (
     calculate_batting_rating,
     calculate_fielding_rating,
@@ -103,7 +103,7 @@ def test_only_wicketkeepers_get_wicketkeeping_detail():
 
 def test_role_inference_matches_position_and_skill_split():
     def make(batting, bowling, position, bowling_type="Pacer"):
-        return Player(
+        return DomesticPlayer(
             player_id=1,
             json_data={
                 "name": "X", "batting": batting, "bowling": bowling, "fielding": 60,

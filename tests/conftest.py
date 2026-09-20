@@ -1,6 +1,6 @@
 from collections import deque
 
-from Player.player import Player
+from Player.player import DomesticPlayer
 from Team.team import Team
 
 from app.game.engine import AuctionPhase, BidderHandle, GameSession
@@ -39,7 +39,7 @@ class FakeBidder:
 
 
 def make_player(player_id=1, name="Test Player", estimated_price=50, position="Batsmen"):
-    return Player(
+    return DomesticPlayer(
         player_id=player_id,
         json_data={
             "name": name,

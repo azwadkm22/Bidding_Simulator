@@ -6,21 +6,10 @@ from Utils.probability_utils import get_random_normal_distribution_number_biased
 import random
 
 class Player():
-    # Overridden by DomesticPlayer/InternationalPlayer before they call
-    # super().__init__() - these class-level defaults only apply if Player is
-    # ever instantiated directly (e.g. reconstructing from json_data saved
-    # before this field existed), so get_JSON_data() never crashes.
-    nationality = "Domestic"
-    player_type = "Domestic"
 
     def __init__(self, player_id, json_data = None):
         if json_data == None:
             self.player_id = player_id
-            # No default name here on purpose - a fresh (no json_data) Player
-            # must come from DomesticPlayer/InternationalPlayer, which set
-            # self.name before calling super().__init__(). A plain Player()
-            # with no json_data and no name is a bug, not a case to paper
-            # over with a placeholder.
             self.batting = get_random_normal_distribution_number_biased(25, 94)
             bowlSkillStart = 20
             if self.batting >= 70:
@@ -41,7 +30,7 @@ class Player():
             self.batting_order = self.pickBattingOrder()
             
             self.selling_price = 0
-        else:
+        if json_data != None:
             self.player_id = player_id
             self.name = json_data["name"]
             self.batting = json_data["batting"]
@@ -220,16 +209,65 @@ class DomesticPlayer(Player):
         self.player_type = "Domestic"
         super().__init__(player_id, json_data)
 
+        if json_data == None:
+            self.player_id = player_id
+            self.batting = get_random_normal_distribution_number_biased(25, 94)
+            bowlSkillStart = 20
+            if self.batting >= 70:
+                bowlSkillStart = 15
+            elif self.batting <= 50:
+                bowlSkillStart = 35
+            self.bowling = get_random_normal_distribution_number_biased(bowlSkillStart, 94)
+            self.fielding = get_random_normal_distribution_number_biased(
+                max(self.batting, self.bowling) - 30, min(max(self.batting, self.bowling) + 20, 90))
+            self.position = self.getPosition()
+            if self.position == "Trainee":
+                self.fielding = 50
+            self.fame = 50 #get_random_normal_distribution_number_biased
+            self.estimated_price = self.getEstimatedPrice()
+            self.batting_hand = random.choice(["Left", "Right"])
+            self.bowling_type = random.choice(["Spinner", "Pacer"])
+            self.bowling_style = self.pickBowlingStyle()
+            self.batting_order = self.pickBattingOrder()
+
 
 class InternationalPlayer(Player):
     def __init__(self, player_id, json_data = None):
-        self.name = getInternationalPlayerName()
-        # Placeholder - real per-country nationalities come later; player_type
-        # is the stable field to filter/branch on, since nationality here is
-        # expected to change shape as this gets expanded.
-        self.nationality = "International"
+        # super().__init__(player_id, json_data)
+        self.player_id = player_id
         self.player_type = "International"
-        super().__init__(player_id, json_data)
+        self.nationality = random.choice(["Australia", "England", "New Zealand", "South Africa", "West Indies"])
+        self.name = getInternationalPlayerName(self.nationality)
+
+        self.position = random.choices(["Batsmen", "Bowler", "Allrounder", "Wicketkeeper"], weights=[0.4, 0.3, 0.2, 0.1])[0]
+
+        if self.position == "Batsmen" or self.position == "Wicketkeeper":
+            self.batting = get_random_normal_distribution_number_biased(75, 96)
+            self.bowling = get_random_normal_distribution_number_biased(20, 60)
+            self.fielding = get_random_normal_distribution_number_biased(
+                max(self.batting, self.bowling) - 30, min(max(self.batting, self.bowling) + 20, 90))
+        elif self.position == "Bowler":
+            self.bowling = get_random_normal_distribution_number_biased(75, 96)
+            self.batting = get_random_normal_distribution_number_biased(20, 60)
+            self.fielding = get_random_normal_distribution_number_biased(
+                max(self.batting, self.bowling) - 30, min(max(self.batting, self.bowling) + 20, 90))
+        elif self.position == "Allrounder":
+            self.batting = get_random_normal_distribution_number_biased(70, 94)
+            self.bowling = get_random_normal_distribution_number_biased(70, 94)
+            self.fielding = get_random_normal_distribution_number_biased(
+                max(self.batting, self.bowling) - 30, min(max(self.batting, self.bowling) + 20, 90))
+        else:
+            self.batting = 45
+            self.bowling = 45
+            self.fielding = 45
+        
+        self.fame = 50 #get_random_normal_distribution_number_biased
+        self.estimated_price = self.getEstimatedPrice()
+        self.batting_hand = random.choice(["Left", "Right"])
+        self.bowling_type = random.choice(["Spinner", "Pacer"])
+        self.bowling_style = self.pickBowlingStyle()
+        self.batting_order = self.pickBattingOrder()
+        self.selling_price = 0
 
 
 PLAYER_TYPE_CLASSES = {"Domestic": DomesticPlayer, "International": InternationalPlayer}
