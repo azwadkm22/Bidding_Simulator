@@ -4,13 +4,41 @@ import "./App.css";
 
 const POLL_MS = 1000;
 
+// Emoji flags per supported nationality (Player/player.py). West Indies has
+// no country flag emoji, so it gets a maroon "WI" badge instead. Unknown
+// nationalities render nothing rather than a wrong flag.
+const NATIONALITY_FLAGS = {
+  Bangladeshi: "\u{1F1E7}\u{1F1E9}",
+  Australia: "\u{1F1E6}\u{1F1FA}",
+  "South Africa": "\u{1F1FF}\u{1F1E6}",
+  "New Zealand": "\u{1F1F3}\u{1F1FF}",
+  England: "\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}",
+};
+
+function Flag({ nationality }) {
+  if (nationality === "West Indies") {
+    return (
+      <span className="flag flag-badge" title={nationality}>
+        WI
+      </span>
+    );
+  }
+  const flag = NATIONALITY_FLAGS[nationality];
+  if (!flag) return null;
+  return (
+    <span className="flag" title={nationality === "Bangladeshi" ? "Bangladesh (Domestic)" : nationality}>
+      {flag}
+    </span>
+  );
+}
+
 function PlayerCard({ player, onViewPlayer, onToggleShortlist }) {
   if (!player) return <div className="panel">No player on the block.</div>;
   return (
     <div className="panel">
       <h2>
         {player.shortlisted && "★ "}
-        {player.name}{" "}
+        <Flag nationality={player.nationality} /> {player.name}{" "}
         <button className="link-button" onClick={() => onViewPlayer(player.player_id)}>
           [View Stats]
         </button>{" "}
@@ -331,10 +359,12 @@ function PlayerTable({ players, extraColumns, emptyMessage, rowClassName, onView
               <td>
                 {onViewPlayer ? (
                   <button className="link-button" onClick={() => onViewPlayer(p.player_id)}>
-                    {p.name}
+                    <Flag nationality={p.nationality} /> {p.name}
                   </button>
                 ) : (
-                  p.name
+                  <>
+                    <Flag nationality={p.nationality} /> {p.name}
+                  </>
                 )}{" "}
                 ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
               </td>
@@ -497,7 +527,7 @@ function StartingElevenModal({ data, loading, error, onClose }) {
                   <tr key={p.player_id}>
                     <td>{i + 1}</td>
                     <td>
-                      {p.name} ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
+                      <Flag nationality={p.nationality} /> {p.name} ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
                     </td>
                     <td>{p.position}</td>
                     <td>{p.batting_order}</td>
@@ -521,7 +551,7 @@ function StartingElevenModal({ data, loading, error, onClose }) {
                 {data.bench.map((p) => (
                   <tr key={p.player_id}>
                     <td>
-                      {p.name} ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
+                      <Flag nationality={p.nationality} /> {p.name} ({roleLabel(p.role, p.bowling_type === "Pacer", "abbr")})
                     </td>
                     <td>{p.position}</td>
                     <td>{p.batting}</td>
@@ -1270,7 +1300,7 @@ function PlayerDetailModal({ data, loading, error, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{data ? data.name : "Loading..."}</h2>
+          <h2>{data ? <><Flag nationality={data.nationality} /> {data.name}</> : "Loading..."}</h2>
           <button onClick={onClose}>Close</button>
         </div>
         {loading && <p>Loading player...</p>}

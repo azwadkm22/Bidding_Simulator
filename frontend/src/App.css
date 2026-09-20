@@ -500,3 +500,18 @@ button:disabled {
   padding: 2px 6px;
   border-bottom: 1px solid #f0f0f0;
 }
+
+.flag {
+  display: inline-block;
+  margin-right: 2px;
+}
+
+.flag-badge {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: #7b1e3a;
+  color: #fff;
+  font-size: 0.7em;
+  font-weight: 700;
+  vertical-align: middle;
+}
